@@ -128,7 +128,24 @@
 //#pragma clang diagnostic pop
 }
 
-- (CAAnimation *)backgroundImageAnimationForNoDataPlaceholder:(UIScrollView *)scrollView {
+- (UIImage *)imageForNoDataPlaceholder:(UIScrollView *)scrollView
+{
+    if (self.isLoading) {
+        return [UIImage imageNamed:@"loading_imgBlue_78x78" inBundle:[NSBundle bundleForClass:[self class]] compatibleWithTraitCollection:nil];
+    }
+    else {
+        
+        UIImage *image = [UIImage imageNamed:@"placeholder_instagram"];
+        
+        return image;
+    }
+}
+
+- (BOOL)noDataPlaceholderShouldAnimateImageView:(UIScrollView *)scrollView {
+    return self.loading;
+}
+
+- (CAAnimation *)imageAnimationForNoDataPlaceholder:(UIScrollView *)scrollView {
     CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"transform"];
     animation.fromValue = [NSValue valueWithCATransform3D:CATransform3DIdentity];
     animation.toValue = [NSValue valueWithCATransform3D: CATransform3DMakeRotation(M_PI_2, 0.0, 0.0, 1.0) ];

@@ -84,15 +84,15 @@ NS_ASSUME_NONNULL_BEGIN
 /// @return NSAttributedString富文本
 - (NSAttributedString *)detailAttributedStringForNoDataPlaceholder:(UIScrollView *)scrollView;
 
-/// NoDataPlaceholder的背景图片
+/// NoDataPlaceholder的图片
 ///@return UIImage
-- (UIImage *)backgroundImageForNoDataPlaceholder:(UIScrollView *)scrollView;
+- (UIImage *)imageForNoDataPlaceholder:(UIScrollView *)scrollView;
 
 /// 图片的动画，默认为nil
 /// @return CAAnimation
-- (CAAnimation *)backgroundImageAnimationForNoDataPlaceholder:(UIScrollView *)scrollView;
+- (CAAnimation *)imageAnimationForNoDataPlaceholder:(UIScrollView *)scrollView;
 
-/// 背景图片的tintColor , 默认无
+/// 图片的tintColor , 默认无
 /// @return UIColor
 - (UIColor *)imageTintColorForNoDataPlaceholder:(UIScrollView *)scrollView;
 

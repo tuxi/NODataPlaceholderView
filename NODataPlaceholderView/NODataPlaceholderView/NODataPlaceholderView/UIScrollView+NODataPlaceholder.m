@@ -54,7 +54,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 /** 详情label */
 @property (nonatomic, weak, readonly) UILabel *detailLabel;
 /** 图片视图 */
-@property (nonatomic, weak, readonly) UIImageView *backgroundImageView;
+@property (nonatomic, weak, readonly) UIImageView *imageView;
 /** 重新加载的button */
 @property (nonatomic, weak, readonly) UIButton *reloadButton;
 /** 自定义视图 */
@@ -336,10 +336,10 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 }
 
 - (UIImage *)xy_backGroundImage {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(backgroundImageForNoDataPlaceholder:)]) {
-        UIImage *image = [self.noDataPlaceholderDataSource backgroundImageForNoDataPlaceholder:self];
+    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(imageForNoDataPlaceholder:)]) {
+        UIImage *image = [self.noDataPlaceholderDataSource imageForNoDataPlaceholder:self];
         if (image) {
-            NSAssert([image isKindOfClass:[UIImage class]], @"-[backgroundImageForNoDataPlaceholder:]返回值必须是UIImage类型");
+            NSAssert([image isKindOfClass:[UIImage class]], @"-[imageForNoDataPlaceholder:]返回值必须是UIImage类型");
             return image;
         }
     }
@@ -347,10 +347,10 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 }
 
 - (CAAnimation *)xy_imageAnimation {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(backgroundImageAnimationForNoDataPlaceholder:)]) {
-        CAAnimation *imageAnimation = [self.noDataPlaceholderDataSource backgroundImageAnimationForNoDataPlaceholder:self];
+    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(imageAnimationForNoDataPlaceholder:)]) {
+        CAAnimation *imageAnimation = [self.noDataPlaceholderDataSource imageAnimationForNoDataPlaceholder:self];
         if (imageAnimation) {
-            NSAssert([imageAnimation isKindOfClass:[CAAnimation class]], @"-[backgroundImageAnimationForNoDataPlaceholder:]返回值必须为CAAnimation类型");
+            NSAssert([imageAnimation isKindOfClass:[CAAnimation class]], @"-[imageAnimationForNoDataPlaceholder:]返回值必须为CAAnimation类型");
             return imageAnimation;
         }
     }
@@ -613,16 +613,16 @@ void xy_orginal_implementation(id self, SEL _cmd) {
             NSAttributedString *reloadBtnTitle = [self xy_reloadButtonTitleForState:UIControlStateNormal];
             UIImage *reloadBtnImage = [self xy_reloadButtonImageForState:UIControlStateNormal];
             
-            UIImage *backgroundImage = [self xy_backGroundImage];
+            UIImage *image = [self xy_backGroundImage];
             UIColor *imageTintColor = [self xy_imageTintColor];
             UIImageRenderingMode renderingMode = imageTintColor ? UIImageRenderingModeAlwaysTemplate : UIImageRenderingModeAlwaysOriginal;
             
             noDataPlaceholderView.verticalSpace = [self xy_verticalSpace];
             
-            // 设置backgroundImageView
-            if (backgroundImage) {
-                noDataPlaceholderView.backgroundImageView.image = [backgroundImage imageWithRenderingMode:renderingMode];
-                noDataPlaceholderView.backgroundImageView.tintColor = imageTintColor;
+            // 设置ImageView
+            if (image) {
+                noDataPlaceholderView.imageView.image = [image imageWithRenderingMode:renderingMode];
+                noDataPlaceholderView.imageView.tintColor = imageTintColor;
 
             }
             
@@ -671,10 +671,10 @@ void xy_orginal_implementation(id self, SEL _cmd) {
             CAAnimation *animation = [self xy_imageAnimation];
             
             if (animation) {
-                [noDataPlaceholderView.backgroundImageView.layer addAnimation:animation forKey:NoDataPlaceholderBackgroundImageViewAnimationKey];
+                [noDataPlaceholderView.imageView.layer addAnimation:animation forKey:NoDataPlaceholderBackgroundImageViewAnimationKey];
             }
-        } else if ([noDataPlaceholderView.backgroundImageView.layer animationForKey:NoDataPlaceholderBackgroundImageViewAnimationKey]) {
-            [noDataPlaceholderView.backgroundImageView.layer removeAnimationForKey:NoDataPlaceholderBackgroundImageViewAnimationKey];
+        } else if ([noDataPlaceholderView.imageView.layer animationForKey:NoDataPlaceholderBackgroundImageViewAnimationKey]) {
+            [noDataPlaceholderView.imageView.layer removeAnimationForKey:NoDataPlaceholderBackgroundImageViewAnimationKey];
         }
         
         // 通知代理完全显示
@@ -711,7 +711,7 @@ void xy_orginal_implementation(id self, SEL _cmd) {
 contentView = _contentView,
 titleLabel = _titleLabel,
 detailLabel = _detailLabel,
-backgroundImageView = _backgroundImageView,
+imageView = _imageView,
 reloadButton = _reloadButton,
 customView = _customView;
 
@@ -769,18 +769,18 @@ customView = _customView;
     return _contentView;
 }
 
-- (UIImageView *)backgroundImageView {
-    if (_backgroundImageView == nil) {
+- (UIImageView *)imageView {
+    if (_imageView == nil) {
         UIImageView *imageView = [UIImageView new];
         imageView.translatesAutoresizingMaskIntoConstraints = NO;
         imageView.backgroundColor = [UIColor clearColor];
         imageView.contentMode = UIViewContentModeScaleAspectFit;
         imageView.userInteractionEnabled = NO;
-        _backgroundImageView = imageView;
-        _backgroundImageView.accessibilityIdentifier = @"no data placeholder background image";
-        [[self contentView] addSubview:_backgroundImageView];
+        _imageView = imageView;
+        _imageView.accessibilityIdentifier = @"no data placeholder image view";
+        [[self contentView] addSubview:_imageView];
     }
-    return _backgroundImageView;
+    return _imageView;
 }
 
 - (UILabel *)titleLabel {
@@ -846,8 +846,8 @@ customView = _customView;
 }
 
 
-- (BOOL)canShowBackgroundImage {
-    return _backgroundImageView.image && _backgroundImageView.superview;
+- (BOOL)canShowImage {
+    return _imageView.image && _imageView.superview;
 }
 
 - (BOOL)canShowTitle {
@@ -959,11 +959,11 @@ customView = _customView;
         NSDictionary *metrics = @{@"horizontalSpace": @(horizontalSpace)};
         
         // 设置backgroundImageView水平约束
-        if (_backgroundImageView.superview) {
-            [subviewsNames addObject:@"backgroundImageView"];
-            views[[subviewsNames lastObject]] = _backgroundImageView;
+        if (_imageView.superview) {
+            [subviewsNames addObject:@"imageView"];
+            views[[subviewsNames lastObject]] = _imageView;
             
-            [self.contentView addConstraint:[self.contentView equallyRelatedConstraintWithView:_backgroundImageView attribute:NSLayoutAttributeCenterX]];
+            [self.contentView addConstraint:[self.contentView equallyRelatedConstraintWithView:_imageView attribute:NSLayoutAttributeCenterX]];
         }
         
         // 根据title是否可以显示，设置titleLable的水平约束
@@ -1057,7 +1057,7 @@ customView = _customView;
     [_contentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     _titleLabel = nil;
     _detailLabel = nil;
-    _backgroundImageView = nil;
+    _imageView = nil;
     _customView = nil;
     _reloadButton = nil;
     
