@@ -9,6 +9,14 @@
 #import "UIScrollView+NODataPlaceholder.h"
 #import <objc/runtime.h>
 
+
+////////////////////////////////
+static char const * const NoDataPlaceholderViewKey = "NoDataPlaceholderView";
+static char const * const NoDataPlaceholdeDataSourceKey =     "NoDataPlaceholdeDataSource";
+static char const * const NoDataPlaceholdeDelegateKey =   "NoDataPlaceholdeDelegate";
+
+
+/////////////////////////////////
 /// 存储_impLookupTable中swizzledInfo字典中基类名的key
 static NSString * const SwizzleInfoClassKey = @"class";
 /// 存储_impLookupTable中swizzledInfo字典中原方法名称的key
@@ -18,6 +26,7 @@ static NSString *const SwizzleInfoPointerKey = @"pointer";
 /// 作为方法查找表使用, key: 类名_方法名 拼接的，value:swizzledInfo字典 (key为上面三个key)
 static NSMutableDictionary<NSString *, NSDictionary *> *_impLookupTable;
 
+////////////////////////////////
 static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoDataPlaceholderBackgroundImageViewAnimation";
 
 @interface UIView (ConstraintBasedLayoutExtensions)
@@ -83,7 +92,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 - (NoDataPlaceholderView *)noDataPlaceholderView {
     
-    NoDataPlaceholderView *view = objc_getAssociatedObject(self, @selector(noDataPlaceholderView));
+    NoDataPlaceholderView *view = objc_getAssociatedObject(self, NoDataPlaceholderViewKey);
     
     if (view == nil) {
         view = [NoDataPlaceholderView new];
@@ -94,23 +103,24 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
         [view tapGestureRecognizer:^(UITapGestureRecognizer *tap) {
             [weakSelf xy_didTapContentView:tap];
         }];
+        self.noDataPlaceholderView = view;
     }
     
     return view;
 }
 
 - (id<NoDataPlaceholderDataSource>)noDataPlaceholderDataSource {
-    WeakObjectContainer *container = objc_getAssociatedObject(self, @selector(noDataPlaceholderDataSource));
+    WeakObjectContainer *container = objc_getAssociatedObject(self, NoDataPlaceholdeDataSourceKey);
     return container.weakObject;
 }
 
 - (id<NoDataPlaceholderDelegate>)noDataPlaceholderDelegate {
-    WeakObjectContainer *container = objc_getAssociatedObject(self, @selector(noDataPlaceholderDelegate));
+    WeakObjectContainer *container = objc_getAssociatedObject(self, NoDataPlaceholdeDelegateKey);
     return container.weakObject;
 }
 
 - (BOOL)isNoDatasetVisible {
-    UIView *view = objc_getAssociatedObject(self, @selector(isNoDatasetVisible));
+    UIView *view = objc_getAssociatedObject(self, NoDataPlaceholderViewKey);
     return view ? !view.hidden : NO;
 }
 
@@ -123,7 +133,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     }
     
     WeakObjectContainer *container = [[WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDataSource];
-    objc_setAssociatedObject(self, @selector(noDataPlaceholderDataSource), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(self, NoDataPlaceholdeDataSourceKey, container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     
     // reloadData方法的实现进行处理
     [self swizzleIfPossible:@selector(reloadData)];
@@ -139,11 +149,11 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
         [self xy_invalidate];
     }
     WeakObjectContainer *container = [[WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDelegate];
-    objc_setAssociatedObject(self, @selector(noDataPlaceholderDelegate), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(self, NoDataPlaceholdeDelegateKey, container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 - (void)setNoDataPlaceholderView:(NoDataPlaceholderView *)noDataPlaceholderView {
-    objc_setAssociatedObject(self, @selector(noDataPlaceholderView), noDataPlaceholderView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(self, NoDataPlaceholderViewKey, noDataPlaceholderView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 #pragma mark - 
@@ -428,6 +438,12 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
         offset = [self.noDataPlaceholderDataSource verticalOffsetForNoDataPlaceholder:self];
     }
     return offset;
+}
+
+#pragma MARK - public 
+
+- (void)reloadNoDataView {
+    [self xy_reloadNoDataView];
 }
 
 
@@ -824,6 +840,7 @@ customView = _customView;
 - (UITapGestureRecognizer *)tapGesture {
     if (_tapGesture == nil) {
         _tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapGestureOnSelf:)];
+        [self addGestureRecognizer:_tapGesture];
     }
     return _tapGesture;
 }

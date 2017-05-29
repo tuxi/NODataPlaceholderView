@@ -11,6 +11,8 @@
 
 @interface ViewController () <NoDataPlaceholderDataSource, NoDataPlaceholderDelegate>
 
+@property (nonatomic, assign, getter=isLoading) BOOL loading;
+
 @end
 
 @implementation ViewController
@@ -101,15 +103,29 @@
     return [[NSAttributedString alloc] initWithString:text attributes:attributes];
 }
 
+- (void)noDataPlaceholder:(UIScrollView *)scrollView didTapOnContentView:(nonnull UITapGestureRecognizer *)tap {
+    self.loading = YES;
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        self.loading = NO;
+    });
+}
+
 - (void)noDataPlaceholder:(UIScrollView *)scrollView didClickReloadButton:(UIButton *)button {
     
+    self.loading = YES;
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        self.loading = NO;
+    });
+    
     // 打开调试窗口
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored   "-Warc-performSelector-leaks"
-    Class someClass = NSClassFromString(@"UIDebuggingInformationOverlay");
-    id obj = [someClass performSelector:NSSelectorFromString(@"overlay")];
-    [obj performSelector:NSSelectorFromString(@"toggleVisibility")];
-#pragma clang diagnostic pop
+//#pragma clang diagnostic push
+//#pragma clang diagnostic ignored   "-Warc-performSelector-leaks"
+//    Class someClass = NSClassFromString(@"UIDebuggingInformationOverlay");
+//    id obj = [someClass performSelector:NSSelectorFromString(@"overlay")];
+//    [obj performSelector:NSSelectorFromString(@"toggleVisibility")];
+//#pragma clang diagnostic pop
 }
 
 - (CAAnimation *)backgroundImageAnimationForNoDataPlaceholder:(UIScrollView *)scrollView {
@@ -125,6 +141,19 @@
 
 - (UIColor *)reloadButtonBackgroundColorForNoDataPlaceholder:(UIScrollView *)scrollView {
     return [UIColor blueColor];
+}
+
+
+#pragma mark - set 
+
+- (void)setLoading:(BOOL)loading {
+    if (self.isLoading == loading) {
+        return;
+    }
+    
+    _loading = loading;
+    
+    [self.tableView reloadNoDataView];
 }
 
 @end

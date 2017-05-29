@@ -18,6 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak, nullable) id<NoDataPlaceholderDelegate> noDataPlaceholderDelegate;
 @property (nonatomic, assign, readonly, getter=isNoDatasetVisible) BOOL noDatasetVisible;
 
+- (void)reloadNoDataView;
+
 @end
 
 @protocol NoDataPlaceholderDelegate <NSObject>
