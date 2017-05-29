@@ -24,6 +24,8 @@
     
     self.tableView.noDataPlaceholderDataSource = self;
     self.tableView.noDataPlaceholderDelegate = self;
+
+    
 }
 
 
@@ -101,6 +103,13 @@
 
 - (void)noDataPlaceholder:(UIScrollView *)scrollView didClickReloadButton:(UIButton *)button {
     
+    // 打开调试窗口
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored   "-Warc-performSelector-leaks"
+    Class someClass = NSClassFromString(@"UIDebuggingInformationOverlay");
+    id obj = [someClass performSelector:NSSelectorFromString(@"overlay")];
+    [obj performSelector:NSSelectorFromString(@"toggleVisibility")];
+#pragma clang diagnostic pop
 }
 
 - (CAAnimation *)backgroundImageAnimationForNoDataPlaceholder:(UIScrollView *)scrollView {
