@@ -6,7 +6,7 @@
 //  Copyright © 2017年 Ossey. All rights reserved.
 //
 
-#import "UIScrollView+NODataPlaceholder.h"
+#import "UIScrollView+NoDataPlaceholder.h"
 #import <objc/runtime.h>
 
 
