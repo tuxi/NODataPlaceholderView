@@ -7,7 +7,7 @@
 //
 
 #import "ViewController.h"
-#import "UIScrollView+NODataPlaceholder.h"
+#import "UIScrollView+NoDataPlaceholder.h"
 
 @interface ViewController () <NoDataPlaceholderDataSource, NoDataPlaceholderDelegate>
 
