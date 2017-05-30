@@ -3,7 +3,7 @@
 //  MVVMDemo
 //
 //  Created by Ossey on 2017/5/30.
-//  Copyright © 2017年 com.test.demo. All rights reserved.
+//  Copyright © 2017年 Ossey. All rights reserved.
 //
 
 #import "UITableView+NoDataPlaceholderExtend.h"
@@ -188,7 +188,7 @@
 - (void)noDataPlaceholderExtend_setup {
      //在这个block块中设置传入的子控件属性，会导致这些子控件相关的数据源方法不再调用
 //    __weak typeof(self) weakSelf = self;
-//    [self.tableView setNoDataPlaceholderContentViewAttribute:^(UIButton *const  _Nonnull reloadBtn, UILabel *const  _Nonnull titleLabel, UILabel *const  _Nonnull detailLabel, UIImageView *const  _Nonnull imageView) {
+//    [self setNoDataPlaceholderContentViewAttribute:^(UIButton *const  _Nonnull reloadBtn, UILabel *const  _Nonnull titleLabel, UILabel *const  _Nonnull detailLabel, UIImageView *const  _Nonnull imageView) {
 //        
 //        
 //        // 设置reloadBtn
@@ -211,7 +211,7 @@
 //        // 设置detailLabel
 //        [detailLabel setText:@"今天加载数据，没准可以找到你心仪的女神哦~~~~~~~~~~!"];
 //        // 设置imageView
-//        if (weakSelf.tableView.isLoading) {
+//        if (weakSelf.isLoading) {
 //            [imageView setImage:[UIImage imageNamed:@"loading_imgBlue_78x78"]];
 //            
 //            CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"transform"];

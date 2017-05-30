@@ -3,7 +3,7 @@
 //  MVVMDemo
 //
 //  Created by Ossey on 2017/5/30.
-//  Copyright © 2017年 com.test.demo. All rights reserved.
+//  Copyright © 2017年 Ossey. All rights reserved.
 //
 
 #import "UIScrollView+NoDataPlaceholder.h"
