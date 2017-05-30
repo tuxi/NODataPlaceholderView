@@ -16,6 +16,7 @@
 		1809F6511EDBA4B8006929CF /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 1809F64E1EDBA4B8006929CF /* AppDelegate.m */; };
 		1809F6521EDBA4B8006929CF /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1809F6501EDBA4B8006929CF /* ViewController.m */; };
 		1809F6551EDBA6F0006929CF /* UIScrollView+NoDataPlaceholder.m in Sources */ = {isa = PBXBuildFile; fileRef = 1809F6541EDBA6F0006929CF /* UIScrollView+NoDataPlaceholder.m */; };
+		181D11B41EDDB2DF00532D5D /* UITableView+NoDataPlaceholderExtend.m in Sources */ = {isa = PBXBuildFile; fileRef = 181D11B31EDDB2DF00532D5D /* UITableView+NoDataPlaceholderExtend.m */; };
 		187CA6F71EDD633D0003A4EF /* BaseTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 187CA6F61EDD633D0003A4EF /* BaseTableViewController.m */; };
 /* End PBXBuildFile section */
 
@@ -55,6 +56,8 @@
 		1809F6501EDBA4B8006929CF /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		1809F6531EDBA6F0006929CF /* UIScrollView+NoDataPlaceholder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIScrollView+NoDataPlaceholder.h"; sourceTree = "<group>"; };
 		1809F6541EDBA6F0006929CF /* UIScrollView+NoDataPlaceholder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIScrollView+NoDataPlaceholder.m"; sourceTree = "<group>"; };
+		181D11B21EDDB2DF00532D5D /* UITableView+NoDataPlaceholderExtend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UITableView+NoDataPlaceholderExtend.h"; sourceTree = "<group>"; };
+		181D11B31EDDB2DF00532D5D /* UITableView+NoDataPlaceholderExtend.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UITableView+NoDataPlaceholderExtend.m"; sourceTree = "<group>"; };
 		187CA6F51EDD633D0003A4EF /* BaseTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BaseTableViewController.h; sourceTree = "<group>"; };
 		187CA6F61EDD633D0003A4EF /* BaseTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BaseTableViewController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -149,6 +152,8 @@
 			children = (
 				1809F6531EDBA6F0006929CF /* UIScrollView+NoDataPlaceholder.h */,
 				1809F6541EDBA6F0006929CF /* UIScrollView+NoDataPlaceholder.m */,
+				181D11B21EDDB2DF00532D5D /* UITableView+NoDataPlaceholderExtend.h */,
+				181D11B31EDDB2DF00532D5D /* UITableView+NoDataPlaceholderExtend.m */,
 			);
 			path = NODataPlaceholderView;
 			sourceTree = "<group>";
@@ -304,6 +309,7 @@
 			files = (
 				1809F6551EDBA6F0006929CF /* UIScrollView+NoDataPlaceholder.m in Sources */,
 				1809F6521EDBA4B8006929CF /* ViewController.m in Sources */,
+				181D11B41EDDB2DF00532D5D /* UITableView+NoDataPlaceholderExtend.m in Sources */,
 				1809F6511EDBA4B8006929CF /* AppDelegate.m in Sources */,
 				1809F61A1EDBA419006929CF /* main.m in Sources */,
 				187CA6F71EDD633D0003A4EF /* BaseTableViewController.m in Sources */,

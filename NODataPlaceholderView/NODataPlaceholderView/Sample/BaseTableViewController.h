@@ -7,8 +7,8 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "UIScrollView+NoDataPlaceholder.h"
+#import "UITableView+NoDataPlaceholderExtend.h"
 
-@interface BaseTableViewController : UITableViewController <NoDataPlaceholderDataSource, NoDataPlaceholderDelegate>
+@interface BaseTableViewController : UITableViewController
 
 @end
