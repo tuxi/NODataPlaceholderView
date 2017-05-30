@@ -24,15 +24,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-
-
-
 @protocol NoDataPlaceholderDelegate <NSObject>
 
 @optional
 
 /// 是否应该淡入淡出，默认为YES
-- (BOOL)noDataPlaceholderShouldFadeIn:(UIScrollView *)scrollView;
+- (BOOL)noDataPlaceholderShouldFadeInOnDisplay:(UIScrollView *)scrollView;
 
 /// 是否应显示NoDataPlaceholderView, 默认YES
 /// @param scrollView UIScrollView及其子类对象通知代理
@@ -76,7 +73,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @optional
 
-/// 当需要显示自定义的视图时，默认的NoDataPlaceholder则为NULL
+/// 当需要显示customView时，默认的NoDataPlaceholder则为会被清空
 /// @param scrollview UIScrollView 或其子类对象
 /// @return 自定义视图
 - (UIView *)customViewForNoDataPlaceholder:(UIScrollView *)scrollview;
@@ -108,13 +105,13 @@ NS_ASSUME_NONNULL_BEGIN
 /// 指定reloadButton对应state的image
 - (UIImage *)reloadButtonImageForNoDataPlaceholder:(UIScrollView *)scrollView forState:(UIControlState)state;
 
-/// 重新加载按钮背景image
+/// reloadButton背景image
 - (UIImage *)reloadButtonBackgroundImageForNoDataPlaceholder:(UIScrollView *)scrollView forState:(UIControlState)state;
 
 /// NoDataPlaceholder的背景颜色
 - (UIColor *)backgroundColorForNoDataPlaceholder:(UIScrollView *)scrollView;
 
-/// 重新加载按钮背景颜色
+/// reloadButton背景颜色
 - (UIColor *)reloadButtonBackgroundColorForNoDataPlaceholder:(UIScrollView *)scrollView;
 
 /// NoDataPlaceholderView各子控件之间垂直的间距，默认为11

@@ -186,12 +186,12 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     }
 }
 
-#pragma makr - delegate private
+#pragma makr - delegate private api
 
 // 是否需要淡入淡出
-- (BOOL)xy_shouldFadeIn {
-    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldFadeIn:)]) {
-        return [self.noDataPlaceholderDelegate noDataPlaceholderShouldFadeIn:self];
+- (BOOL)xy_shouldFadeInOnDisplay {
+    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldFadeInOnDisplay:)]) {
+        return [self.noDataPlaceholderDelegate noDataPlaceholderShouldFadeInOnDisplay:self];
     }
     return YES;
 }
@@ -318,7 +318,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 
 
-#pragma mark - DataSource (privete)
+#pragma mark - DataSource privete api
 
 - (UIView *)xy_customView {
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(customViewForNoDataPlaceholder:)]) {
@@ -605,7 +605,7 @@ void xy_orginal_implementation(id self, SEL _cmd) {
         
         NoDataPlaceholderView *noDataPlaceholderView = self.noDataPlaceholderView;
         // 设置是否需要淡入淡出效果
-        noDataPlaceholderView.fadeInOnDisplay = [self xy_shouldFadeIn];
+        noDataPlaceholderView.fadeInOnDisplay = [self xy_shouldFadeInOnDisplay];
         
         if (noDataPlaceholderView.superview == nil) {
             if (([self isKindOfClass:[UITableView class]] || [self isKindOfClass:[UICollectionView class]]) && [self.subviews count] > 1) {
@@ -722,6 +722,7 @@ void xy_orginal_implementation(id self, SEL _cmd) {
 
 @end
 
+
 @implementation NoDataPlaceholderView
 
 @synthesize
@@ -765,7 +766,7 @@ customView = _customView;
     };
     
     if (self.fadeInOnDisplay) {
-        [UIView animateWithDuration:0.25 animations:fadeInBlock];
+        [UIView animateWithDuration:0.35 animations:fadeInBlock];
     } else {
         fadeInBlock();
     }
