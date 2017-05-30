@@ -18,9 +18,14 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak, nullable) id<NoDataPlaceholderDelegate> noDataPlaceholderDelegate;
 @property (nonatomic, assign, readonly, getter=isNoDatasetVisible) BOOL noDatasetVisible;
 
+@property (nonatomic, assign, getter=isLoading) BOOL loading;
+
 - (void)reloadNoDataView;
 
 @end
+
+
+
 
 @protocol NoDataPlaceholderDelegate <NSObject>
 
@@ -51,8 +56,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// 当noDataPlaceholder完全消失的回调
 - (void)noDataPlaceholderDidDisappear:(UIScrollView *)scrollView;
 
-/// noDataPlaceholder是否可以接受触摸事件，默认YES
-- (BOOL)noDataPlaceholderShouldAllowTouch:(UIScrollView *)scrollView;
+/// noDataPlaceholder是否可以响应事件，默认YES
+- (BOOL)noDataPlaceholderShouldAllowResponseEvent:(UIScrollView *)scrollView;
 
 /// noDataPlaceholder是否可以滚动，默认NO
 - (BOOL)noDataPlaceholderShouldAllowScroll:(UIScrollView *)scrollView;
@@ -103,16 +108,21 @@ NS_ASSUME_NONNULL_BEGIN
 /// 指定reloadButton对应state的image
 - (UIImage *)reloadButtonImageForNoDataPlaceholder:(UIScrollView *)scrollView forState:(UIControlState)state;
 
+/// 重新加载按钮背景image
 - (UIImage *)reloadButtonBackgroundImageForNoDataPlaceholder:(UIScrollView *)scrollView forState:(UIControlState)state;
 
+/// NoDataPlaceholder的背景颜色
 - (UIColor *)backgroundColorForNoDataPlaceholder:(UIScrollView *)scrollView;
 
+/// 重新加载按钮背景颜色
 - (UIColor *)reloadButtonBackgroundColorForNoDataPlaceholder:(UIScrollView *)scrollView;
 
-/// NoDataPlaceholderView子控件之间垂直的间距，默认为11
-- (CGFloat)spaceHeightForNoDataPlaceholder:(UIScrollView *)scrollView;
+/// NoDataPlaceholderView各子控件之间垂直的间距，默认为11
+- (CGFloat)noDataPlaceholderContentSubviewsVerticalSpace:(UIScrollView *)scrollView;
 
-- (CGFloat)verticalOffsetForNoDataPlaceholder:(UIScrollView *)scrollView;
+/// NoDataPlaceholderView contenView 中心点y 轴 距离 父控件scrollView 中心点y 的偏移量
+/// 默认为0，与所在scrollView的中心点显示
+- (CGFloat)noDataPlaceholderContentOffsetYForNoDataPlaceholder:(UIScrollView *)scrollView;
 
 @end
 

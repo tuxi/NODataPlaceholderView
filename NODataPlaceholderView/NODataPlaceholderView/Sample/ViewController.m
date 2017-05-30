@@ -11,8 +11,6 @@
 
 @interface ViewController () <NoDataPlaceholderDataSource, NoDataPlaceholderDelegate>
 
-@property (nonatomic, assign, getter=isLoading) BOOL loading;
-
 @end
 
 @implementation ViewController
@@ -43,7 +41,7 @@
     UIFont *font = nil;
     UIColor *textColor = nil;
     
-    text = @"Please Allow Photo Access";
+    text = @"没有关注的好友!";
     font = [UIFont boldSystemFontOfSize:18.0];
     textColor = [UIColor redColor];
     
@@ -73,7 +71,7 @@
     style.lineBreakMode = NSLineBreakByWordWrapping;
     style.alignment = NSTextAlignmentCenter;
     
-    text = @"Send photos and videos directly to your friends. Only the people you send to can see these posts.";
+    text = @"快去关注你喜欢的达人吧! TA的最新动态将在本页中展示！";
     font = [UIFont systemFontOfSize:16.0];
     textColor = [UIColor greenColor];
     style.lineSpacing = 4.0;
@@ -93,7 +91,7 @@
     UIFont *font = nil;
     UIColor *textColor = nil;
     
-    text = @"Learn more";
+    text = @"获取达人";
     font = [UIFont systemFontOfSize:15.0];
     textColor = [UIColor blackColor];
     NSMutableDictionary *attributes = [NSMutableDictionary new];
@@ -104,19 +102,19 @@
 }
 
 - (void)noDataPlaceholder:(UIScrollView *)scrollView didTapOnContentView:(nonnull UITapGestureRecognizer *)tap {
-    self.loading = YES;
+    self.tableView.loading = YES;
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        self.loading = NO;
+        self.tableView.loading = NO;
     });
 }
 
 - (void)noDataPlaceholder:(UIScrollView *)scrollView didClickReloadButton:(UIButton *)button {
     
-    self.loading = YES;
+    self.tableView.loading = YES;
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        self.loading = NO;
+        self.tableView.loading = NO;
     });
     
     // 打开调试窗口
@@ -130,7 +128,7 @@
 
 - (UIImage *)imageForNoDataPlaceholder:(UIScrollView *)scrollView
 {
-    if (self.isLoading) {
+    if (self.tableView.loading) {
         return [UIImage imageNamed:@"loading_imgBlue_78x78" inBundle:[NSBundle bundleForClass:[self class]] compatibleWithTraitCollection:nil];
     }
     else {
@@ -142,7 +140,7 @@
 }
 
 - (BOOL)noDataPlaceholderShouldAnimateImageView:(UIScrollView *)scrollView {
-    return self.loading;
+    return self.tableView.loading;
 }
 
 - (CAAnimation *)imageAnimationForNoDataPlaceholder:(UIScrollView *)scrollView {
@@ -160,17 +158,29 @@
     return [UIColor blueColor];
 }
 
-
-#pragma mark - set 
-
-- (void)setLoading:(BOOL)loading {
-    if (self.isLoading == loading) {
-        return;
-    }
-    
-    _loading = loading;
-    
-    [self.tableView reloadNoDataView];
+- (CGFloat)noDataPlaceholderContentOffsetYForNoDataPlaceholder:(UIScrollView *)scrollView {
+    return 0;
 }
+
+- (CGFloat)noDataPlaceholderContentSubviewsVerticalSpace:(UIScrollView *)scrollView {
+    return 30;
+}
+
+- (UIView *)customViewForNoDataPlaceholder:(UIScrollView *)scrollview {
+    if (self.tableView.isLoading) {
+        UIActivityIndicatorView *activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+        [activityView startAnimating];
+        return activityView;
+    }else {
+        return nil;
+    }
+}
+
+- (BOOL)noDataPlaceholderShouldAllowScroll:(UIScrollView *)scrollView {
+    return YES;
+}
+
+#pragma mark - set
+
 
 @end

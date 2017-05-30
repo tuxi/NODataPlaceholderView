@@ -12,9 +12,9 @@
 
 ////////////////////////////////
 static char const * const NoDataPlaceholderViewKey = "NoDataPlaceholderView";
-static char const * const NoDataPlaceholdeDataSourceKey =     "NoDataPlaceholdeDataSource";
-static char const * const NoDataPlaceholdeDelegateKey =   "NoDataPlaceholdeDelegate";
-
+static char const * const NoDataPlaceholderDataSourceKey =     "NoDataPlaceholdeDataSource";
+static char const * const NoDataPlaceholderDelegateKey =   "NoDataPlaceholdeDelegate";
+static char const * const NoDataPlcaeHolderLoadingKey = "loading";
 
 /////////////////////////////////
 /// 存储_impLookupTable中swizzledInfo字典中基类名的key
@@ -61,8 +61,8 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 @property (nonatomic, strong) UIView *customView;
 /** 点按手势 */
 @property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
-/** 垂直偏移量 */
-@property (nonatomic, assign) CGFloat verticalOffsetY;
+/** 中心点y的偏移量 */
+@property (nonatomic, assign) CGFloat contentOffsetY;
 /** 垂直间距 */
 @property (nonatomic, assign) CGFloat verticalSpace;
 /** 是否淡入淡出显示 */
@@ -72,7 +72,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 /// 设置子控件的约束
 - (void)setupConstraints;
-/// 准备复用
+/// 准备复用,移除所有子控件及其约束
 - (void)prepareForReuse;
 /// 设置tap手势
 - (void)tapGestureRecognizer:(void (^)(UITapGestureRecognizer *))tapBlock;
@@ -110,18 +110,22 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 }
 
 - (id<NoDataPlaceholderDataSource>)noDataPlaceholderDataSource {
-    WeakObjectContainer *container = objc_getAssociatedObject(self, NoDataPlaceholdeDataSourceKey);
+    WeakObjectContainer *container = objc_getAssociatedObject(self, NoDataPlaceholderDataSourceKey);
     return container.weakObject;
 }
 
 - (id<NoDataPlaceholderDelegate>)noDataPlaceholderDelegate {
-    WeakObjectContainer *container = objc_getAssociatedObject(self, NoDataPlaceholdeDelegateKey);
+    WeakObjectContainer *container = objc_getAssociatedObject(self, NoDataPlaceholderDelegateKey);
     return container.weakObject;
 }
 
 - (BOOL)isNoDatasetVisible {
     UIView *view = objc_getAssociatedObject(self, NoDataPlaceholderViewKey);
     return view ? !view.hidden : NO;
+}
+
+- (BOOL)isLoading {
+    return [objc_getAssociatedObject(self, NoDataPlcaeHolderLoadingKey) boolValue];
 }
 
 
@@ -133,7 +137,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     }
     
     WeakObjectContainer *container = [[WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDataSource];
-    objc_setAssociatedObject(self, NoDataPlaceholdeDataSourceKey, container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(self, NoDataPlaceholderDataSourceKey, container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     
     // reloadData方法的实现进行处理
     [self swizzleIfPossible:@selector(reloadData)];
@@ -149,11 +153,22 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
         [self xy_invalidate];
     }
     WeakObjectContainer *container = [[WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDelegate];
-    objc_setAssociatedObject(self, NoDataPlaceholdeDelegateKey, container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(self, NoDataPlaceholderDelegateKey, container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 - (void)setNoDataPlaceholderView:(NoDataPlaceholderView *)noDataPlaceholderView {
     objc_setAssociatedObject(self, NoDataPlaceholderViewKey, noDataPlaceholderView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (void)setLoading:(BOOL)loading {
+    
+    if (self.loading == loading) {
+        return;
+    }
+    
+    objc_setAssociatedObject(self, NoDataPlcaeHolderLoadingKey, @(loading), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    
+    [self reloadNoDataView];
 }
 
 #pragma mark - 
@@ -259,21 +274,24 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     }
 }
 
-- (BOOL)xy_isTouchAllowed {
-    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldAllowTouch:)]) {
-        return [self.noDataPlaceholderDelegate noDataPlaceholderShouldAllowTouch:self];
+/// 是否允许响应事件
+- (BOOL)xy_isAllowedResponseEvent {
+    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldAllowResponseEvent:)]) {
+        return [self.noDataPlaceholderDelegate noDataPlaceholderShouldAllowResponseEvent:self];
     }
     return YES;
 }
 
-- (BOOL)xy_isScrollAllowed {
+/// 是否运行滚动
+- (BOOL)xy_isAllowedScroll  {
     if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldAllowScroll:)]) {
         return [self.noDataPlaceholderDelegate noDataPlaceholderShouldAllowScroll:self];
     }
     return NO;
 }
 
-- (BOOL)xy_isImageViewAnimateAllowed {
+/// 是否运行imageView展示动画
+- (BOOL)xy_isAllowedImageViewAnimate {
     if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldAnimateImageView:)]) {
         return [self.noDataPlaceholderDelegate noDataPlaceholderShouldAnimateImageView:self];
     }
@@ -425,17 +443,17 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 }
 
 - (CGFloat)xy_verticalSpace {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(spaceHeightForNoDataPlaceholder:)]) {
-        return [self.noDataPlaceholderDataSource spaceHeightForNoDataPlaceholder:self];
+    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(noDataPlaceholderContentSubviewsVerticalSpace:)]) {
+        return [self.noDataPlaceholderDataSource noDataPlaceholderContentSubviewsVerticalSpace:self];
     }
     return 0.0;
 }
 
-- (CGFloat)xy_verticalOffset {
+- (CGFloat)xy_contentOffsetY {
     CGFloat offset = 0.0;
     
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(verticalOffsetForNoDataPlaceholder:)]) {
-        offset = [self.noDataPlaceholderDataSource verticalOffsetForNoDataPlaceholder:self];
+    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(noDataPlaceholderContentOffsetYForNoDataPlaceholder:)]) {
+        offset = [self.noDataPlaceholderDataSource noDataPlaceholderContentOffsetYForNoDataPlaceholder:self];
     }
     return offset;
 }
@@ -449,7 +467,6 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 #pragma mark - Method Swizzling
 
-/// 调换方法地址
 - (void)swizzleIfPossible:(SEL)selector {
     
     // 检测这个方法是否实现
@@ -550,7 +567,7 @@ void xy_orginal_implementation(id self, SEL _cmd) {
 
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
     if ([gestureRecognizer.view isEqual:self.noDataPlaceholderView]) {
-        return [self xy_isTouchAllowed];
+        return [self xy_isAllowedResponseEvent];
     }
     
     return [super gestureRecognizerShouldBegin:gestureRecognizer];
@@ -649,13 +666,13 @@ void xy_orginal_implementation(id self, SEL _cmd) {
         }
         
     
-        noDataPlaceholderView.verticalOffsetY = [self xy_verticalOffset];
+        noDataPlaceholderView.contentOffsetY = [self xy_contentOffsetY];
         
         noDataPlaceholderView.backgroundColor = [self xy_noDataViewBackgroundColor];
         noDataPlaceholderView.hidden = NO;
         noDataPlaceholderView.clipsToBounds = YES;
         
-        noDataPlaceholderView.userInteractionEnabled = [self xy_isTouchAllowed];
+        noDataPlaceholderView.userInteractionEnabled = [self xy_isAllowedResponseEvent];
         
         [noDataPlaceholderView setupConstraints];
         
@@ -664,10 +681,10 @@ void xy_orginal_implementation(id self, SEL _cmd) {
             [noDataPlaceholderView layoutIfNeeded];
         }];
         
-        self.scrollEnabled = [self xy_isScrollAllowed];
+        self.scrollEnabled = [self xy_isAllowedScroll];
         
         // 设置backgroundImageView的动画
-        if ([self xy_isImageViewAnimateAllowed]) {
+        if ([self xy_isAllowedImageViewAnimate]) {
             CAAnimation *animation = [self xy_imageAnimation];
             
             if (animation) {
@@ -933,8 +950,8 @@ customView = _customView;
                                                                    views:@{@"contentView": self.contentView}]];
     
     // 当verticalOffset(自定义的垂直偏移量)有值时，需要调整垂直偏移量的约束值
-    if (self.verticalOffsetY != 0.0 && self.constraints.count > 0) {
-        contentViewY.constant = self.verticalOffsetY;
+    if (self.contentOffsetY != 0.0 && self.constraints.count > 0) {
+        contentViewY.constant = self.contentOffsetY;
     }
     
     // 若有customView 则 让其与contentView的约束相同
@@ -942,11 +959,11 @@ customView = _customView;
         [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[customView]|"
                                                                                  options:0
                                                                                  metrics:nil
-                                                                                   views:@{@"customView": self.contentView}]];
+                                                                                   views:@{@"customView": _customView}]];
         [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[customView]|"
                                                                                  options:0
                                                                                  metrics:nil
-                                                                                   views:@{@"customView": self.contentView}]];
+                                                                                   views:@{@"customView": _customView}]];
     } else {
         
         // 无customView
