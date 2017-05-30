@@ -29,14 +29,6 @@ static NSMutableDictionary<NSString *, NSDictionary *> *_impLookupTable;
 ////////////////////////////////
 static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoDataPlaceholderBackgroundImageViewAnimation";
 
-@interface UIView (ConstraintBasedLayoutExtensions)
-
-/// 创建视图的约束
-- (NSLayoutConstraint *)equallyRelatedConstraintWithView:(UIView *)view
-                                               attribute:(NSLayoutAttribute)attribute;
-
-@end
-
 @interface WeakObjectContainer : NSObject
 
 @property (nonatomic, weak, readonly) id weakObject;
@@ -83,6 +75,8 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 @property (nonatomic, readonly) NoDataPlaceholderView *noDataPlaceholderView;
 
+@property (nonatomic, copy) NoDataPlaceholderContentViewAttribute noDataPlaceholderContentViewAttribute;
+
 @end
 
 @implementation UIScrollView (NoDataPlaceholder)
@@ -128,6 +122,10 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return [objc_getAssociatedObject(self, NoDataPlcaeHolderLoadingKey) boolValue];
 }
 
+- (NoDataPlaceholderContentViewAttribute)noDataPlaceholderContentViewAttribute {
+    return objc_getAssociatedObject(self, @selector(noDataPlaceholderContentViewAttribute));
+}
+
 
 #pragma mark - set
 
@@ -168,10 +166,21 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     
     objc_setAssociatedObject(self, NoDataPlcaeHolderLoadingKey, @(loading), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     
+    // 这里最好还是别干预reloadData,只刷新NoDataView
     [self reloadNoDataView];
+    
+    //    if ([self respondsToSelector:@selector(reloadData)]) {
+    //        [self performSelector:@selector(reloadData)];
+    //    } else {
+    //        [self reloadNoDataView];
+    //    }
 }
 
-#pragma mark - 
+- (void)setNoDataPlaceholderContentViewAttribute:(NoDataPlaceholderContentViewAttribute)noDataPlaceholderContentViewAttribute {
+    objc_setAssociatedObject(self, @selector(noDataPlaceholderContentViewAttribute), noDataPlaceholderContentViewAttribute, OBJC_ASSOCIATION_COPY_NONATOMIC);
+}
+
+#pragma mark -
 
 /// 点击NODataPlaceholderView contentView的回调
 - (void)xy_didTapContentView:(UITapGestureRecognizer *)tap {
@@ -336,7 +345,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
         NSAttributedString *string = [self.noDataPlaceholderDataSource titleAttributedStringForNoDataPlaceholder:self];
         if (string) {
             NSAssert([string isKindOfClass:[NSAttributedString class]], @"-[titleAttributedStringForNoDataPlaceholder:] 返回值必须是有效的NSAttributedString类型");
-        return string;
+            return string;
         }
     }
     return nil;
@@ -390,7 +399,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
         if (string) {
             NSAssert([string isKindOfClass:[NSAttributedString class]], @"-[reloadbuttonTitleAttributedStringForNoDataPlaceholder:forState:]返回值必须为NSAttributedString类型");
             return string;
-
+            
         }
     }
     return nil;
@@ -413,7 +422,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
         if (image) {
             NSAssert([image isKindOfClass:[UIImage class]], @"-[reloadButtonBackgroundImageForNoDataPlaceholder:forState:]返回值必须为UIImage类型");
             return image;
-
+            
         }
         
     }
@@ -443,8 +452,8 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 }
 
 - (CGFloat)xy_verticalSpace {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(noDataPlaceholderContentSubviewsVerticalSpace:)]) {
-        return [self.noDataPlaceholderDataSource noDataPlaceholderContentSubviewsVerticalSpace:self];
+    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(contentSubviewsVerticalSpaceFoNoDataPlaceholder:)]) {
+        return [self.noDataPlaceholderDataSource contentSubviewsVerticalSpaceFoNoDataPlaceholder:self];
     }
     return 0.0;
 }
@@ -452,13 +461,13 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 - (CGFloat)xy_contentOffsetY {
     CGFloat offset = 0.0;
     
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(noDataPlaceholderContentOffsetYForNoDataPlaceholder:)]) {
-        offset = [self.noDataPlaceholderDataSource noDataPlaceholderContentOffsetYForNoDataPlaceholder:self];
+    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(contentOffsetYForNoDataPlaceholder:)]) {
+        offset = [self.noDataPlaceholderDataSource contentOffsetYForNoDataPlaceholder:self];
     }
     return offset;
 }
 
-#pragma MARK - public 
+#pragma MARK - public
 
 - (void)reloadNoDataView {
     [self xy_reloadNoDataView];
@@ -591,7 +600,7 @@ void xy_orginal_implementation(id self, SEL _cmd) {
 
 #pragma mark - Private methods
 
-// 刷新NoDataPlaceholderView
+// 刷新NoDataPlaceholderView 当调用reloadData时也会调用此方法
 - (void)xy_reloadNoDataView {
     
     if (![self xy_canDisplay]) {
@@ -622,50 +631,69 @@ void xy_orginal_implementation(id self, SEL _cmd) {
         if (customView) {
             noDataPlaceholderView.customView = customView;
         } else {
+            
             // customView为nil时，则从dataSource中设置到默认的contentView
             
-            NSAttributedString *titleLabelString = [self xy_titleLabelString];
-            NSAttributedString *detailLabelString = [self xy_detailLabelString];
+            if (self.noDataPlaceholderContentViewAttribute) {
+                self.noDataPlaceholderContentViewAttribute(noDataPlaceholderView.reloadButton, noDataPlaceholderView.titleLabel, noDataPlaceholderView.detailLabel, noDataPlaceholderView.imageView);
+            } else {
+                NSAttributedString *titleLabelString = [self xy_titleLabelString];
+                NSAttributedString *detailLabelString = [self xy_detailLabelString];
+                
+                NSAttributedString *reloadBtnTitle = [self xy_reloadButtonTitleForState:UIControlStateNormal];
+                UIImage *reloadBtnImage = [self xy_reloadButtonImageForState:UIControlStateNormal];
+                
+                UIImage *image = [self xy_backGroundImage];
+                UIColor *imageTintColor = [self xy_imageTintColor];
+                UIImageRenderingMode renderingMode = imageTintColor ? UIImageRenderingModeAlwaysTemplate : UIImageRenderingModeAlwaysOriginal;
+                
+                
+                // 设置ImageView
+                if (image) {
+                    noDataPlaceholderView.imageView.image = [image imageWithRenderingMode:renderingMode];
+                    noDataPlaceholderView.imageView.tintColor = imageTintColor;
+                    
+                }
+                // 设置imageView的动画
+                if ([self xy_isAllowedImageViewAnimate]) {
+                    CAAnimation *animation = [self xy_imageAnimation];
+                    
+                    if (animation) {
+                        [noDataPlaceholderView.imageView.layer addAnimation:animation forKey:NoDataPlaceholderBackgroundImageViewAnimationKey];
+                    }
+                } else if ([noDataPlaceholderView.imageView.layer animationForKey:NoDataPlaceholderBackgroundImageViewAnimationKey]) {
+                    [noDataPlaceholderView.imageView.layer removeAnimationForKey:NoDataPlaceholderBackgroundImageViewAnimationKey];
+                }
+                
+                if (titleLabelString) {
+                    noDataPlaceholderView.titleLabel.attributedText = titleLabelString;
+                }
+                
+                // 设置detailLabel
+                if (detailLabelString) {
+                    noDataPlaceholderView.detailLabel.attributedText = detailLabelString;
+                }
+                
+                // 设置reloadButton
+                [noDataPlaceholderView.reloadButton setBackgroundColor:[self xy_reloadButtonBackgroundColor]];
+                if (reloadBtnImage) {
+                    [noDataPlaceholderView.reloadButton setImage:reloadBtnImage forState:UIControlStateNormal];
+                    [noDataPlaceholderView.reloadButton setImage:[self xy_reloadButtonImageForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
+                } else if (reloadBtnTitle) {
+                    [noDataPlaceholderView.reloadButton setAttributedTitle:reloadBtnTitle forState:UIControlStateNormal];
+                    [noDataPlaceholderView.reloadButton setAttributedTitle:[self xy_reloadButtonTitleForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
+                    [noDataPlaceholderView.reloadButton setBackgroundImage:[self xy_reloadButtonBackgroundImageForState:UIControlStateNormal] forState:UIControlStateNormal];
+                    [noDataPlaceholderView.reloadButton setBackgroundImage:[self xy_reloadButtonBackgroundImageForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
+                }
+                
+            }
             
-            NSAttributedString *reloadBtnTitle = [self xy_reloadButtonTitleForState:UIControlStateNormal];
-            UIImage *reloadBtnImage = [self xy_reloadButtonImageForState:UIControlStateNormal];
-            
-            UIImage *image = [self xy_backGroundImage];
-            UIColor *imageTintColor = [self xy_imageTintColor];
-            UIImageRenderingMode renderingMode = imageTintColor ? UIImageRenderingModeAlwaysTemplate : UIImageRenderingModeAlwaysOriginal;
-            
+            // 设置noDataPlaceholderView子控件垂直间的间距
             noDataPlaceholderView.verticalSpace = [self xy_verticalSpace];
             
-            // 设置ImageView
-            if (image) {
-                noDataPlaceholderView.imageView.image = [image imageWithRenderingMode:renderingMode];
-                noDataPlaceholderView.imageView.tintColor = imageTintColor;
-
-            }
-            
-            if (titleLabelString) {
-                noDataPlaceholderView.titleLabel.attributedText = titleLabelString;
-            }
-            
-            // 设置detailLabel
-            if (detailLabelString) {
-                noDataPlaceholderView.detailLabel.attributedText = detailLabelString;
-            }
-            
-            // 设置reloadButton
-            [noDataPlaceholderView.reloadButton setBackgroundColor:[self xy_reloadButtonBackgroundColor]];
-            if (reloadBtnImage) {
-                [noDataPlaceholderView.reloadButton setImage:reloadBtnImage forState:UIControlStateNormal];
-                [noDataPlaceholderView.reloadButton setImage:[self xy_reloadButtonImageForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
-            } else if (reloadBtnTitle) {
-                [noDataPlaceholderView.reloadButton setAttributedTitle:reloadBtnTitle forState:UIControlStateNormal];
-                [noDataPlaceholderView.reloadButton setAttributedTitle:[self xy_reloadButtonTitleForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
-                [noDataPlaceholderView.reloadButton setBackgroundImage:[self xy_reloadButtonBackgroundImageForState:UIControlStateNormal] forState:UIControlStateNormal];
-                [noDataPlaceholderView.reloadButton setBackgroundImage:[self xy_reloadButtonBackgroundImageForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
-            }
         }
         
-    
+        
         noDataPlaceholderView.contentOffsetY = [self xy_contentOffsetY];
         
         noDataPlaceholderView.backgroundColor = [self xy_noDataViewBackgroundColor];
@@ -676,23 +704,12 @@ void xy_orginal_implementation(id self, SEL _cmd) {
         
         [noDataPlaceholderView setupConstraints];
         
-        // 此方法会先检查动画当前是否启用，然后禁止动画，执行块语句
+        // 此方法会先检查动画当前是否启用，然后禁止动画，执行block块语句
         [UIView performWithoutAnimation:^{
             [noDataPlaceholderView layoutIfNeeded];
         }];
         
         self.scrollEnabled = [self xy_isAllowedScroll];
-        
-        // 设置backgroundImageView的动画
-        if ([self xy_isAllowedImageViewAnimate]) {
-            CAAnimation *animation = [self xy_imageAnimation];
-            
-            if (animation) {
-                [noDataPlaceholderView.imageView.layer addAnimation:animation forKey:NoDataPlaceholderBackgroundImageViewAnimationKey];
-            }
-        } else if ([noDataPlaceholderView.imageView.layer animationForKey:NoDataPlaceholderBackgroundImageViewAnimationKey]) {
-            [noDataPlaceholderView.imageView.layer removeAnimationForKey:NoDataPlaceholderBackgroundImageViewAnimationKey];
-        }
         
         // 通知代理完全显示
         [self xy_didAppear];
@@ -722,6 +739,13 @@ void xy_orginal_implementation(id self, SEL _cmd) {
 
 @end
 
+@interface UIView (ConstraintBasedLayoutExtensions)
+
+/// 创建视图的约束
+- (NSLayoutConstraint *)equallyRelatedConstraintWithView:(UIView *)view
+                                               attribute:(NSLayoutAttribute)attribute;
+
+@end
 
 @implementation NoDataPlaceholderView
 
@@ -806,7 +830,6 @@ customView = _customView;
         UILabel *titleLabel = [UILabel new];
         titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
         titleLabel.backgroundColor = [UIColor clearColor];
-        
         titleLabel.font = [UIFont systemFontOfSize:27.0];
         titleLabel.textColor = [UIColor colorWithWhite:0.6 alpha:1.0];
         titleLabel.textAlignment = NSTextAlignmentCenter;
@@ -877,13 +900,13 @@ customView = _customView;
 }
 
 - (BOOL)canShowReloadButton {
-    if ([_reloadButton attributedTitleForState:UIControlStateNormal].string.length > 0 || [_reloadButton imageForState:UIControlStateNormal]) {
+    if ([_reloadButton titleForState:UIControlStateNormal] || [_reloadButton attributedTitleForState:UIControlStateNormal].string.length > 0 || [_reloadButton imageForState:UIControlStateNormal]) {
         return _reloadButton.superview != nil;
     }
     return NO;
 }
 
-#pragma mark - set 
+#pragma mark - set
 
 - (void)setCustomView:(UIView *)customView {
     if (!customView) {
@@ -1088,7 +1111,7 @@ customView = _customView;
 
 - (NSLayoutConstraint *)equallyRelatedConstraintWithView:(UIView *)view
                                                attribute:(NSLayoutAttribute)attribute {
-
+    
     return [NSLayoutConstraint constraintWithItem:view
                                         attribute:attribute
                                         relatedBy:NSLayoutRelationEqual

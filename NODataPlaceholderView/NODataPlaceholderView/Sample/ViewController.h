@@ -6,9 +6,9 @@
 //  Copyright © 2017年 Ossey. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+#import "BaseTableViewController.h"
 
-@interface ViewController : UITableViewController
+@interface ViewController : BaseTableViewController
 
 
 @end

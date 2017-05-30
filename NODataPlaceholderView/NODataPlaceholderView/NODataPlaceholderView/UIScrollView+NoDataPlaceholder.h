@@ -10,6 +10,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef void(^NoDataPlaceholderContentViewAttribute)(UIButton * const reloadBtn, UILabel * const titleLabel, UILabel * const detailLabel, UIImageView * const imageView);
+
 @protocol NoDataPlaceholderDelegate, NoDataPlaceholderDataSource;
 
 @interface UIScrollView (NoDataPlaceholder)
@@ -20,7 +22,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, assign, getter=isLoading) BOOL loading;
 
+/// 刷新NoDataPlaceholder, 当执行reloadData时也会执行该方法内部的实现
 - (void)reloadNoDataView;
+
+/// 通过此block可以对contentView的四个子控件设置，若使用了此属性，则与其相关的数据源方法不再调用
+- (void)setNoDataPlaceholderContentViewAttribute:(NoDataPlaceholderContentViewAttribute)noDataPlaceholderContentViewAttribute;
 
 @end
 
@@ -115,11 +121,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (UIColor *)reloadButtonBackgroundColorForNoDataPlaceholder:(UIScrollView *)scrollView;
 
 /// NoDataPlaceholderView各子控件之间垂直的间距，默认为11
-- (CGFloat)noDataPlaceholderContentSubviewsVerticalSpace:(UIScrollView *)scrollView;
+- (CGFloat)contentSubviewsVerticalSpaceFoNoDataPlaceholder:(UIScrollView *)scrollView;
 
 /// NoDataPlaceholderView contenView 中心点y 轴 距离 父控件scrollView 中心点y 的偏移量
 /// 默认为0，与所在scrollView的中心点显示
-- (CGFloat)noDataPlaceholderContentOffsetYForNoDataPlaceholder:(UIScrollView *)scrollView;
+- (CGFloat)contentOffsetYForNoDataPlaceholder:(UIScrollView *)scrollView;
 
 @end
 
