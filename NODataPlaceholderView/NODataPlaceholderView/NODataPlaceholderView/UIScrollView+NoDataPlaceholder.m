@@ -154,7 +154,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 - (void)setNoDataPlaceholderDataSource:(id<NoDataPlaceholderDataSource>)noDataPlaceholderDataSource {
     if (!noDataPlaceholderDataSource || ![self xy_noDataPlacehodlerCanDisplay]) {
-        [self xy_noDataPlacehodler_invalidate];
+        [self xy_removeNoDataPlacehodlerView];
     }
     
     _WeakObjectContainer *container = [[_WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDataSource];
@@ -171,7 +171,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 - (void)setNoDataPlaceholderDelegate:(id<NoDataPlaceholderDelegate>)noDataPlaceholderDelegate {
     if (noDataPlaceholderDelegate == nil) {
-        [self xy_noDataPlacehodler_invalidate];
+        [self xy_removeNoDataPlacehodlerView];
     }
     _WeakObjectContainer *container = [[_WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDelegate];
     objc_setAssociatedObject(self, @selector(noDataPlaceholderDelegate), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
@@ -300,7 +300,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return NO;
 }
 
-- (void)xy_noDataPlacehodlerNoDataPlaceholderViewWillAppear {
+- (void)xy_noDataPlaceholderViewWillAppear {
     if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderWillAppear:)]) {
         [self.noDataPlaceholderDelegate noDataPlaceholderWillAppear:self];
     }
@@ -628,7 +628,7 @@ void xy_orginal_implementation(id self, SEL _cmd) {
     if (([self xy_noDataPlacehodlerShouldDisplay] && [self xy_itemCount] == 0) || [self xy_noDataPlacehodlerShouldBeForcedToDisplay]) {
         
         // 通知代理即将显示
-        [self xy_noDataPlacehodlerNoDataPlaceholderViewWillAppear];
+        [self xy_noDataPlaceholderViewWillAppear];
         
         NoDataPlaceholderView *noDataPlaceholderView = self.noDataPlaceholderView;
         // 设置是否需要淡入淡出效果
@@ -733,12 +733,12 @@ void xy_orginal_implementation(id self, SEL _cmd) {
         [self xy_noDataPlacehodlerDidAppear];
         
     } else if (self.isNoDatasetVisible) {
-        [self xy_noDataPlacehodler_invalidate];
+        [self xy_removeNoDataPlacehodlerView];
     }
     
 }
 
-- (void)xy_noDataPlacehodler_invalidate {
+- (void)xy_removeNoDataPlacehodlerView {
     // 通知代理即将消失
     [self xy_noDataPlacehodlerWillDisappear];
     
@@ -966,7 +966,9 @@ customView = _customView;
             [superView performSelector:selector withObject:btn afterDelay:0.0];
             superView = nil;
         }
-    superView = superView.superview;
+        else {
+            superView = superView.superview;
+        }
     }
 }
 
