@@ -20,6 +20,8 @@ static NSMutableDictionary<NSString *, NSDictionary *> *_impLookupTable;
 ////////////////////////////////
 static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoDataPlaceholderBackgroundImageViewAnimation";
 
+#pragma mark *** _WeakObjectContainer ***
+
 @interface _WeakObjectContainer : NSObject
 
 @property (nonatomic, weak, readonly) id weakObject;
@@ -28,6 +30,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 @end
 
+#pragma mark *** _WeakSwizzlObject ***
 
 // 支持3个基类 UITableView UICollectionView UIScrollView
 @interface _WeakSwizzlObject : NSObject
@@ -41,6 +44,8 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 
 @end
+
+#pragma mark *** NoDataPlaceholderView ***
 
 @interface NoDataPlaceholderView : UIView
 
@@ -76,134 +81,30 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 @end
 
+#pragma mark *** UIScrollView (NoDataPlaceholder) ***
+
 @interface UIScrollView () <UIGestureRecognizerDelegate>
 
 @property (nonatomic, readonly) NoDataPlaceholderView *noDataPlaceholderView;
-
 @property (nonatomic, copy) NoDataPlaceholderContentViewAttribute noDataPlaceholderContentViewAttribute;
-
-/// 作为方法查找表使用, key: 类名_方法名 拼接的，value:_WeakSwizzlObject
 @property (nonatomic, class, readonly) NSMutableDictionary<ImpLookupDictionaryKey, _WeakSwizzlObject *> *impLookupDictionary;
 
 @end
 
 @implementation UIScrollView (NoDataPlaceholder)
 
+////////////////////////////////////////////////////////////////////////
+#pragma mark - Public methods
+////////////////////////////////////////////////////////////////////////
 
-
-#pragma mark - get
-
-- (NoDataPlaceholderView *)noDataPlaceholderView {
-    
-    NoDataPlaceholderView *view = objc_getAssociatedObject(self, _cmd);
-    
-    if (view == nil) {
-        view = [NoDataPlaceholderView new];
-        view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        view.hidden = YES;
-        view.tapGesture.delegate = self;
-        __weak typeof(self) weakSelf = self;
-        [view tapGestureRecognizer:^(UITapGestureRecognizer *tap) {
-            [weakSelf xy_didTapContentView:tap];
-        }];
-        self.noDataPlaceholderView = view;
-    }
-    
-    return view;
-}
-
-- (id<NoDataPlaceholderDataSource>)noDataPlaceholderDataSource {
-    _WeakObjectContainer *container = objc_getAssociatedObject(self, _cmd);
-    return container.weakObject;
-}
-
-- (id<NoDataPlaceholderDelegate>)noDataPlaceholderDelegate {
-    _WeakObjectContainer *container = objc_getAssociatedObject(self, _cmd);
-    return container.weakObject;
-}
-
-- (BOOL)isNoDatasetVisible {
-    UIView *view = objc_getAssociatedObject(self, _cmd);
-    return view ? !view.hidden : NO;
-}
-
-- (BOOL)isLoading {
-    return [objc_getAssociatedObject(self, _cmd) boolValue];
-}
-
-- (NoDataPlaceholderContentViewAttribute)noDataPlaceholderContentViewAttribute {
-    return objc_getAssociatedObject(self, _cmd);
-}
-
-+ (NSMutableDictionary *)impLookupDictionary {
-    static NSMutableDictionary *table = nil;
-    table = objc_getAssociatedObject(self, _cmd);
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        table = [NSMutableDictionary dictionary];
-        objc_setAssociatedObject(self, _cmd, table, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    });
-    return table;
-}
-
-- (NSMutableDictionary<ImpLookupDictionaryKey, _WeakSwizzlObject *> *)impLookupDictionary {
-    return self.class.impLookupDictionary;
-}
-
-#pragma mark - set
-
-- (void)setNoDataPlaceholderDataSource:(id<NoDataPlaceholderDataSource>)noDataPlaceholderDataSource {
-    if (!noDataPlaceholderDataSource || ![self xy_noDataPlacehodlerCanDisplay]) {
-        [self xy_removeNoDataPlacehodlerView];
-    }
-    
-    _WeakObjectContainer *container = [[_WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDataSource];
-    objc_setAssociatedObject(self, @selector(noDataPlaceholderDataSource), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    
-    // reloadData方法的实现进行处理
-    [self swizzleIfPossible:@selector(reloadData)];
-    
-    if ([self isKindOfClass:[UITableView class]]) {
-        [self swizzleIfPossible:@selector(endUpdates)];
-    }
+- (void)reloadNoDataView {
+    [self xy_reloadNoDataView];
 }
 
 
-- (void)setNoDataPlaceholderDelegate:(id<NoDataPlaceholderDelegate>)noDataPlaceholderDelegate {
-    if (noDataPlaceholderDelegate == nil) {
-        [self xy_removeNoDataPlacehodlerView];
-    }
-    _WeakObjectContainer *container = [[_WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDelegate];
-    objc_setAssociatedObject(self, @selector(noDataPlaceholderDelegate), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-}
-
-- (void)setNoDataPlaceholderView:(NoDataPlaceholderView *)noDataPlaceholderView {
-    objc_setAssociatedObject(self, @selector(noDataPlaceholderView), noDataPlaceholderView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-}
-
-- (void)setLoading:(BOOL)loading {
-    
-    if (self.loading == loading) {
-        return;
-    }
-    
-    objc_setAssociatedObject(self, @selector(isLoading), @(loading), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    
-    // 这里最好还是别干预reloadData,只刷新NoDataView
-    [self reloadNoDataView];
-    
-    //    if ([self respondsToSelector:@selector(reloadData)]) {
-    //        [self performSelector:@selector(reloadData)];
-    //    } else {
-    //        [self reloadNoDataView];
-    //    }
-}
-
-- (void)setNoDataPlaceholderContentViewAttribute:(NoDataPlaceholderContentViewAttribute)noDataPlaceholderContentViewAttribute {
-    objc_setAssociatedObject(self, @selector(noDataPlaceholderContentViewAttribute), noDataPlaceholderContentViewAttribute, OBJC_ASSOCIATION_COPY_NONATOMIC);
-}
-
-#pragma mark -
+////////////////////////////////////////////////////////////////////////
+#pragma mark - Events
+////////////////////////////////////////////////////////////////////////
 
 /// 点击NODataPlaceholderView contentView的回调
 - (void)xy_didTapContentView:(UITapGestureRecognizer *)tap {
@@ -218,7 +119,9 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     }
 }
 
-#pragma makr - delegate private api
+////////////////////////////////////////////////////////////////////////
+#pragma mark - Private methods (delegate private api)
+////////////////////////////////////////////////////////////////////////
 
 // 是否需要淡入淡出
 - (BOOL)xy_noDataPlacehodlerShouldFadeInOnDisplay {
@@ -350,7 +253,9 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 
 
-#pragma mark - DataSource privete api
+////////////////////////////////////////////////////////////////////////
+#pragma mark - Private methods (dataSource privete api)
+////////////////////////////////////////////////////////////////////////
 
 - (UIView *)xy_noDataPlacehodlerCustomView {
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(customViewForNoDataPlaceholder:)]) {
@@ -490,14 +395,9 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return offset;
 }
 
-#pragma MARK - public
-
-- (void)reloadNoDataView {
-    [self xy_reloadNoDataView];
-}
-
-
+////////////////////////////////////////////////////////////////////////
 #pragma mark - Method Swizzling
+////////////////////////////////////////////////////////////////////////
 
 
 - (void)swizzleIfPossible:(SEL)selector {
@@ -572,7 +472,7 @@ NSString * xy_getImplementationKey(Class clas, SEL selector) {
 void xy_orginal_implementation(id self, SEL _cmd) {
     // 从查找表中获取原始实现
     Class baseCls = xy_baseClassToSwizzleForTarget(self);
-    NSString *key = xy_getImplementationKey(baseCls, _cmd);
+    ImpLookupDictionaryKey key = xy_getImplementationKey(baseCls, _cmd);
     _WeakSwizzlObject *swizzleObject = [[self impLookupDictionary] objectForKey:key];
     NSValue *implValue = swizzleObject.swizzlePointer;
     
@@ -589,7 +489,9 @@ void xy_orginal_implementation(id self, SEL _cmd) {
     }
 }
 
+////////////////////////////////////////////////////////////////////////
 #pragma mark - UIGestureRecognizerDelegate
+////////////////////////////////////////////////////////////////////////
 
 
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
@@ -616,7 +518,9 @@ void xy_orginal_implementation(id self, SEL _cmd) {
 
 
 
-#pragma mark - Private methods
+////////////////////////////////////////////////////////////////////////
+#pragma mark - Privite method (reload subviews)
+////////////////////////////////////////////////////////////////////////
 
 // 刷新NoDataPlaceholderView 当调用reloadData时也会调用此方法
 - (void)xy_reloadNoDataView {
@@ -755,6 +659,123 @@ void xy_orginal_implementation(id self, SEL _cmd) {
     [self xy_noDataPlacehodlerDidDisappear];
 }
 
+////////////////////////////////////////////////////////////////////////
+#pragma mark - get
+////////////////////////////////////////////////////////////////////////
+
+- (NoDataPlaceholderView *)noDataPlaceholderView {
+    
+    NoDataPlaceholderView *view = objc_getAssociatedObject(self, _cmd);
+    
+    if (view == nil) {
+        view = [NoDataPlaceholderView new];
+        view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        view.hidden = YES;
+        view.tapGesture.delegate = self;
+        __weak typeof(self) weakSelf = self;
+        [view tapGestureRecognizer:^(UITapGestureRecognizer *tap) {
+            [weakSelf xy_didTapContentView:tap];
+        }];
+        self.noDataPlaceholderView = view;
+    }
+    
+    return view;
+}
+
+- (id<NoDataPlaceholderDataSource>)noDataPlaceholderDataSource {
+    _WeakObjectContainer *container = objc_getAssociatedObject(self, _cmd);
+    return container.weakObject;
+}
+
+- (id<NoDataPlaceholderDelegate>)noDataPlaceholderDelegate {
+    _WeakObjectContainer *container = objc_getAssociatedObject(self, _cmd);
+    return container.weakObject;
+}
+
+- (BOOL)isNoDatasetVisible {
+    UIView *view = objc_getAssociatedObject(self, _cmd);
+    return view ? !view.hidden : NO;
+}
+
+- (BOOL)isLoading {
+    return [objc_getAssociatedObject(self, _cmd) boolValue];
+}
+
+- (NoDataPlaceholderContentViewAttribute)noDataPlaceholderContentViewAttribute {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
++ (NSMutableDictionary *)impLookupDictionary {
+    static NSMutableDictionary *table = nil;
+    table = objc_getAssociatedObject(self, _cmd);
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        table = [NSMutableDictionary dictionary];
+        objc_setAssociatedObject(self, _cmd, table, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    });
+    return table;
+}
+
+- (NSMutableDictionary<ImpLookupDictionaryKey, _WeakSwizzlObject *> *)impLookupDictionary {
+    return self.class.impLookupDictionary;
+}
+
+////////////////////////////////////////////////////////////////////////
+#pragma mark - set
+////////////////////////////////////////////////////////////////////////
+
+- (void)setNoDataPlaceholderDataSource:(id<NoDataPlaceholderDataSource>)noDataPlaceholderDataSource {
+    if (!noDataPlaceholderDataSource || ![self xy_noDataPlacehodlerCanDisplay]) {
+        [self xy_removeNoDataPlacehodlerView];
+    }
+    
+    _WeakObjectContainer *container = [[_WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDataSource];
+    objc_setAssociatedObject(self, @selector(noDataPlaceholderDataSource), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    
+    // reloadData方法的实现进行处理
+    [self swizzleIfPossible:@selector(reloadData)];
+    
+    if ([self isKindOfClass:[UITableView class]]) {
+        [self swizzleIfPossible:@selector(endUpdates)];
+    }
+}
+
+
+- (void)setNoDataPlaceholderDelegate:(id<NoDataPlaceholderDelegate>)noDataPlaceholderDelegate {
+    if (noDataPlaceholderDelegate == nil) {
+        [self xy_removeNoDataPlacehodlerView];
+    }
+    _WeakObjectContainer *container = [[_WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDelegate];
+    objc_setAssociatedObject(self, @selector(noDataPlaceholderDelegate), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (void)setNoDataPlaceholderView:(NoDataPlaceholderView *)noDataPlaceholderView {
+    objc_setAssociatedObject(self, @selector(noDataPlaceholderView), noDataPlaceholderView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (void)setLoading:(BOOL)loading {
+    
+    if (self.loading == loading) {
+        return;
+    }
+    
+    objc_setAssociatedObject(self, @selector(isLoading), @(loading), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    
+    // 这里最好还是别干预reloadData,只刷新NoDataView
+    [self reloadNoDataView];
+    
+    //    if ([self respondsToSelector:@selector(reloadData)]) {
+    //        [self performSelector:@selector(reloadData)];
+    //    } else {
+    //        [self reloadNoDataView];
+    //    }
+}
+
+- (void)setNoDataPlaceholderContentViewAttribute:(NoDataPlaceholderContentViewAttribute)noDataPlaceholderContentViewAttribute {
+    objc_setAssociatedObject(self, @selector(noDataPlaceholderContentViewAttribute), noDataPlaceholderContentViewAttribute, OBJC_ASSOCIATION_COPY_NONATOMIC);
+}
+
+
 @end
 
 @interface UIView (ConstraintBasedLayoutExtensions)
@@ -764,6 +785,8 @@ void xy_orginal_implementation(id self, SEL _cmd) {
                                                attribute:(NSLayoutAttribute)attribute;
 
 @end
+
+#pragma mark *** NoDataPlaceholderView ***
 
 @implementation NoDataPlaceholderView
 
@@ -775,7 +798,9 @@ imageView = _imageView,
 reloadButton = _reloadButton,
 customView = _customView;
 
-#pragma mark - init
+////////////////////////////////////////////////////////////////////////
+#pragma mark - Initialize
+////////////////////////////////////////////////////////////////////////
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
@@ -814,7 +839,9 @@ customView = _customView;
     }
 }
 
+////////////////////////////////////////////////////////////////////////
 #pragma mark - get
+////////////////////////////////////////////////////////////////////////
 - (UIView *)contentView {
     if (_contentView == nil) {
         UIView *contentView = [UIView new];
@@ -924,7 +951,9 @@ customView = _customView;
     return NO;
 }
 
+////////////////////////////////////////////////////////////////////////
 #pragma mark - set
+////////////////////////////////////////////////////////////////////////
 
 - (void)setCustomView:(UIView *)customView {
     if (!customView) {
@@ -955,7 +984,9 @@ customView = _customView;
     self.tapGestureRecognizerBlock = tapBlock;
 }
 
+////////////////////////////////////////////////////////////////////////
 #pragma mark - Events
+////////////////////////////////////////////////////////////////////////
 
 /// 点击刷新按钮时处理事件
 - (void)clickReloadBtn:(UIButton *)btn {
@@ -978,7 +1009,9 @@ customView = _customView;
     }
 }
 
+////////////////////////////////////////////////////////////////////////
 #pragma mark - Auto Layout
+////////////////////////////////////////////////////////////////////////
 /// 移除所有约束
 - (void)removeAllConstraints {
     [self removeConstraints:self.constraints];
@@ -1099,6 +1132,10 @@ customView = _customView;
     }
     
 }
+
+////////////////////////////////////////////////////////////////////////
+#pragma mark -
+////////////////////////////////////////////////////////////////////////
 
 // 控制器事件的响应
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
