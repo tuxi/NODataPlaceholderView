@@ -11,29 +11,34 @@
 
 
 ////////////////////////////////
-static char const * const NoDataPlaceholderViewKey = "NoDataPlaceholderView";
-static char const * const NoDataPlaceholderDataSourceKey =     "NoDataPlaceholdeDataSource";
-static char const * const NoDataPlaceholderDelegateKey =   "NoDataPlaceholdeDelegate";
-static char const * const NoDataPlcaeHolderLoadingKey = "loading";
 
-/////////////////////////////////
-/// 存储_impLookupTable中swizzledInfo字典中基类名的key
-static NSString * const SwizzleInfoClassKey = @"class";
-/// 存储_impLookupTable中swizzledInfo字典中原方法名称的key
-static NSString * const SwizzleInfoSelectorKey = @"selector";
-/// 存储_impLookupTable中swizzledInfo字典中原方法的新的实现的地址
-static NSString *const SwizzleInfoPointerKey = @"pointer";
-/// 作为方法查找表使用, key: 类名_方法名 拼接的，value:swizzledInfo字典 (key为上面三个key)
+typedef NSString * ImpLookupDictionaryKey NS_EXTENSIBLE_STRING_ENUM;
+
+
 static NSMutableDictionary<NSString *, NSDictionary *> *_impLookupTable;
 
 ////////////////////////////////
 static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoDataPlaceholderBackgroundImageViewAnimation";
 
-@interface WeakObjectContainer : NSObject
+@interface _WeakObjectContainer : NSObject
 
 @property (nonatomic, weak, readonly) id weakObject;
 
 - (instancetype)initWithWeakObject:(__weak id)weakObject;
+
+@end
+
+
+// 支持3个基类 UITableView UICollectionView UIScrollView
+@interface _WeakImplObject : NSObject
+
+/// 存储_impLookupTable中swizzledInfo字典中基类名的key
+@property (nonatomic) Class swizzleClass;
+/// 存储_impLookupTable中swizzledInfo字典中原方法名称的key
+@property (nonatomic) SEL swizzleSelector;
+/// 存储_impLookupTable中swizzledInfo字典中原方法的新的实现的地址
+@property (nonatomic) NSValue *swizzlePointer;
+
 
 @end
 
@@ -77,16 +82,20 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 @property (nonatomic, copy) NoDataPlaceholderContentViewAttribute noDataPlaceholderContentViewAttribute;
 
+/// 作为方法查找表使用, key: 类名_方法名 拼接的，value:_WeakImplObject
+@property (nonatomic, class, readonly) NSMutableDictionary<ImpLookupDictionaryKey, _WeakImplObject *> *impLookupDictionary;
+
 @end
 
 @implementation UIScrollView (NoDataPlaceholder)
+
 
 
 #pragma mark - get
 
 - (NoDataPlaceholderView *)noDataPlaceholderView {
     
-    NoDataPlaceholderView *view = objc_getAssociatedObject(self, NoDataPlaceholderViewKey);
+    NoDataPlaceholderView *view = objc_getAssociatedObject(self, _cmd);
     
     if (view == nil) {
         view = [NoDataPlaceholderView new];
@@ -104,38 +113,49 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 }
 
 - (id<NoDataPlaceholderDataSource>)noDataPlaceholderDataSource {
-    WeakObjectContainer *container = objc_getAssociatedObject(self, NoDataPlaceholderDataSourceKey);
+    _WeakObjectContainer *container = objc_getAssociatedObject(self, _cmd);
     return container.weakObject;
 }
 
 - (id<NoDataPlaceholderDelegate>)noDataPlaceholderDelegate {
-    WeakObjectContainer *container = objc_getAssociatedObject(self, NoDataPlaceholderDelegateKey);
+    _WeakObjectContainer *container = objc_getAssociatedObject(self, _cmd);
     return container.weakObject;
 }
 
 - (BOOL)isNoDatasetVisible {
-    UIView *view = objc_getAssociatedObject(self, NoDataPlaceholderViewKey);
+    UIView *view = objc_getAssociatedObject(self, _cmd);
     return view ? !view.hidden : NO;
 }
 
 - (BOOL)isLoading {
-    return [objc_getAssociatedObject(self, NoDataPlcaeHolderLoadingKey) boolValue];
+    return [objc_getAssociatedObject(self, _cmd) boolValue];
 }
 
 - (NoDataPlaceholderContentViewAttribute)noDataPlaceholderContentViewAttribute {
-    return objc_getAssociatedObject(self, @selector(noDataPlaceholderContentViewAttribute));
+    return objc_getAssociatedObject(self, _cmd);
+}
+
++ (NSMutableDictionary *)impLookupDictionary {
+    static NSMutableDictionary *table = nil;
+    table = objc_getAssociatedObject(self, _cmd);
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        table = [NSMutableDictionary dictionary];
+        objc_setAssociatedObject(self, _cmd, table, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    });
+    return table;
 }
 
 
 #pragma mark - set
 
 - (void)setNoDataPlaceholderDataSource:(id<NoDataPlaceholderDataSource>)noDataPlaceholderDataSource {
-    if (!noDataPlaceholderDataSource || ![self xy_noDataPlacehodler_canDisplay]) {
+    if (!noDataPlaceholderDataSource || ![self xy_noDataPlacehodlerCanDisplay]) {
         [self xy_noDataPlacehodler_invalidate];
     }
     
-    WeakObjectContainer *container = [[WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDataSource];
-    objc_setAssociatedObject(self, NoDataPlaceholderDataSourceKey, container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    _WeakObjectContainer *container = [[_WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDataSource];
+    objc_setAssociatedObject(self, @selector(noDataPlaceholderDataSource), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     
     // reloadData方法的实现进行处理
     [self swizzleIfPossible:@selector(reloadData)];
@@ -150,12 +170,12 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     if (noDataPlaceholderDelegate == nil) {
         [self xy_noDataPlacehodler_invalidate];
     }
-    WeakObjectContainer *container = [[WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDelegate];
-    objc_setAssociatedObject(self, NoDataPlaceholderDelegateKey, container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    _WeakObjectContainer *container = [[_WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDelegate];
+    objc_setAssociatedObject(self, @selector(noDataPlaceholderDelegate), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 - (void)setNoDataPlaceholderView:(NoDataPlaceholderView *)noDataPlaceholderView {
-    objc_setAssociatedObject(self, NoDataPlaceholderViewKey, noDataPlaceholderView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(self, @selector(noDataPlaceholderView), noDataPlaceholderView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 - (void)setLoading:(BOOL)loading {
@@ -164,7 +184,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
         return;
     }
     
-    objc_setAssociatedObject(self, NoDataPlcaeHolderLoadingKey, @(loading), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(self, @selector(isLoading), @(loading), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     
     // 这里最好还是别干预reloadData,只刷新NoDataView
     [self reloadNoDataView];
@@ -198,7 +218,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 #pragma makr - delegate private api
 
 // 是否需要淡入淡出
-- (BOOL)xy_noDataPlacehodler_shouldFadeInOnDisplay {
+- (BOOL)xy_noDataPlacehodlerShouldFadeInOnDisplay {
     if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldFadeInOnDisplay:)]) {
         return [self.noDataPlaceholderDelegate noDataPlaceholderShouldFadeInOnDisplay:self];
     }
@@ -206,7 +226,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 }
 
 // 是否符合显示
-- (BOOL)xy_noDataPlacehodler_canDisplay {
+- (BOOL)xy_noDataPlacehodlerCanDisplay {
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource conformsToProtocol:@protocol(NoDataPlaceholderDataSource) ]) {
         if ([self isKindOfClass:[UITableView class]] || [self isKindOfClass:[UICollectionView class]] || [self isKindOfClass:[UIScrollView class]]) {
             return YES;
@@ -262,7 +282,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 }
 
 /// 是否应该显示
-- (BOOL)xy_noDataPlacehodler_shouldDisplay {
+- (BOOL)xy_noDataPlacehodlerShouldDisplay {
     if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldDisplay:)]) {
         return [self.noDataPlaceholderDelegate noDataPlaceholderShouldDisplay:self];
     }
@@ -270,21 +290,21 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 }
 
 /// 是否应该强制显示,默认不需要的
-- (BOOL)xy_noDataPlacehodler_shouldBeForcedToDisplay {
+- (BOOL)xy_noDataPlacehodlerShouldBeForcedToDisplay {
     if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldBeForcedToDisplay:)]) {
         return [self.noDataPlaceholderDelegate noDataPlaceholderShouldBeForcedToDisplay:self];
     }
     return NO;
 }
 
-- (void)xy_noDataPlacehodler_noDataPlaceholderViewWillAppear {
+- (void)xy_noDataPlacehodlerNoDataPlaceholderViewWillAppear {
     if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderWillAppear:)]) {
         [self.noDataPlaceholderDelegate noDataPlaceholderWillAppear:self];
     }
 }
 
 /// 是否允许响应事件
-- (BOOL)xy_noDataPlacehodler_isAllowedResponseEvent {
+- (BOOL)xy_noDataPlacehodlerIsAllowedResponseEvent {
     if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldAllowResponseEvent:)]) {
         return [self.noDataPlaceholderDelegate noDataPlaceholderShouldAllowResponseEvent:self];
     }
@@ -292,7 +312,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 }
 
 /// 是否运行滚动
-- (BOOL)xy_noDataPlacehodler_isAllowedScroll  {
+- (BOOL)xy_noDataPlacehodlerIsAllowedScroll  {
     if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldAllowScroll:)]) {
         return [self.noDataPlaceholderDelegate noDataPlaceholderShouldAllowScroll:self];
     }
@@ -300,26 +320,26 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 }
 
 /// 是否运行imageView展示动画
-- (BOOL)xy_noDataPlacehodler_isAllowedImageViewAnimate {
+- (BOOL)xy_noDataPlacehodlerIsAllowedImageViewAnimate {
     if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldAnimateImageView:)]) {
         return [self.noDataPlaceholderDelegate noDataPlaceholderShouldAnimateImageView:self];
     }
     return NO;
 }
 
-- (void)xy_noDataPlacehodler_didAppear {
+- (void)xy_noDataPlacehodlerDidAppear {
     if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderDidAppear:)]) {
         [self.noDataPlaceholderDelegate noDataPlaceholderDidAppear:self];
     }
 }
 
-- (void)xy_noDataPlacehodler_willDisappear {
+- (void)xy_noDataPlacehodlerWillDisappear {
     if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderWillDisappear:)]) {
         [self.noDataPlaceholderDelegate noDataPlaceholderWillDisappear:self];
     }
 }
 
-- (void)xy_noDataPlacehodler_didDisappear {
+- (void)xy_noDataPlacehodlerDidDisappear {
     if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderDidDisappear:)]) {
         [self.noDataPlaceholderDelegate noDataPlaceholderDidDisappear:self];
     }
@@ -329,7 +349,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 #pragma mark - DataSource privete api
 
-- (UIView *)xy_noDataPlacehodler_customView {
+- (UIView *)xy_noDataPlacehodlerCustomView {
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(customViewForNoDataPlaceholder:)]) {
         UIView *view = [self.noDataPlaceholderDataSource customViewForNoDataPlaceholder:self];
         if (view) {
@@ -340,7 +360,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return nil;
 }
 
-- (NSAttributedString *)xy_noDataPlacehodler_titleLabelString {
+- (NSAttributedString *)xy_noDataPlacehodlerTitleLabelString {
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(titleAttributedStringForNoDataPlaceholder:)]) {
         NSAttributedString *string = [self.noDataPlaceholderDataSource titleAttributedStringForNoDataPlaceholder:self];
         if (string) {
@@ -351,7 +371,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return nil;
 }
 
-- (NSAttributedString *)xy_noDataPlacehodler_detailLabelString {
+- (NSAttributedString *)xy_noDataPlacehodlerDetailLabelString {
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(detailAttributedStringForNoDataPlaceholder:)]) {
         NSAttributedString *string = [self.noDataPlaceholderDataSource detailAttributedStringForNoDataPlaceholder:self];
         if (string) {
@@ -362,7 +382,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return nil;
 }
 
-- (UIImage *)xy_noDataPlacehodler_Image {
+- (UIImage *)xy_noDataPlacehodlerImage {
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(imageForNoDataPlaceholder:)]) {
         UIImage *image = [self.noDataPlaceholderDataSource imageForNoDataPlaceholder:self];
         if (image) {
@@ -373,7 +393,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return nil;
 }
 
-- (CAAnimation *)xy_noDataPlacehodler_imageAnimation {
+- (CAAnimation *)xy_noDataPlacehodlerImageAnimation {
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(imageAnimationForNoDataPlaceholder:)]) {
         CAAnimation *imageAnimation = [self.noDataPlaceholderDataSource imageAnimationForNoDataPlaceholder:self];
         if (imageAnimation) {
@@ -384,7 +404,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return nil;
 }
 
-- (UIColor *)xy_noDataPlacehodler_imageTintColor {
+- (UIColor *)xy_noDataPlacehodlerImageTintColor {
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(imageTintColorForNoDataPlaceholder:)]) {
         UIColor *color = [self.noDataPlaceholderDataSource imageTintColorForNoDataPlaceholder:self];
         if (color) NSAssert([color isKindOfClass:[UIColor class]], @"-[imageTintColorForNoDataPlaceholder:]返回值必须是有效的UIColor类型");
@@ -393,7 +413,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return nil;
 }
 
-- (NSAttributedString *)xy_noDataPlacehodler_reloadButtonTitleForState:(UIControlState)state {
+- (NSAttributedString *)xy_noDataPlacehodlerReloadButtonTitleForState:(UIControlState)state {
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(reloadbuttonTitleAttributedStringForNoDataPlaceholder:forState:)]) {
         NSAttributedString *string = [self.noDataPlaceholderDataSource reloadbuttonTitleAttributedStringForNoDataPlaceholder:self forState:state];
         if (string) {
@@ -405,7 +425,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return nil;
 }
 
-- (UIImage *)xy_noDataPlacehodler_reloadButtonImageForState:(UIControlState)state {
+- (UIImage *)xy_noDataPlacehodlerReloadButtonImageForState:(UIControlState)state {
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(reloadButtonImageForNoDataPlaceholder:forState:)]) {
         UIImage *image = [self.noDataPlaceholderDataSource reloadButtonImageForNoDataPlaceholder:self forState:state];
         if (image) {
@@ -416,7 +436,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return nil;
 }
 
-- (UIImage *)xy_noDataPlacehodler_reloadButtonBackgroundImageForState:(UIControlState)state {
+- (UIImage *)xy_noDataPlacehodlerReloadButtonBackgroundImageForState:(UIControlState)state {
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(reloadButtonBackgroundImageForNoDataPlaceholder:forState:)]) {
         UIImage *image = [self.noDataPlaceholderDataSource reloadButtonBackgroundImageForNoDataPlaceholder:self forState:state];
         if (image) {
@@ -429,7 +449,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return nil;
 }
 
-- (UIColor *)xy_noDataPlacehodler_backgroundColor {
+- (UIColor *)xy_noDataPlacehodlerBackgroundColor {
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(backgroundColorForNoDataPlaceholder:)]) {
         UIColor *color = [self.noDataPlaceholderDataSource backgroundColorForNoDataPlaceholder:self];
         if (color) {
@@ -440,7 +460,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return [UIColor clearColor];
 }
 
-- (UIColor *)xy_noDataPlacehodler_reloadButtonBackgroundColor {
+- (UIColor *)xy_noDataPlacehodlerReloadButtonBackgroundColor {
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(reloadButtonBackgroundColorForNoDataPlaceholder:)]) {
         UIColor *color = [self.noDataPlaceholderDataSource reloadButtonBackgroundColorForNoDataPlaceholder:self];
         if (color) {
@@ -451,14 +471,14 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return [UIColor clearColor];
 }
 
-- (CGFloat)xy_noDataPlacehodler_verticalSpace {
+- (CGFloat)xy_noDataPlacehodlerVerticalSpace {
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(contentSubviewsVerticalSpaceFoNoDataPlaceholder:)]) {
         return [self.noDataPlaceholderDataSource contentSubviewsVerticalSpaceFoNoDataPlaceholder:self];
     }
     return 0.0;
 }
 
-- (CGFloat)xy_noDataPlacehodler_contentOffsetY {
+- (CGFloat)xy_noDataPlacehodlerContentOffsetY {
     CGFloat offset = 0.0;
     
     if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(contentOffsetYForNoDataPlaceholder:)]) {
@@ -478,34 +498,27 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 - (void)swizzleIfPossible:(SEL)selector {
     
-    // 检测这个方法是否实现
+    // 本类未实现则return
     if (![self respondsToSelector:selector]) {
         return;
     }
     
-    if (_impLookupTable == nil) {
-        // 支持3个基类 UITableView UICollectionView UIScrollView
-        _impLookupTable = [NSMutableDictionary  dictionaryWithCapacity:3];
-    }
+    NSLog(@"%@", self.class.impLookupDictionary);
     
-    // 确保setImplementation 在UITableView or UICollectionView只调用一次
-    for (NSDictionary *info in [_impLookupTable allValues]) {
-        Class clas = [info objectForKey:SwizzleInfoClassKey];
-        NSString *selectorName = [info objectForKey:SwizzleInfoSelectorKey];
-        
-        // 当当前类已经lookup了，就返回
-        if ([selectorName isEqualToString:NSStringFromSelector(selector)]) {
-            if ([self isKindOfClass:clas]) {
-                return;
-            }
+    // 确保setImplementation 在UITableView or UICollectionView只调用一次, 也就是每个方法的指针只存储一次
+    [self.class.impLookupDictionary enumerateKeysAndObjectsUsingBlock:^(ImpLookupDictionaryKey  _Nonnull key, _WeakImplObject * _Nonnull obj, BOOL * _Nonnull stop) {
+        if (selector == obj.swizzleSelector && [self isKindOfClass:obj.swizzleClass]) {
+            return;
         }
-    }
+        NSLog(@"%@", obj.class);
+    }];
+    
     
     // 检查当前类的基类：UITableView  UICollectionView  UIScrollView
     Class baseClas = xy_baseClassToSwizzleForTarget(self);
-    NSString *key = xy_implementationKey(baseClas, selector);
-    NSDictionary *info = [_impLookupTable objectForKey:key];
-    NSValue *implValue = [info valueForKey:SwizzleInfoPointerKey];
+    NSString *key = xy_getImplementationKey(baseClas, selector);
+    _WeakImplObject *swizzleObjcet = [self.class.impLookupDictionary objectForKey:key];
+    NSValue *implValue = swizzleObjcet.swizzlePointer;
     
     // 如果该类的实现已经存在，就return
     if (implValue || !key || !baseClas) {
@@ -517,9 +530,12 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     // 设置这个方法的实现
     IMP newImpl = method_setImplementation(method, (IMP)xy_orginal_implementation);
     
-    // 将新实现存储在_impLookupTable(查找表)中
-    NSDictionary *swizzleInfo = @{SwizzleInfoClassKey: baseClas, SwizzleInfoSelectorKey: NSStringFromSelector(selector), SwizzleInfoPointerKey: [NSValue valueWithPointer:newImpl]};
-    [_impLookupTable setObject:swizzleInfo forKey:key];
+    // 将新实现保存到impLookupDictionary中
+    swizzleObjcet = [_WeakImplObject new];
+    swizzleObjcet.swizzleClass = baseClas;
+    swizzleObjcet.swizzleSelector = selector;
+    swizzleObjcet.swizzlePointer = [NSValue valueWithPointer:newImpl];
+    [self.class.impLookupDictionary setObject:swizzleObjcet forKey:key];
 }
 
 /// 检查当前类是否符合，符合就返回当前类的基类，不符合返回nil
@@ -539,7 +555,7 @@ Class xy_baseClassToSwizzleForTarget(id target) {
 
 
 /// 根据类名和方法，拼接字符串，作为_impLookupTable的key
-NSString * xy_implementationKey(Class clas, SEL selector) {
+NSString * xy_getImplementationKey(Class clas, SEL selector) {
     if (clas == nil || selector == nil) {
         return nil;
     }
@@ -553,10 +569,9 @@ NSString * xy_implementationKey(Class clas, SEL selector) {
 void xy_orginal_implementation(id self, SEL _cmd) {
     // 从查找表中获取原始实现
     Class baseCls = xy_baseClassToSwizzleForTarget(self);
-    NSString *key = xy_implementationKey(baseCls, _cmd);
-    
-    NSDictionary *swizzleInfo = [_impLookupTable objectForKey:key];
-    NSValue *implValue = [swizzleInfo valueForKey:SwizzleInfoPointerKey];
+    NSString *key = xy_getImplementationKey(baseCls, _cmd);
+    _WeakImplObject *swizzleObject = [[[self class] impLookupDictionary] objectForKey:key];
+    NSValue *implValue = swizzleObject.swizzlePointer;
     
     // 原方法的实现
     IMP impPointer = [implValue pointerValue];
@@ -576,7 +591,7 @@ void xy_orginal_implementation(id self, SEL _cmd) {
 
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
     if ([gestureRecognizer.view isEqual:self.noDataPlaceholderView]) {
-        return [self xy_noDataPlacehodler_isAllowedResponseEvent];
+        return [self xy_noDataPlacehodlerIsAllowedResponseEvent];
     }
     
     return [super gestureRecognizerShouldBegin:gestureRecognizer];
@@ -603,18 +618,18 @@ void xy_orginal_implementation(id self, SEL _cmd) {
 // 刷新NoDataPlaceholderView 当调用reloadData时也会调用此方法
 - (void)xy_reloadNoDataView {
     
-    if (![self xy_noDataPlacehodler_canDisplay]) {
+    if (![self xy_noDataPlacehodlerCanDisplay]) {
         return;
     }
     
-    if (([self xy_noDataPlacehodler_shouldDisplay] && [self xy_itemCount] == 0) || [self xy_noDataPlacehodler_shouldBeForcedToDisplay]) {
+    if (([self xy_noDataPlacehodlerShouldDisplay] && [self xy_itemCount] == 0) || [self xy_noDataPlacehodlerShouldBeForcedToDisplay]) {
         
         // 通知代理即将显示
-        [self xy_noDataPlacehodler_noDataPlaceholderViewWillAppear];
+        [self xy_noDataPlacehodlerNoDataPlaceholderViewWillAppear];
         
         NoDataPlaceholderView *noDataPlaceholderView = self.noDataPlaceholderView;
         // 设置是否需要淡入淡出效果
-        noDataPlaceholderView.fadeInOnDisplay = [self xy_noDataPlacehodler_shouldFadeInOnDisplay];
+        noDataPlaceholderView.fadeInOnDisplay = [self xy_noDataPlacehodlerShouldFadeInOnDisplay];
         
         if (noDataPlaceholderView.superview == nil) {
             if (([self isKindOfClass:[UITableView class]] || [self isKindOfClass:[UICollectionView class]]) && [self.subviews count] > 1) {
@@ -627,7 +642,7 @@ void xy_orginal_implementation(id self, SEL _cmd) {
         // 重置视图及其约束对于保证良好状态
         [noDataPlaceholderView prepareForReuse];
         
-        UIView *customView = [self xy_noDataPlacehodler_customView];
+        UIView *customView = [self xy_noDataPlacehodlerCustomView];
         if (customView) {
             noDataPlaceholderView.customView = customView;
         } else {
@@ -637,14 +652,14 @@ void xy_orginal_implementation(id self, SEL _cmd) {
             if (self.noDataPlaceholderContentViewAttribute) {
                 self.noDataPlaceholderContentViewAttribute(noDataPlaceholderView.reloadButton, noDataPlaceholderView.titleLabel, noDataPlaceholderView.detailLabel, noDataPlaceholderView.imageView);
             } else {
-                NSAttributedString *titleLabelString = [self xy_noDataPlacehodler_titleLabelString];
-                NSAttributedString *detailLabelString = [self xy_noDataPlacehodler_detailLabelString];
+                NSAttributedString *titleLabelString = [self xy_noDataPlacehodlerTitleLabelString];
+                NSAttributedString *detailLabelString = [self xy_noDataPlacehodlerDetailLabelString];
                 
-                NSAttributedString *reloadBtnTitle = [self xy_noDataPlacehodler_reloadButtonTitleForState:UIControlStateNormal];
-                UIImage *reloadBtnImage = [self xy_noDataPlacehodler_reloadButtonImageForState:UIControlStateNormal];
+                NSAttributedString *reloadBtnTitle = [self xy_noDataPlacehodlerReloadButtonTitleForState:UIControlStateNormal];
+                UIImage *reloadBtnImage = [self xy_noDataPlacehodlerReloadButtonImageForState:UIControlStateNormal];
                 
-                UIImage *image = [self xy_noDataPlacehodler_Image];
-                UIColor *imageTintColor = [self xy_noDataPlacehodler_imageTintColor];
+                UIImage *image = [self xy_noDataPlacehodlerImage];
+                UIColor *imageTintColor = [self xy_noDataPlacehodlerImageTintColor];
                 UIImageRenderingMode renderingMode = imageTintColor ? UIImageRenderingModeAlwaysTemplate : UIImageRenderingModeAlwaysOriginal;
                 
                 
@@ -655,8 +670,8 @@ void xy_orginal_implementation(id self, SEL _cmd) {
                     
                 }
                 // 设置imageView的动画
-                if ([self xy_noDataPlacehodler_isAllowedImageViewAnimate]) {
-                    CAAnimation *animation = [self xy_noDataPlacehodler_imageAnimation];
+                if ([self xy_noDataPlacehodlerIsAllowedImageViewAnimate]) {
+                    CAAnimation *animation = [self xy_noDataPlacehodlerImageAnimation];
                     
                     if (animation) {
                         [noDataPlaceholderView.imageView.layer addAnimation:animation forKey:NoDataPlaceholderBackgroundImageViewAnimationKey];
@@ -675,32 +690,32 @@ void xy_orginal_implementation(id self, SEL _cmd) {
                 }
                 
                 // 设置reloadButton
-                [noDataPlaceholderView.reloadButton setBackgroundColor:[self xy_noDataPlacehodler_reloadButtonBackgroundColor]];
+                [noDataPlaceholderView.reloadButton setBackgroundColor:[self xy_noDataPlacehodlerReloadButtonBackgroundColor]];
                 if (reloadBtnImage) {
                     [noDataPlaceholderView.reloadButton setImage:reloadBtnImage forState:UIControlStateNormal];
-                    [noDataPlaceholderView.reloadButton setImage:[self xy_noDataPlacehodler_reloadButtonImageForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
+                    [noDataPlaceholderView.reloadButton setImage:[self xy_noDataPlacehodlerReloadButtonImageForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
                 } else if (reloadBtnTitle) {
                     [noDataPlaceholderView.reloadButton setAttributedTitle:reloadBtnTitle forState:UIControlStateNormal];
-                    [noDataPlaceholderView.reloadButton setAttributedTitle:[self xy_noDataPlacehodler_reloadButtonTitleForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
-                    [noDataPlaceholderView.reloadButton setBackgroundImage:[self xy_noDataPlacehodler_reloadButtonBackgroundImageForState:UIControlStateNormal] forState:UIControlStateNormal];
-                    [noDataPlaceholderView.reloadButton setBackgroundImage:[self xy_noDataPlacehodler_reloadButtonBackgroundImageForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
+                    [noDataPlaceholderView.reloadButton setAttributedTitle:[self xy_noDataPlacehodlerReloadButtonTitleForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
+                    [noDataPlaceholderView.reloadButton setBackgroundImage:[self xy_noDataPlacehodlerReloadButtonBackgroundImageForState:UIControlStateNormal] forState:UIControlStateNormal];
+                    [noDataPlaceholderView.reloadButton setBackgroundImage:[self xy_noDataPlacehodlerReloadButtonBackgroundImageForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
                 }
                 
             }
             
             // 设置noDataPlaceholderView子控件垂直间的间距
-            noDataPlaceholderView.verticalSpace = [self xy_noDataPlacehodler_verticalSpace];
+            noDataPlaceholderView.verticalSpace = [self xy_noDataPlacehodlerVerticalSpace];
             
         }
         
         
-        noDataPlaceholderView.contentOffsetY = [self xy_noDataPlacehodler_contentOffsetY];
+        noDataPlaceholderView.contentOffsetY = [self xy_noDataPlacehodlerContentOffsetY];
         
-        noDataPlaceholderView.backgroundColor = [self xy_noDataPlacehodler_backgroundColor];
+        noDataPlaceholderView.backgroundColor = [self xy_noDataPlacehodlerBackgroundColor];
         noDataPlaceholderView.hidden = NO;
         noDataPlaceholderView.clipsToBounds = YES;
         
-        noDataPlaceholderView.userInteractionEnabled = [self xy_noDataPlacehodler_isAllowedResponseEvent];
+        noDataPlaceholderView.userInteractionEnabled = [self xy_noDataPlacehodlerIsAllowedResponseEvent];
         
         [noDataPlaceholderView setupConstraints];
         
@@ -709,10 +724,10 @@ void xy_orginal_implementation(id self, SEL _cmd) {
             [noDataPlaceholderView layoutIfNeeded];
         }];
         
-        self.scrollEnabled = [self xy_noDataPlacehodler_isAllowedScroll];
+        self.scrollEnabled = [self xy_noDataPlacehodlerIsAllowedScroll];
         
         // 通知代理完全显示
-        [self xy_noDataPlacehodler_didAppear];
+        [self xy_noDataPlacehodlerDidAppear];
         
     } else if (self.isNoDatasetVisible) {
         [self xy_noDataPlacehodler_invalidate];
@@ -722,7 +737,7 @@ void xy_orginal_implementation(id self, SEL _cmd) {
 
 - (void)xy_noDataPlacehodler_invalidate {
     // 通知代理即将消失
-    [self xy_noDataPlacehodler_willDisappear];
+    [self xy_noDataPlacehodlerWillDisappear];
     
     if (self.noDataPlaceholderView) {
         [self.noDataPlaceholderView prepareForReuse];
@@ -734,7 +749,7 @@ void xy_orginal_implementation(id self, SEL _cmd) {
     self.scrollEnabled = YES;
     
     // 通知代理完全消失
-    [self xy_noDataPlacehodler_didDisappear];
+    [self xy_noDataPlacehodlerDidDisappear];
 }
 
 @end
@@ -742,7 +757,7 @@ void xy_orginal_implementation(id self, SEL _cmd) {
 @interface UIView (ConstraintBasedLayoutExtensions)
 
 /// 创建视图的约束
-- (NSLayoutConstraint *)equallyRelatedConstraintWithView:(UIView *)view
+- (NSLayoutConstraint *)equallyConstraintWithView:(UIView *)view
                                                attribute:(NSLayoutAttribute)attribute;
 
 @end
@@ -942,9 +957,13 @@ customView = _customView;
 /// 点击刷新按钮时处理事件
 - (void)clickReloadBtn:(UIButton *)btn {
     SEL selector = NSSelectorFromString(@"xy_clickReloadBtn:");
-    // 让btn所在的父控件去执行点击事件
-    if ([self.superview respondsToSelector:selector]) {
-        [self.superview performSelector:selector withObject:btn afterDelay:0.0];
+    UIView *superView = self.superview;
+    while (superView) {
+        superView = superView.superview;
+        if ([superView isKindOfClass:[UIScrollView class]]) {
+            [superView performSelector:selector withObject:btn afterDelay:0.0];
+            superView = nil;
+        }
     }
 }
 
@@ -964,8 +983,8 @@ customView = _customView;
 - (void)setupConstraints {
     
     // contentView 与 父视图 保持一致
-    NSLayoutConstraint *contentViewX = [self equallyRelatedConstraintWithView:self.contentView attribute:NSLayoutAttributeCenterX];
-    NSLayoutConstraint *contentViewY = [self equallyRelatedConstraintWithView:self.contentView attribute:NSLayoutAttributeCenterY];
+    NSLayoutConstraint *contentViewX = [self equallyConstraintWithView:self.contentView attribute:NSLayoutAttributeCenterX];
+    NSLayoutConstraint *contentViewY = [self equallyConstraintWithView:self.contentView attribute:NSLayoutAttributeCenterY];
     [self addConstraint:contentViewX];
     [self addConstraint:contentViewY];
     [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[contentView]|"
@@ -1004,7 +1023,7 @@ customView = _customView;
             [subviewsNames addObject:@"imageView"];
             views[[subviewsNames lastObject]] = _imageView;
             
-            [self.contentView addConstraint:[self.contentView equallyRelatedConstraintWithView:_imageView attribute:NSLayoutAttributeCenterX]];
+            [self.contentView addConstraint:[self.contentView equallyConstraintWithView:_imageView attribute:NSLayoutAttributeCenterX]];
         }
         
         // 根据title是否可以显示，设置titleLable的水平约束
@@ -1109,7 +1128,7 @@ customView = _customView;
 
 @implementation UIView (ConstraintBasedLayoutExtensions)
 
-- (NSLayoutConstraint *)equallyRelatedConstraintWithView:(UIView *)view
+- (NSLayoutConstraint *)equallyConstraintWithView:(UIView *)view
                                                attribute:(NSLayoutAttribute)attribute {
     
     return [NSLayoutConstraint constraintWithItem:view
@@ -1122,13 +1141,24 @@ customView = _customView;
 
 @end
 
-@implementation WeakObjectContainer
+@implementation _WeakObjectContainer
 
 - (instancetype)initWithWeakObject:(__weak id)weakObject {
     if (self = [super init]) {
         _weakObject = weakObject;
     }
     return self;
+}
+
+@end
+
+@implementation _WeakImplObject
+
+- (NSString *)description {
+    
+    NSDictionary *descriptionDict = @{@"swizzleClass": self.swizzleClass, @"swizzleSelector": NSStringFromSelector(self.swizzleSelector), @"swizzlePointer": self.swizzlePointer};
+    
+    return [descriptionDict description];
 }
 
 @end

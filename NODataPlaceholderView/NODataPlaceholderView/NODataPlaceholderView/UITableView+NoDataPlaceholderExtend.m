@@ -90,7 +90,7 @@
         return [UIImage imageNamed:@"loading_imgBlue_78x78" inBundle:[NSBundle bundleForClass:[self class]] compatibleWithTraitCollection:nil];
     } else {
         
-        UIImage *image = [UIImage imageNamed:@"placeholder_instagram"];
+        UIImage *image = [UIImage imageNamed:@"icon-"];
         return image;
     }
 }

@@ -238,7 +238,7 @@
 				TargetAttributes = {
 					1809F6141EDBA419006929CF = {
 						CreatedOnToolsVersion = 8.3.1;
-						DevelopmentTeam = H3Q63DY2LV;
+						DevelopmentTeam = NKW67GFDHM;
 						ProvisioningStyle = Automatic;
 					};
 					1809F62D1EDBA419006929CF = {
@@ -461,11 +461,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = H3Q63DY2LV;
+				DEVELOPMENT_TEAM = NKW67GFDHM;
 				INFOPLIST_FILE = NODataPlaceholderView/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.sey.NODataPlaceholderView;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ossey.NODataPlaceholderView;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -474,11 +474,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = H3Q63DY2LV;
+				DEVELOPMENT_TEAM = NKW67GFDHM;
 				INFOPLIST_FILE = NODataPlaceholderView/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.sey.NODataPlaceholderView;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ossey.NODataPlaceholderView;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
