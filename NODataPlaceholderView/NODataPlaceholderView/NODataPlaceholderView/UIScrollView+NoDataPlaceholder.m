@@ -30,7 +30,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 
 // 支持3个基类 UITableView UICollectionView UIScrollView
-@interface _WeakImplObject : NSObject
+@interface _WeakSwizzlObject : NSObject
 
 /// 存储_impLookupTable中swizzledInfo字典中基类名的key
 @property (nonatomic) Class swizzleClass;
@@ -82,8 +82,8 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 @property (nonatomic, copy) NoDataPlaceholderContentViewAttribute noDataPlaceholderContentViewAttribute;
 
-/// 作为方法查找表使用, key: 类名_方法名 拼接的，value:_WeakImplObject
-@property (nonatomic, class, readonly) NSMutableDictionary<ImpLookupDictionaryKey, _WeakImplObject *> *impLookupDictionary;
+/// 作为方法查找表使用, key: 类名_方法名 拼接的，value:_WeakSwizzlObject
+@property (nonatomic, class, readonly) NSMutableDictionary<ImpLookupDictionaryKey, _WeakSwizzlObject *> *impLookupDictionary;
 
 @end
 
@@ -146,6 +146,9 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return table;
 }
 
+- (NSMutableDictionary<ImpLookupDictionaryKey, _WeakSwizzlObject *> *)impLookupDictionary {
+    return self.class.impLookupDictionary;
+}
 
 #pragma mark - set
 
@@ -496,6 +499,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 #pragma mark - Method Swizzling
 
+
 - (void)swizzleIfPossible:(SEL)selector {
     
     // 本类未实现则return
@@ -503,21 +507,20 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
         return;
     }
     
-    NSLog(@"%@", self.class.impLookupDictionary);
+    NSLog(@"%@", self.impLookupDictionary);
     
     // 确保setImplementation 在UITableView or UICollectionView只调用一次, 也就是每个方法的指针只存储一次
-    [self.class.impLookupDictionary enumerateKeysAndObjectsUsingBlock:^(ImpLookupDictionaryKey  _Nonnull key, _WeakImplObject * _Nonnull obj, BOOL * _Nonnull stop) {
-        if (selector == obj.swizzleSelector && [self isKindOfClass:obj.swizzleClass]) {
+    for (_WeakSwizzlObject *implObject in self.impLookupDictionary.allValues) {
+        if (selector == implObject.swizzleSelector && [self isKindOfClass:implObject.swizzleClass]) {
+            //  当前类已经添加过了，就返回
             return;
         }
-        NSLog(@"%@", obj.class);
-    }];
-    
-    
+    }
+
     // 检查当前类的基类：UITableView  UICollectionView  UIScrollView
     Class baseClas = xy_baseClassToSwizzleForTarget(self);
-    NSString *key = xy_getImplementationKey(baseClas, selector);
-    _WeakImplObject *swizzleObjcet = [self.class.impLookupDictionary objectForKey:key];
+    ImpLookupDictionaryKey key = xy_getImplementationKey(baseClas, selector);
+    _WeakSwizzlObject *swizzleObjcet = [self.impLookupDictionary objectForKey:key];
     NSValue *implValue = swizzleObjcet.swizzlePointer;
     
     // 如果该类的实现已经存在，就return
@@ -531,11 +534,11 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     IMP newImpl = method_setImplementation(method, (IMP)xy_orginal_implementation);
     
     // 将新实现保存到impLookupDictionary中
-    swizzleObjcet = [_WeakImplObject new];
+    swizzleObjcet = [_WeakSwizzlObject new];
     swizzleObjcet.swizzleClass = baseClas;
     swizzleObjcet.swizzleSelector = selector;
     swizzleObjcet.swizzlePointer = [NSValue valueWithPointer:newImpl];
-    [self.class.impLookupDictionary setObject:swizzleObjcet forKey:key];
+    [self.impLookupDictionary setObject:swizzleObjcet forKey:key];
 }
 
 /// 检查当前类是否符合，符合就返回当前类的基类，不符合返回nil
@@ -570,10 +573,10 @@ void xy_orginal_implementation(id self, SEL _cmd) {
     // 从查找表中获取原始实现
     Class baseCls = xy_baseClassToSwizzleForTarget(self);
     NSString *key = xy_getImplementationKey(baseCls, _cmd);
-    _WeakImplObject *swizzleObject = [[[self class] impLookupDictionary] objectForKey:key];
+    _WeakSwizzlObject *swizzleObject = [[self impLookupDictionary] objectForKey:key];
     NSValue *implValue = swizzleObject.swizzlePointer;
     
-    // 原方法的实现
+    // 获取原方法的实现
     IMP impPointer = [implValue pointerValue];
     
     // 为加载NODataPlaceholderView时注入额外的实现
@@ -959,11 +962,11 @@ customView = _customView;
     SEL selector = NSSelectorFromString(@"xy_clickReloadBtn:");
     UIView *superView = self.superview;
     while (superView) {
-        superView = superView.superview;
         if ([superView isKindOfClass:[UIScrollView class]]) {
             [superView performSelector:selector withObject:btn afterDelay:0.0];
             superView = nil;
         }
+    superView = superView.superview;
     }
 }
 
@@ -1152,7 +1155,7 @@ customView = _customView;
 
 @end
 
-@implementation _WeakImplObject
+@implementation _WeakSwizzlObject
 
 - (NSString *)description {
     
