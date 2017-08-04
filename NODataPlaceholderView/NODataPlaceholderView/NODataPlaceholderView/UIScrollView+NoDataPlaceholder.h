@@ -38,12 +38,10 @@ typedef void(^NoDataPlaceholderContentViewAttribute)(UIButton * const reloadBtn,
 - (BOOL)noDataPlaceholderShouldFadeInOnDisplay:(UIScrollView *)scrollView;
 
 /// 是否应显示NoDataPlaceholderView, 默认YES
-/// @param scrollView UIScrollView及其子类对象通知代理
 /// @return 如果当前无数据则应显示NoDataPlaceholderView
 - (BOOL)noDataPlaceholderShouldDisplay:(UIScrollView *)scrollView;
 
 /// 当前所在页面的数据源itemCount>0时，是否应该实现NoDataPlaceholder，默认是不显示的
-/// @param scrollView UIScrollView及其子类对象通知代理
 /// @return 如果需要强制显示NoDataPlaceholder，返回YES即可
 - (BOOL)noDataPlaceholderShouldBeForcedToDisplay:(UIScrollView *)scrollView;
 
@@ -80,16 +78,15 @@ typedef void(^NoDataPlaceholderContentViewAttribute)(UIButton * const reloadBtn,
 @optional
 
 /// 当需要显示customView时，默认的NoDataPlaceholder则为会被清空
-/// @param scrollview UIScrollView 或其子类对象
 /// @return 自定义视图
 - (UIView *)customViewForNoDataPlaceholder:(UIScrollView *)scrollview;
 
 /// NoDataPlaceholder需要显示的标题富文本
-/// @return NSAttributedString富文本
+/// @return NSAttributedString
 - (NSAttributedString *)titleAttributedStringForNoDataPlaceholder:(UIScrollView *)scrollView;
 
 /// NoDataPlaceholder需要显示的详情富文本
-/// @return NSAttributedString富文本
+/// @return NSAttributedString
 - (NSAttributedString *)detailAttributedStringForNoDataPlaceholder:(UIScrollView *)scrollView;
 
 /// NoDataPlaceholder的图片
