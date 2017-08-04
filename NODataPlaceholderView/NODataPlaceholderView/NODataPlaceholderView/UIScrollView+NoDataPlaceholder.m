@@ -12,12 +12,8 @@
 
 ////////////////////////////////
 
-typedef NSString * ImpLookupDictionaryKey NS_EXTENSIBLE_STRING_ENUM;
+typedef NSString * ImplementationKey NS_EXTENSIBLE_STRING_ENUM;
 
-
-static NSMutableDictionary<NSString *, NSDictionary *> *_impLookupTable;
-
-////////////////////////////////
 static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoDataPlaceholderBackgroundImageViewAnimation";
 
 #pragma mark *** _WeakObjectContainer ***
@@ -30,21 +26,21 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 @end
 
-#pragma mark *** _WeakSwizzlObject ***
+#pragma mark *** _SwizzlingObject ***
 
-@interface _WeakSwizzlObject : NSObject
+@interface _SwizzlingObject : NSObject
 
-@property (nonatomic) Class swizzleClass;
-@property (nonatomic) SEL swizzleSelector;
-@property (nonatomic) NSValue *swizzlePointer;
+@property (nonatomic) Class swizzlingClass;
+@property (nonatomic) SEL swizzlingSelector;
+@property (nonatomic) NSValue *swizzlingPointer;
 
 @end
 
-@interface NSObject (SwizzleExtend)
+@interface NSObject (SwizzlingExtend)
 
-@property (nonatomic, class, readonly) NSMutableDictionary<ImpLookupDictionaryKey, _WeakSwizzlObject *> *impLookupDictionary;
+@property (nonatomic, class, readonly) NSMutableDictionary<ImplementationKey, _SwizzlingObject *> *implementationDictionary;
 
-- (void)swizzleIfPossible:(SEL)selector baseClass:(Class)baseClas;
+- (void)swizzlingIfPossible:(SEL)selector baseClass:(Class)baseClas;
 
 @end
 
@@ -90,7 +86,6 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 @property (nonatomic, readonly) NoDataPlaceholderView *noDataPlaceholderView;
 @property (nonatomic, copy) NoDataPlaceholderContentViewAttribute noDataPlaceholderContentViewAttribute;
-//@property (nonatomic, class, readonly) NSMutableDictionary<ImpLookupDictionaryKey, _WeakSwizzlObject *> *impLookupDictionary;
 
 @end
 
@@ -644,10 +639,10 @@ Class xy_baseClassToSwizzleForTarget(id target) {
     objc_setAssociatedObject(self, @selector(noDataPlaceholderDataSource), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     
     // reloadData方法的实现进行处理
-    [self swizzleIfPossible:@selector(reloadData) baseClass:xy_baseClassToSwizzleForTarget(self)];
+    [self swizzlingIfPossible:@selector(reloadData) baseClass:xy_baseClassToSwizzleForTarget(self)];
     
     if ([self isKindOfClass:[UITableView class]]) {
-        [self swizzleIfPossible:@selector(endUpdates) baseClass:xy_baseClassToSwizzleForTarget(self)];
+        [self swizzlingIfPossible:@selector(endUpdates) baseClass:xy_baseClassToSwizzleForTarget(self)];
     }
 }
 
@@ -737,7 +732,10 @@ customView = _customView;
 
 - (void)didMoveToSuperview {
     CGRect superviewBounds = self.superview.bounds;
-    self.frame = CGRectMake(0.0, 0.0, CGRectGetWidth(superviewBounds), CGRectGetHeight(superviewBounds));
+    self.frame = CGRectMake(0.0,
+                            0.0,
+                            CGRectGetWidth(superviewBounds),
+                            CGRectGetHeight(superviewBounds));
     // 当需要淡入淡出时结合动画执行
     void (^fadeInBlock)(void) = ^{
         _contentView.alpha = 1.0;
@@ -1105,44 +1103,46 @@ customView = _customView;
 
 @end
 
-@implementation _WeakSwizzlObject
+@implementation _SwizzlingObject
 
 - (NSString *)description {
     
-    NSDictionary *descriptionDict = @{@"swizzleClass": self.swizzleClass, @"swizzleSelector": NSStringFromSelector(self.swizzleSelector), @"swizzlePointer": self.swizzlePointer};
+    NSDictionary *descriptionDict = @{@"swizzlingClass": self.swizzlingClass,
+                                      @"swizzlingSelector": NSStringFromSelector(self.swizzlingSelector),
+                                      @"swizzlingPointer": self.swizzlingPointer};
     
     return [descriptionDict description];
 }
 
 @end
 
-@implementation NSObject (SwizzleExtend)
+@implementation NSObject (SwizzlingExtend)
 
 ////////////////////////////////////////////////////////////////////////
-#pragma mark - Method Swizzling
+#pragma mark - Method swizzling
 ////////////////////////////////////////////////////////////////////////
 
 
-- (void)swizzleIfPossible:(SEL)selector baseClass:(Class)baseClas {
+- (void)swizzlingIfPossible:(SEL)selector baseClass:(Class)baseClas {
     
     // 本类未实现则return
     if (![self respondsToSelector:selector]) {
         return;
     }
     
-    NSLog(@"%@", self.impLookupDictionary);
+    NSLog(@"%@", self.implementationDictionary);
     
-    // 确保setImplementation 在UITableView or UICollectionView只调用一次, 也就是每个方法的指针只存储一次
-    for (_WeakSwizzlObject *implObject in self.impLookupDictionary.allValues) {
-        if (selector == implObject.swizzleSelector && [self isKindOfClass:implObject.swizzleClass]) {
+    for (_SwizzlingObject *implObject in self.implementationDictionary.allValues) {
+        // 确保setImplementation 在UITableView or UICollectionView只调用一次, 也就是每个方法的指针只存储一次
+        if (selector == implObject.swizzlingSelector && [self isKindOfClass:implObject.swizzlingClass]) {
             //  当前类已经添加过了，就返回
             return;
         }
     }
     
-    ImpLookupDictionaryKey key = xy_getImplementationKey(baseClas, selector);
-    _WeakSwizzlObject *swizzleObjcet = [self.impLookupDictionary objectForKey:key];
-    NSValue *implValue = swizzleObjcet.swizzlePointer;
+    ImplementationKey key = xy_getImplementationKey(baseClas, selector);
+    _SwizzlingObject *swizzleObjcet = [self.implementationDictionary objectForKey:key];
+    NSValue *implValue = swizzleObjcet.swizzlingPointer;
     
     // 如果该类的实现已经存在，就return
     if (implValue || !key || !baseClas) {
@@ -1152,17 +1152,17 @@ customView = _customView;
     // 注入额外的实现
     Method method = class_getInstanceMethod(baseClas, selector);
     // 设置这个方法的实现
-    IMP newImpl = method_setImplementation(method, (IMP)xy_orginal_implementation);
+    IMP newImpl = method_setImplementation(method, (IMP)xy_orginalImplementation);
     
-    // 将新实现保存到impLookupDictionary中
-    swizzleObjcet = [_WeakSwizzlObject new];
-    swizzleObjcet.swizzleClass = baseClas;
-    swizzleObjcet.swizzleSelector = selector;
-    swizzleObjcet.swizzlePointer = [NSValue valueWithPointer:newImpl];
-    [self.impLookupDictionary setObject:swizzleObjcet forKey:key];
+    // 将新实现保存到implementationDictionary中
+    swizzleObjcet = [_SwizzlingObject new];
+    swizzleObjcet.swizzlingClass = baseClas;
+    swizzleObjcet.swizzlingSelector = selector;
+    swizzleObjcet.swizzlingPointer = [NSValue valueWithPointer:newImpl];
+    [self.implementationDictionary setObject:swizzleObjcet forKey:key];
 }
 
-/// 根据类名和方法，拼接字符串，作为_impLookupTable的key
+/// 根据类名和方法，拼接字符串，作为implementationDictionary的key
 NSString * xy_getImplementationKey(Class clas, SEL selector) {
     if (clas == nil || selector == nil) {
         return nil;
@@ -1174,12 +1174,12 @@ NSString * xy_getImplementationKey(Class clas, SEL selector) {
 }
 
 // 对原方法的实现进行加工
-void xy_orginal_implementation(id self, SEL _cmd) {
+void xy_orginalImplementation(id self, SEL _cmd) {
     // 从查找表中获取原始实现
     Class baseCls = xy_baseClassToSwizzleForTarget(self);
-    ImpLookupDictionaryKey key = xy_getImplementationKey(baseCls, _cmd);
-    _WeakSwizzlObject *swizzleObject = [[self impLookupDictionary] objectForKey:key];
-    NSValue *implValue = swizzleObject.swizzlePointer;
+    ImplementationKey key = xy_getImplementationKey(baseCls, _cmd);
+    _SwizzlingObject *swizzleObject = [[self implementationDictionary] objectForKey:key];
+    NSValue *implValue = swizzleObject.swizzlingPointer;
     
     // 获取原方法的实现
     IMP impPointer = [implValue pointerValue];
@@ -1193,7 +1193,7 @@ void xy_orginal_implementation(id self, SEL _cmd) {
         ((void(*)(id, SEL))impPointer)(self, _cmd);
     }
 }
-+ (NSMutableDictionary *)impLookupDictionary {
++ (NSMutableDictionary *)implementationDictionary {
     static NSMutableDictionary *table = nil;
     table = objc_getAssociatedObject(self, _cmd);
     static dispatch_once_t onceToken;
@@ -1204,8 +1204,8 @@ void xy_orginal_implementation(id self, SEL _cmd) {
     return table;
 }
 
-- (NSMutableDictionary<ImpLookupDictionaryKey, _WeakSwizzlObject *> *)impLookupDictionary {
-    return self.class.impLookupDictionary;
+- (NSMutableDictionary<ImplementationKey, _SwizzlingObject *> *)implementationDictionary {
+    return self.class.implementationDictionary;
 }
 
 @end
