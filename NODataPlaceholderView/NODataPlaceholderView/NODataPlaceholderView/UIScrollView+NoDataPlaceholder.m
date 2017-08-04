@@ -971,6 +971,9 @@ customView = _customView;
             views[[subviewsNames lastObject]] = _imageView;
             
             [self.contentView addConstraint:[self.contentView equallyConstraintWithView:_imageView attribute:NSLayoutAttributeCenterX]];
+        } else {
+            [_imageView removeFromSuperview];
+            _imageView = nil;
         }
         
         // 根据title是否可以显示，设置titleLable的水平约束
