@@ -18,7 +18,6 @@ typedef void(^NoDataPlaceholderContentViewAttribute)(UIButton * const reloadBtn,
 
 @property (nonatomic, weak, nullable) id<NoDataPlaceholderDataSource> noDataPlaceholderDataSource;
 @property (nonatomic, weak, nullable) id<NoDataPlaceholderDelegate> noDataPlaceholderDelegate;
-@property (nonatomic, assign, readonly, getter=isNoDatasetVisible) BOOL noDatasetVisible;
 
 @property (nonatomic, assign, getter=isLoading) BOOL loading;
 

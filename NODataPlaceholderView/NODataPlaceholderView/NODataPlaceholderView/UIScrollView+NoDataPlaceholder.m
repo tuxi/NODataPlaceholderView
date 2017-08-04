@@ -448,7 +448,7 @@ Class xy_baseClassToSwizzleForTarget(id target) {
         return;
     }
     
-    if (([self xy_noDataPlacehodlerShouldDisplay] && [self xy_itemCount] == 0) || [self xy_noDataPlacehodlerShouldBeForcedToDisplay]) {
+    if (([self xy_noDataPlacehodlerShouldDisplay] && ![self xy_itemCount]) || [self xy_noDataPlacehodlerShouldBeForcedToDisplay]) {
         
         // 通知代理即将显示
         [self xy_noDataPlaceholderViewWillAppear];
@@ -555,7 +555,7 @@ Class xy_baseClassToSwizzleForTarget(id target) {
         // 通知代理完全显示
         [self xy_noDataPlacehodlerDidAppear];
         
-    } else if (self.isNoDatasetVisible) {
+    } else {
         [self xy_removeNoDataPlacehodlerView];
     }
     
@@ -611,10 +611,6 @@ Class xy_baseClassToSwizzleForTarget(id target) {
     return container.weakObject;
 }
 
-- (BOOL)isNoDatasetVisible {
-    UIView *view = objc_getAssociatedObject(self, _cmd);
-    return view ? !view.hidden : NO;
-}
 
 - (BOOL)isLoading {
     return [objc_getAssociatedObject(self, _cmd) boolValue];
