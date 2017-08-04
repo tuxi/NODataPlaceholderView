@@ -965,8 +965,8 @@ customView = _customView;
         NSMutableDictionary *views = [NSMutableDictionary dictionaryWithCapacity:0];
         NSDictionary *metrics = @{@"horizontalSpace": @(horizontalSpace)};
         
-        // 设置backgroundImageView水平约束
-        if (_imageView.superview) {
+        // 设置imageView水平约束
+        if ([self canShowImage]) {
             [subviewsNames addObject:@"imageView"];
             views[[subviewsNames lastObject]] = _imageView;
             
