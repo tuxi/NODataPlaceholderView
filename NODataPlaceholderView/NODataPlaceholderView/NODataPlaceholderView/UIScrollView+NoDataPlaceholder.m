@@ -31,8 +31,9 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 @interface _SwizzlingObject : NSObject
 
 @property (nonatomic) Class swizzlingClass;
+@property (nonatomic) SEL orginSelector;
 @property (nonatomic) SEL swizzlingSelector;
-@property (nonatomic) NSValue *swizzlingPointer;
+@property (nonatomic) NSValue *swizzlingImplPointer;
 
 @end
 
@@ -40,7 +41,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 @property (nonatomic, class, readonly) NSMutableDictionary<ImplementationKey, _SwizzlingObject *> *implementationDictionary;
 
-- (void)swizzlingIfPossible:(SEL)selector baseClass:(Class)baseClas;
+- (void)swizzlingIfPossibleWithOrginSelector:(SEL)orginSelector swizzlingSelector:(SEL)swizzlingSelector baseClass:(Class)baseClas;
 
 @end
 
@@ -638,11 +639,13 @@ Class xy_baseClassToSwizzleForTarget(id target) {
     _WeakObjectContainer *container = [[_WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDataSource];
     objc_setAssociatedObject(self, @selector(noDataPlaceholderDataSource), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     
-    // reloadData方法的实现进行处理
-    [self swizzlingIfPossible:@selector(reloadData) baseClass:xy_baseClassToSwizzleForTarget(self)];
-    
+    // 对reloadData方法的实现进行处理
+    // 为加载reloadData时注入额外的实现
+    // 当它在调用原来的执行的方法时并及时更新 'isNoDatasetVisible'属性的值
+    [self swizzlingIfPossibleWithOrginSelector:@selector(reloadData) swizzlingSelector:@selector(xy_reloadNoDataView) baseClass:xy_baseClassToSwizzleForTarget(self)];
+
     if ([self isKindOfClass:[UITableView class]]) {
-        [self swizzlingIfPossible:@selector(endUpdates) baseClass:xy_baseClassToSwizzleForTarget(self)];
+        [self swizzlingIfPossibleWithOrginSelector:@selector(endUpdates) swizzlingSelector:@selector(xy_reloadNoDataView) baseClass:xy_baseClassToSwizzleForTarget(self)];
     }
 }
 
@@ -1111,8 +1114,8 @@ customView = _customView;
 - (NSString *)description {
     
     NSDictionary *descriptionDict = @{@"swizzlingClass": self.swizzlingClass,
-                                      @"swizzlingSelector": NSStringFromSelector(self.swizzlingSelector),
-                                      @"swizzlingPointer": self.swizzlingPointer};
+                                      @"orginSelector": NSStringFromSelector(self.orginSelector),
+                                      @"swizzlingImplPointer": self.swizzlingImplPointer};
     
     return [descriptionDict description];
 }
@@ -1126,10 +1129,10 @@ customView = _customView;
 ////////////////////////////////////////////////////////////////////////
 
 
-- (void)swizzlingIfPossible:(SEL)selector baseClass:(Class)baseClas {
+- (void)swizzlingIfPossibleWithOrginSelector:(SEL)orginSelector swizzlingSelector:(SEL)swizzlingSelector baseClass:(Class)baseClas {
     
     // 本类未实现则return
-    if (![self respondsToSelector:selector]) {
+    if (![self respondsToSelector:orginSelector]) {
         return;
     }
     
@@ -1137,15 +1140,15 @@ customView = _customView;
     
     for (_SwizzlingObject *implObject in self.implementationDictionary.allValues) {
         // 确保setImplementation 在UITableView or UICollectionView只调用一次, 也就是每个方法的指针只存储一次
-        if (selector == implObject.swizzlingSelector && [self isKindOfClass:implObject.swizzlingClass]) {
+        if (orginSelector == implObject.orginSelector && [self isKindOfClass:implObject.swizzlingClass]) {
             //  当前类已经添加过了，就返回
             return;
         }
     }
     
-    ImplementationKey key = xy_getImplementationKey(baseClas, selector);
+    ImplementationKey key = xy_getImplementationKey(baseClas, orginSelector);
     _SwizzlingObject *swizzleObjcet = [self.implementationDictionary objectForKey:key];
-    NSValue *implValue = swizzleObjcet.swizzlingPointer;
+    NSValue *implValue = swizzleObjcet.swizzlingImplPointer;
     
     // 如果该类的实现已经存在，就return
     if (implValue || !key || !baseClas) {
@@ -1153,15 +1156,16 @@ customView = _customView;
     }
     
     // 注入额外的实现
-    Method method = class_getInstanceMethod(baseClas, selector);
+    Method method = class_getInstanceMethod(baseClas, orginSelector);
     // 设置这个方法的实现
     IMP newImpl = method_setImplementation(method, (IMP)xy_orginalImplementation);
     
     // 将新实现保存到implementationDictionary中
     swizzleObjcet = [_SwizzlingObject new];
     swizzleObjcet.swizzlingClass = baseClas;
-    swizzleObjcet.swizzlingSelector = selector;
-    swizzleObjcet.swizzlingPointer = [NSValue valueWithPointer:newImpl];
+    swizzleObjcet.orginSelector = orginSelector;
+    swizzleObjcet.swizzlingImplPointer = [NSValue valueWithPointer:newImpl];
+    swizzleObjcet.swizzlingSelector = swizzlingSelector;
     [self.implementationDictionary setObject:swizzleObjcet forKey:key];
 }
 
@@ -1182,14 +1186,16 @@ void xy_orginalImplementation(id self, SEL _cmd) {
     Class baseCls = xy_baseClassToSwizzleForTarget(self);
     ImplementationKey key = xy_getImplementationKey(baseCls, _cmd);
     _SwizzlingObject *swizzleObject = [[self implementationDictionary] objectForKey:key];
-    NSValue *implValue = swizzleObject.swizzlingPointer;
+    NSValue *implValue = swizzleObject.swizzlingImplPointer;
     
     // 获取原方法的实现
     IMP impPointer = [implValue pointerValue];
     
-    // 为加载NODataPlaceholderView时注入额外的实现
-    // 当它在调用原来的执行的方法时并及时更新 'isNoDatasetVisible'属性的值
-    [self xy_reloadNoDataView];
+    // 执行swizzing
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+    [self performSelector:swizzleObject.swizzlingSelector];
+#pragma clang diagnostic pop
     
     // 如果找到原实现，就调用原实现
     if (impPointer) {
