@@ -612,10 +612,6 @@ Class xy_baseClassToSwizzleForTarget(id target) {
 }
 
 
-- (BOOL)isLoading {
-    return [objc_getAssociatedObject(self, _cmd) boolValue];
-}
-
 - (NoDataPlaceholderContentViewAttribute)noDataPlaceholderContentViewAttribute {
     return objc_getAssociatedObject(self, _cmd);
 }
@@ -626,6 +622,11 @@ Class xy_baseClassToSwizzleForTarget(id target) {
 ////////////////////////////////////////////////////////////////////////
 
 - (void)setNoDataPlaceholderDataSource:(id<NoDataPlaceholderDataSource>)noDataPlaceholderDataSource {
+    
+    if (noDataPlaceholderDataSource == self.noDataPlaceholderDataSource) {
+        return;
+    }
+    
     if (!noDataPlaceholderDataSource || ![self xy_noDataPlacehodlerCanDisplay]) {
         [self xy_removeNoDataPlacehodlerView];
     }
@@ -645,6 +646,11 @@ Class xy_baseClassToSwizzleForTarget(id target) {
 
 
 - (void)setNoDataPlaceholderDelegate:(id<NoDataPlaceholderDelegate>)noDataPlaceholderDelegate {
+    
+    if (noDataPlaceholderDelegate == self.noDataPlaceholderDelegate) {
+        return;
+    }
+    
     if (noDataPlaceholderDelegate == nil) {
         [self xy_removeNoDataPlacehodlerView];
     }
@@ -656,20 +662,6 @@ Class xy_baseClassToSwizzleForTarget(id target) {
     objc_setAssociatedObject(self, @selector(noDataPlaceholderView), noDataPlaceholderView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
-- (void)setLoading:(BOOL)loading {
-    
-    if (self.isLoading == loading) {
-        return;
-    }
-    
-    objc_setAssociatedObject(self, @selector(isLoading), @(loading), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    
-    if ([self respondsToSelector:@selector(reloadData)]) {
-        [self performSelector:@selector(reloadData)];
-    } else {
-        [self xy_reloadNoDataView];
-    }
-}
 
 - (void)setNoDataPlaceholderContentViewAttribute:(NoDataPlaceholderContentViewAttribute)noDataPlaceholderContentViewAttribute {
     objc_setAssociatedObject(self, @selector(noDataPlaceholderContentViewAttribute), noDataPlaceholderContentViewAttribute, OBJC_ASSOCIATION_COPY_NONATOMIC);
@@ -1132,7 +1124,6 @@ customView = _customView;
     for (_SwizzlingObject *implObject in self.implementationDictionary.allValues) {
         // 确保setImplementation 在UITableView or UICollectionView只调用一次, 也就是每个方法的指针只存储一次
         if (orginSelector == implObject.orginSelector && [self isKindOfClass:implObject.swizzlingClass]) {
-            //  当前类已经添加过了，就返回
             return;
         }
     }
@@ -1186,7 +1177,7 @@ void xy_orginalImplementation(id self, SEL _cmd) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
     SEL swizzlingSelector = swizzleObject.swizzlingSelector;
-    if ([self respondsToSelector:@selector(swizzlingSelector)]) {
+    if ([self respondsToSelector:swizzlingSelector]) {
         [self performSelector:swizzlingSelector];
     }
 #pragma clang diagnostic pop

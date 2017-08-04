@@ -12,4 +12,6 @@
 
 @property (nonatomic, copy) void (^reloadButtonClickBlock)();
 
+@property (nonatomic, assign, getter=isLoading) BOOL loading;
+
 @end

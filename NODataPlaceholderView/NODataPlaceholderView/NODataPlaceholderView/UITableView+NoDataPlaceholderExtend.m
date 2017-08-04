@@ -159,19 +159,12 @@
 
 - (void)setLoading:(BOOL)loading {
     
-    [super setLoading:loading];
-    
-    self.noDataPlaceholderDataSource = self;
-    self.noDataPlaceholderDelegate = self;
-    
-    [self noDataPlaceholderExtend_setup];
-    
-    [self reloadNoDataView];
+    objc_setAssociatedObject(self, @selector(isLoading), @(loading), OBJC_ASSOCIATION_ASSIGN);
     
 }
 
 - (BOOL)isLoading {
-    return [super isLoading];
+    return [objc_getAssociatedObject(self, _cmd) boolValue];
 }
 
 - (void (^)())reloadButtonClickBlock {
@@ -181,11 +174,14 @@
 
 - (void)setReloadButtonClickBlock:(void (^)())reloadButtonClickBlock {
     objc_setAssociatedObject(self, @selector(reloadButtonClickBlock), reloadButtonClickBlock, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    self.noDataPlaceholderDataSource = self;
+    self.noDataPlaceholderDelegate = self;
+    [self noDataPlaceholderExtendSetup];
 }
 
 #pragma mark - Others
 
-- (void)noDataPlaceholderExtend_setup {
+- (void)noDataPlaceholderExtendSetup {
      //在这个block块中设置传入的子控件属性，会导致这些子控件相关的数据源方法不再调用
 //    __weak typeof(self) weakSelf = self;
 //    [self setNoDataPlaceholderContentViewAttribute:^(UIButton *const  _Nonnull reloadBtn, UILabel *const  _Nonnull titleLabel, UILabel *const  _Nonnull detailLabel, UIImageView *const  _Nonnull imageView) {

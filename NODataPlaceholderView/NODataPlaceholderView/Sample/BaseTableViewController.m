@@ -21,8 +21,6 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    self.tableView.loading = NO;
-
     _dataSource = [NSMutableArray array];
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"reuseIdentifier"];
     

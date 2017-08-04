@@ -19,7 +19,6 @@ typedef void(^NoDataPlaceholderContentViewAttribute)(UIButton * const reloadBtn,
 @property (nonatomic, weak, nullable) id<NoDataPlaceholderDataSource> noDataPlaceholderDataSource;
 @property (nonatomic, weak, nullable) id<NoDataPlaceholderDelegate> noDataPlaceholderDelegate;
 
-@property (nonatomic, assign, getter=isLoading) BOOL loading;
 
 /// 刷新NoDataPlaceholder, 当执行reloadData时也会执行该方法内部的实现
 - (void)reloadNoDataView;
