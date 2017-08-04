@@ -10,8 +10,6 @@
 #import <objc/runtime.h>
 
 
-////////////////////////////////
-
 typedef NSString * ImplementationKey NS_EXTENSIBLE_STRING_ENUM;
 
 static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoDataPlaceholderBackgroundImageViewAnimation";
@@ -41,7 +39,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 @property (nonatomic, class, readonly) NSMutableDictionary<ImplementationKey, _SwizzlingObject *> *implementationDictionary;
 
-- (void)swizzlingIfPossibleWithOrginSelector:(SEL)orginSelector swizzlingSelector:(SEL)swizzlingSelector baseClass:(Class)baseClas;
+- (void)hockSelector:(SEL)orginSelector swizzlingSelector:(SEL)swizzlingSelector baseClass:(Class)baseClas;
 
 @end
 
@@ -74,8 +72,8 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 /// 设置子控件的约束
 - (void)setupConstraints;
-/// 准备复用,移除所有子控件及其约束
-- (void)prepareForReuse;
+/// 移除所有子控件及其约束
+- (void)resetSubviews;
 /// 设置tap手势
 - (void)tapGestureRecognizer:(void (^)(UITapGestureRecognizer *))tapBlock;
 
@@ -468,7 +466,7 @@ Class xy_baseClassToSwizzleForTarget(id target) {
         }
         
         // 重置视图及其约束对于保证良好状态
-        [noDataPlaceholderView prepareForReuse];
+        [noDataPlaceholderView resetSubviews];
         
         UIView *customView = [self xy_noDataPlacehodlerCustomView];
         if (customView) {
@@ -568,7 +566,7 @@ Class xy_baseClassToSwizzleForTarget(id target) {
     [self xy_noDataPlacehodlerWillDisappear];
     
     if (self.noDataPlaceholderView) {
-        [self.noDataPlaceholderView prepareForReuse];
+        [self.noDataPlaceholderView resetSubviews];
         [self.noDataPlaceholderView removeFromSuperview];
         
         [self setNoDataPlaceholderView:nil];
@@ -642,10 +640,10 @@ Class xy_baseClassToSwizzleForTarget(id target) {
     // 对reloadData方法的实现进行处理
     // 为加载reloadData时注入额外的实现
     // 当它在调用原来的执行的方法时并及时更新 'isNoDatasetVisible'属性的值
-    [self swizzlingIfPossibleWithOrginSelector:@selector(reloadData) swizzlingSelector:@selector(xy_reloadNoDataView) baseClass:xy_baseClassToSwizzleForTarget(self)];
-
+    [self hockSelector:@selector(reloadData) swizzlingSelector:@selector(xy_reloadNoDataView) baseClass:xy_baseClassToSwizzleForTarget(self)];
+    
     if ([self isKindOfClass:[UITableView class]]) {
-        [self swizzlingIfPossibleWithOrginSelector:@selector(endUpdates) swizzlingSelector:@selector(xy_reloadNoDataView) baseClass:xy_baseClassToSwizzleForTarget(self)];
+        [self hockSelector:@selector(endUpdates) swizzlingSelector:@selector(xy_reloadNoDataView) baseClass:xy_baseClassToSwizzleForTarget(self)];
     }
 }
 
@@ -664,20 +662,17 @@ Class xy_baseClassToSwizzleForTarget(id target) {
 
 - (void)setLoading:(BOOL)loading {
     
-    if (self.loading == loading) {
+    if (self.isLoading == loading) {
         return;
     }
     
     objc_setAssociatedObject(self, @selector(isLoading), @(loading), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     
-    // 这里最好还是别干预reloadData,只刷新NoDataView
-    [self reloadNoDataView];
-    
-    //    if ([self respondsToSelector:@selector(reloadData)]) {
-    //        [self performSelector:@selector(reloadData)];
-    //    } else {
-    //        [self reloadNoDataView];
-    //    }
+    if ([self respondsToSelector:@selector(reloadData)]) {
+        [self performSelector:@selector(reloadData)];
+    } else {
+        [self xy_reloadNoDataView];
+    }
 }
 
 - (void)setNoDataPlaceholderContentViewAttribute:(NoDataPlaceholderContentViewAttribute)noDataPlaceholderContentViewAttribute {
@@ -691,7 +686,7 @@ Class xy_baseClassToSwizzleForTarget(id target) {
 
 /// 创建视图的约束
 - (NSLayoutConstraint *)equallyConstraintWithView:(UIView *)view
-                                               attribute:(NSLayoutAttribute)attribute;
+                                        attribute:(NSLayoutAttribute)attribute;
 
 @end
 
@@ -1070,7 +1065,7 @@ customView = _customView;
     return nil;
 }
 
-- (void)prepareForReuse {
+- (void)resetSubviews {
     [_contentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     _titleLabel = nil;
     _detailLabel = nil;
@@ -1086,7 +1081,7 @@ customView = _customView;
 @implementation UIView (ConstraintBasedLayoutExtensions)
 
 - (NSLayoutConstraint *)equallyConstraintWithView:(UIView *)view
-                                               attribute:(NSLayoutAttribute)attribute {
+                                        attribute:(NSLayoutAttribute)attribute {
     
     return [NSLayoutConstraint constraintWithItem:view
                                         attribute:attribute
@@ -1129,7 +1124,7 @@ customView = _customView;
 ////////////////////////////////////////////////////////////////////////
 
 
-- (void)swizzlingIfPossibleWithOrginSelector:(SEL)orginSelector swizzlingSelector:(SEL)swizzlingSelector baseClass:(Class)baseClas {
+- (void)hockSelector:(SEL)orginSelector swizzlingSelector:(SEL)swizzlingSelector baseClass:(Class)baseClas {
     
     // 本类未实现则return
     if (![self respondsToSelector:orginSelector]) {
@@ -1182,7 +1177,7 @@ NSString * xy_getImplementationKey(Class clas, SEL selector) {
 
 // 对原方法的实现进行加工
 void xy_orginalImplementation(id self, SEL _cmd) {
-    // 从查找表中获取原始实现
+    
     Class baseCls = xy_baseClassToSwizzleForTarget(self);
     ImplementationKey key = xy_getImplementationKey(baseCls, _cmd);
     _SwizzlingObject *swizzleObject = [[self implementationDictionary] objectForKey:key];
@@ -1194,10 +1189,13 @@ void xy_orginalImplementation(id self, SEL _cmd) {
     // 执行swizzing
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-    [self performSelector:swizzleObject.swizzlingSelector];
+    SEL swizzlingSelector = swizzleObject.swizzlingSelector;
+    if ([self respondsToSelector:@selector(swizzlingSelector)]) {
+        [self performSelector:swizzlingSelector];
+    }
 #pragma clang diagnostic pop
     
-    // 如果找到原实现，就调用原实现
+    // 执行原实现
     if (impPointer) {
         ((void(*)(id, SEL))impPointer)(self, _cmd);
     }
