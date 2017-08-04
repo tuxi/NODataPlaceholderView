@@ -32,16 +32,19 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 #pragma mark *** _WeakSwizzlObject ***
 
-// 支持3个基类 UITableView UICollectionView UIScrollView
 @interface _WeakSwizzlObject : NSObject
 
-/// 存储_impLookupTable中swizzledInfo字典中基类名的key
 @property (nonatomic) Class swizzleClass;
-/// 存储_impLookupTable中swizzledInfo字典中原方法名称的key
 @property (nonatomic) SEL swizzleSelector;
-/// 存储_impLookupTable中swizzledInfo字典中原方法的新的实现的地址
 @property (nonatomic) NSValue *swizzlePointer;
 
+@end
+
+@interface NSObject (SwizzleExtend)
+
+@property (nonatomic, class, readonly) NSMutableDictionary<ImpLookupDictionaryKey, _WeakSwizzlObject *> *impLookupDictionary;
+
+- (void)swizzleIfPossible:(SEL)selector baseClass:(Class)baseClas;
 
 @end
 
@@ -87,7 +90,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 @property (nonatomic, readonly) NoDataPlaceholderView *noDataPlaceholderView;
 @property (nonatomic, copy) NoDataPlaceholderContentViewAttribute noDataPlaceholderContentViewAttribute;
-@property (nonatomic, class, readonly) NSMutableDictionary<ImpLookupDictionaryKey, _WeakSwizzlObject *> *impLookupDictionary;
+//@property (nonatomic, class, readonly) NSMutableDictionary<ImpLookupDictionaryKey, _WeakSwizzlObject *> *impLookupDictionary;
 
 @end
 
@@ -395,52 +398,6 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return offset;
 }
 
-////////////////////////////////////////////////////////////////////////
-#pragma mark - Method Swizzling
-////////////////////////////////////////////////////////////////////////
-
-
-- (void)swizzleIfPossible:(SEL)selector {
-    
-    // 本类未实现则return
-    if (![self respondsToSelector:selector]) {
-        return;
-    }
-    
-    NSLog(@"%@", self.impLookupDictionary);
-    
-    // 确保setImplementation 在UITableView or UICollectionView只调用一次, 也就是每个方法的指针只存储一次
-    for (_WeakSwizzlObject *implObject in self.impLookupDictionary.allValues) {
-        if (selector == implObject.swizzleSelector && [self isKindOfClass:implObject.swizzleClass]) {
-            //  当前类已经添加过了，就返回
-            return;
-        }
-    }
-
-    // 检查当前类的基类：UITableView  UICollectionView  UIScrollView
-    Class baseClas = xy_baseClassToSwizzleForTarget(self);
-    ImpLookupDictionaryKey key = xy_getImplementationKey(baseClas, selector);
-    _WeakSwizzlObject *swizzleObjcet = [self.impLookupDictionary objectForKey:key];
-    NSValue *implValue = swizzleObjcet.swizzlePointer;
-    
-    // 如果该类的实现已经存在，就return
-    if (implValue || !key || !baseClas) {
-        return;
-    }
-    
-    // 注入额外的实现
-    Method method = class_getInstanceMethod(baseClas, selector);
-    // 设置这个方法的实现
-    IMP newImpl = method_setImplementation(method, (IMP)xy_orginal_implementation);
-    
-    // 将新实现保存到impLookupDictionary中
-    swizzleObjcet = [_WeakSwizzlObject new];
-    swizzleObjcet.swizzleClass = baseClas;
-    swizzleObjcet.swizzleSelector = selector;
-    swizzleObjcet.swizzlePointer = [NSValue valueWithPointer:newImpl];
-    [self.impLookupDictionary setObject:swizzleObjcet forKey:key];
-}
-
 /// 检查当前类是否符合，符合就返回当前类的基类，不符合返回nil
 /// 只能关联这三个类或其子类的， 基类为：UITableView  UICollectionView  UIScrollView
 Class xy_baseClassToSwizzleForTarget(id target) {
@@ -456,38 +413,6 @@ Class xy_baseClassToSwizzleForTarget(id target) {
     return nil;
 }
 
-
-/// 根据类名和方法，拼接字符串，作为_impLookupTable的key
-NSString * xy_getImplementationKey(Class clas, SEL selector) {
-    if (clas == nil || selector == nil) {
-        return nil;
-    }
-    
-    NSString *className = NSStringFromClass(clas);
-    NSString *selectorName = NSStringFromSelector(selector);
-    return [NSString stringWithFormat:@"%@_%@", className, selectorName];
-}
-
-// 对原方法的实现进行加工
-void xy_orginal_implementation(id self, SEL _cmd) {
-    // 从查找表中获取原始实现
-    Class baseCls = xy_baseClassToSwizzleForTarget(self);
-    ImpLookupDictionaryKey key = xy_getImplementationKey(baseCls, _cmd);
-    _WeakSwizzlObject *swizzleObject = [[self impLookupDictionary] objectForKey:key];
-    NSValue *implValue = swizzleObject.swizzlePointer;
-    
-    // 获取原方法的实现
-    IMP impPointer = [implValue pointerValue];
-    
-    // 为加载NODataPlaceholderView时注入额外的实现
-    // 当它在调用原来的执行的方法时并及时更新 'isNoDatasetVisible'属性的值
-    [self xy_reloadNoDataView];
-    
-    // 如果找到原实现，就调用原实现
-    if (impPointer) {
-        ((void(*)(id, SEL))impPointer)(self, _cmd);
-    }
-}
 
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - UIGestureRecognizerDelegate
@@ -705,20 +630,6 @@ void xy_orginal_implementation(id self, SEL _cmd) {
     return objc_getAssociatedObject(self, _cmd);
 }
 
-+ (NSMutableDictionary *)impLookupDictionary {
-    static NSMutableDictionary *table = nil;
-    table = objc_getAssociatedObject(self, _cmd);
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        table = [NSMutableDictionary dictionary];
-        objc_setAssociatedObject(self, _cmd, table, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    });
-    return table;
-}
-
-- (NSMutableDictionary<ImpLookupDictionaryKey, _WeakSwizzlObject *> *)impLookupDictionary {
-    return self.class.impLookupDictionary;
-}
 
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - set
@@ -733,10 +644,10 @@ void xy_orginal_implementation(id self, SEL _cmd) {
     objc_setAssociatedObject(self, @selector(noDataPlaceholderDataSource), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     
     // reloadData方法的实现进行处理
-    [self swizzleIfPossible:@selector(reloadData)];
+    [self swizzleIfPossible:@selector(reloadData) baseClass:xy_baseClassToSwizzleForTarget(self)];
     
     if ([self isKindOfClass:[UITableView class]]) {
-        [self swizzleIfPossible:@selector(endUpdates)];
+        [self swizzleIfPossible:@selector(endUpdates) baseClass:xy_baseClassToSwizzleForTarget(self)];
     }
 }
 
@@ -1201,6 +1112,100 @@ customView = _customView;
     NSDictionary *descriptionDict = @{@"swizzleClass": self.swizzleClass, @"swizzleSelector": NSStringFromSelector(self.swizzleSelector), @"swizzlePointer": self.swizzlePointer};
     
     return [descriptionDict description];
+}
+
+@end
+
+@implementation NSObject (SwizzleExtend)
+
+////////////////////////////////////////////////////////////////////////
+#pragma mark - Method Swizzling
+////////////////////////////////////////////////////////////////////////
+
+
+- (void)swizzleIfPossible:(SEL)selector baseClass:(Class)baseClas {
+    
+    // 本类未实现则return
+    if (![self respondsToSelector:selector]) {
+        return;
+    }
+    
+    NSLog(@"%@", self.impLookupDictionary);
+    
+    // 确保setImplementation 在UITableView or UICollectionView只调用一次, 也就是每个方法的指针只存储一次
+    for (_WeakSwizzlObject *implObject in self.impLookupDictionary.allValues) {
+        if (selector == implObject.swizzleSelector && [self isKindOfClass:implObject.swizzleClass]) {
+            //  当前类已经添加过了，就返回
+            return;
+        }
+    }
+    
+    ImpLookupDictionaryKey key = xy_getImplementationKey(baseClas, selector);
+    _WeakSwizzlObject *swizzleObjcet = [self.impLookupDictionary objectForKey:key];
+    NSValue *implValue = swizzleObjcet.swizzlePointer;
+    
+    // 如果该类的实现已经存在，就return
+    if (implValue || !key || !baseClas) {
+        return;
+    }
+    
+    // 注入额外的实现
+    Method method = class_getInstanceMethod(baseClas, selector);
+    // 设置这个方法的实现
+    IMP newImpl = method_setImplementation(method, (IMP)xy_orginal_implementation);
+    
+    // 将新实现保存到impLookupDictionary中
+    swizzleObjcet = [_WeakSwizzlObject new];
+    swizzleObjcet.swizzleClass = baseClas;
+    swizzleObjcet.swizzleSelector = selector;
+    swizzleObjcet.swizzlePointer = [NSValue valueWithPointer:newImpl];
+    [self.impLookupDictionary setObject:swizzleObjcet forKey:key];
+}
+
+/// 根据类名和方法，拼接字符串，作为_impLookupTable的key
+NSString * xy_getImplementationKey(Class clas, SEL selector) {
+    if (clas == nil || selector == nil) {
+        return nil;
+    }
+    
+    NSString *className = NSStringFromClass(clas);
+    NSString *selectorName = NSStringFromSelector(selector);
+    return [NSString stringWithFormat:@"%@_%@", className, selectorName];
+}
+
+// 对原方法的实现进行加工
+void xy_orginal_implementation(id self, SEL _cmd) {
+    // 从查找表中获取原始实现
+    Class baseCls = xy_baseClassToSwizzleForTarget(self);
+    ImpLookupDictionaryKey key = xy_getImplementationKey(baseCls, _cmd);
+    _WeakSwizzlObject *swizzleObject = [[self impLookupDictionary] objectForKey:key];
+    NSValue *implValue = swizzleObject.swizzlePointer;
+    
+    // 获取原方法的实现
+    IMP impPointer = [implValue pointerValue];
+    
+    // 为加载NODataPlaceholderView时注入额外的实现
+    // 当它在调用原来的执行的方法时并及时更新 'isNoDatasetVisible'属性的值
+    [self xy_reloadNoDataView];
+    
+    // 如果找到原实现，就调用原实现
+    if (impPointer) {
+        ((void(*)(id, SEL))impPointer)(self, _cmd);
+    }
+}
++ (NSMutableDictionary *)impLookupDictionary {
+    static NSMutableDictionary *table = nil;
+    table = objc_getAssociatedObject(self, _cmd);
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        table = [NSMutableDictionary dictionary];
+        objc_setAssociatedObject(self, _cmd, table, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    });
+    return table;
+}
+
+- (NSMutableDictionary<ImpLookupDictionaryKey, _WeakSwizzlObject *> *)impLookupDictionary {
+    return self.class.impLookupDictionary;
 }
 
 @end
