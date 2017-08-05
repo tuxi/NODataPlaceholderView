@@ -43,6 +43,12 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 @end
 
+@interface UIView (NoDataPlaceholderViewEdgeInsetsExtend)
+
+@property (nonatomic) UIEdgeInsets noDataPlaceholderViewContentEdgeInsets;
+
+@end
+
 #pragma mark *** NoDataPlaceholderView ***
 
 @interface NoDataPlaceholderView : UIView
@@ -63,8 +69,13 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 @property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
 /** 中心点y的偏移量 */
 @property (nonatomic, assign) CGFloat contentOffsetY;
-/** 垂直间距 */
-@property (nonatomic, assign) CGFloat verticalSpace;
+/** 所有子控件之间垂直间距 */
+@property (nonatomic, assign) CGFloat globalverticalSpace;
+/** 各子控件之间的边距，若设置此边距则 */
+@property (nonatomic, assign) UIEdgeInsets titleEdgeInsets;
+@property (nonatomic, assign) UIEdgeInsets imageEdgeInsets;
+@property (nonatomic, assign) UIEdgeInsets detailEdgeInsets;
+@property (nonatomic, assign) UIEdgeInsets buttonEdgeInsets;
 /** 是否淡入淡出显示 */
 @property (nonatomic, assign) BOOL fadeInOnDisplay;
 /** tap手势回调block */
@@ -116,74 +127,6 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return flag;
 }
 
-- (void)setCustomNoDataView:(UIView * _Nonnull (^)(void))customNoDataView {
-    objc_setAssociatedObject(self, @selector(customNoDataView), customNoDataView, OBJC_ASSOCIATION_COPY_NONATOMIC);
-    [self registerNoDataPlaceholder];
-}
-
-- (UIView * _Nonnull (^)(void))customNoDataView {
-    return objc_getAssociatedObject(self, _cmd);
-}
-
-- (void)setNoDataTextLabel:(UILabel * _Nonnull (^)(void))noDataTextLabel {
-    objc_setAssociatedObject(self, @selector(noDataTextLabel), noDataTextLabel, OBJC_ASSOCIATION_COPY_NONATOMIC);
-    [self registerNoDataPlaceholder];
-}
-
-- (UILabel * _Nonnull (^)(void))noDataTextLabel {
-    return objc_getAssociatedObject(self, _cmd);
-}
-
-- (void)setNoDataDetailTextLabel:(UILabel * _Nonnull (^)(void))noDataDetailTextLabel {
-    objc_setAssociatedObject(self, @selector(noDataDetailTextLabel), noDataDetailTextLabel, OBJC_ASSOCIATION_COPY_NONATOMIC);
-    [self registerNoDataPlaceholder];
-}
-
-- (UILabel * _Nonnull (^)(void))noDataDetailTextLabel {
-    return objc_getAssociatedObject(self, _cmd);
-}
-
-- (void)setNoDataImageView:(UIImageView * _Nonnull (^)(void))noDataImageView {
-    objc_setAssociatedObject(self, @selector(noDataImageView), noDataImageView, OBJC_ASSOCIATION_COPY_NONATOMIC);
-    [self registerNoDataPlaceholder];
-}
-
-- (UIImageView * _Nonnull (^)(void))noDataImageView {
-    return objc_getAssociatedObject(self, _cmd);
-}
-
-- (void)setNoDataReloadButton:(UIButton * _Nonnull (^)(void))noDataReloadButton {
-    objc_setAssociatedObject(self, @selector(noDataReloadButton), noDataReloadButton, OBJC_ASSOCIATION_COPY_NONATOMIC);
-    [self registerNoDataPlaceholder];
-}
-
-- (UIButton * _Nonnull (^)(void))noDataReloadButton {
-    return objc_getAssociatedObject(self, _cmd);
-}
-
-- (void)setNoDataViewBackgroundColor:(UIColor *)noDataViewBackgroundColor {
-    objc_setAssociatedObject(self, @selector(noDataViewBackgroundColor), noDataViewBackgroundColor, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-}
-
-- (UIColor *)noDataViewBackgroundColor {
-    return objc_getAssociatedObject(self, _cmd);
-}
-
-- (void)setLoading:(BOOL)loading {
-    
-    if (self.isLoading == loading) {
-        return;
-    }
-    
-    objc_setAssociatedObject(self, @selector(isLoading), @(loading), OBJC_ASSOCIATION_ASSIGN);
-    
-    [self xy_reloadNoDataView];
-
-}
-
-- (BOOL)isLoading {
-    return [objc_getAssociatedObject(self, _cmd) integerValue];
-}
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -345,9 +288,9 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 }
 
 
-- (CGFloat)xy_noDataPlacehodlerVerticalSpace {
-    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(contentSubviewsVerticalSpaceFoNoDataPlaceholder:)]) {
-        return [self.noDataPlaceholderDelegate contentSubviewsVerticalSpaceFoNoDataPlaceholder:self];
+- (CGFloat)xy_noDataPlacehodlerGlobalVerticalSpace {
+    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(contentSubviewsGlobalVerticalSpaceFoNoDataPlaceholder:)]) {
+        return [self.noDataPlaceholderDelegate contentSubviewsGlobalVerticalSpaceFoNoDataPlaceholder:self];
     }
     return 0.0;
 }
@@ -505,8 +448,13 @@ Class xy_baseClassToSwizzlingForTarget(id target) {
             noDataPlaceholderView.imageView = [self xy_noDataPlacehodlerImageView];
             noDataPlaceholderView.reloadButton = [self xy_noDataPlacehodlerReloadButton];
             
+            // 设置子控件之间的边距
+            noDataPlaceholderView.titleEdgeInsets = self.noDataTextEdgeInsets;
+            noDataPlaceholderView.detailEdgeInsets = self.noDataDetailEdgeInsets;
+            noDataPlaceholderView.imageEdgeInsets = self.noDataImageEdgeInsets;
+            noDataPlaceholderView.buttonEdgeInsets = self.noDataButtonEdgeInsets;
             // 设置noDataPlaceholderView子控件垂直间的间距
-            noDataPlaceholderView.verticalSpace = [self xy_noDataPlacehodlerVerticalSpace];
+            noDataPlaceholderView.globalverticalSpace = [self xy_noDataPlacehodlerGlobalVerticalSpace];
             
         }
         
@@ -586,11 +534,108 @@ Class xy_baseClassToSwizzlingForTarget(id target) {
     return container.weakObject;
 }
 
+- (UIView * _Nonnull (^)(void))customNoDataView {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (UILabel * _Nonnull (^)(void))noDataTextLabel {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (UILabel * _Nonnull (^)(void))noDataDetailTextLabel {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (UIImageView * _Nonnull (^)(void))noDataImageView {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (UIButton * _Nonnull (^)(void))noDataReloadButton {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (UIColor *)noDataViewBackgroundColor {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (BOOL)isLoading {
+    return [objc_getAssociatedObject(self, _cmd) integerValue];
+}
+
+- (UIEdgeInsets)noDataTextEdgeInsets {
+    NSValue *value = objc_getAssociatedObject(self, _cmd);
+    return value ? [value UIEdgeInsetsValue] : UIEdgeInsetsZero;
+}
+
+- (UIEdgeInsets)noDataDetailEdgeInsets {
+    NSValue *value = objc_getAssociatedObject(self, _cmd);
+    return value ? [value UIEdgeInsetsValue] : UIEdgeInsetsZero;
+}
+
+- (UIEdgeInsets)noDataImageEdgeInsets {
+    NSValue *value = objc_getAssociatedObject(self, _cmd);
+    return value ? [value UIEdgeInsetsValue] : UIEdgeInsetsZero;
+}
+
+- (UIEdgeInsets)noDataButtonEdgeInsets {
+    NSValue *value = objc_getAssociatedObject(self, _cmd);
+    return value ? [value UIEdgeInsetsValue] : UIEdgeInsetsZero;
+}
 
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - set
 ////////////////////////////////////////////////////////////////////////
 
+- (void)setCustomNoDataView:(UIView * _Nonnull (^)(void))customNoDataView {
+    objc_setAssociatedObject(self, @selector(customNoDataView), customNoDataView, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [self registerNoDataPlaceholder];
+}
+
+
+- (void)setNoDataTextLabel:(UILabel * _Nonnull (^)(void))noDataTextLabel {
+    objc_setAssociatedObject(self, @selector(noDataTextLabel), noDataTextLabel, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [self registerNoDataPlaceholder];
+}
+
+
+- (void)setNoDataDetailTextLabel:(UILabel * _Nonnull (^)(void))noDataDetailTextLabel {
+    objc_setAssociatedObject(self, @selector(noDataDetailTextLabel), noDataDetailTextLabel, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [self registerNoDataPlaceholder];
+}
+
+
+
+- (void)setNoDataImageView:(UIImageView * _Nonnull (^)(void))noDataImageView {
+    objc_setAssociatedObject(self, @selector(noDataImageView), noDataImageView, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [self registerNoDataPlaceholder];
+}
+
+
+
+- (void)setNoDataReloadButton:(UIButton * _Nonnull (^)(void))noDataReloadButton {
+    objc_setAssociatedObject(self, @selector(noDataReloadButton), noDataReloadButton, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [self registerNoDataPlaceholder];
+}
+
+
+
+- (void)setNoDataViewBackgroundColor:(UIColor *)noDataViewBackgroundColor {
+    objc_setAssociatedObject(self, @selector(noDataViewBackgroundColor), noDataViewBackgroundColor, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+
+
+- (void)setLoading:(BOOL)loading {
+    
+    if (self.isLoading == loading) {
+        return;
+    }
+    
+    objc_setAssociatedObject(self, @selector(isLoading), @(loading), OBJC_ASSOCIATION_ASSIGN);
+    
+    [self xy_reloadNoDataView];
+    
+}
 
 
 - (void)setNoDataPlaceholderDelegate:(id<NoDataPlaceholderDelegate>)noDataPlaceholderDelegate {
@@ -608,6 +653,22 @@ Class xy_baseClassToSwizzlingForTarget(id target) {
 
 - (void)setNoDataPlaceholderView:(NoDataPlaceholderView *)noDataPlaceholderView {
     objc_setAssociatedObject(self, @selector(noDataPlaceholderView), noDataPlaceholderView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (void)setNoDataTextEdgeInsets:(UIEdgeInsets)noDataTextEdgeInsets {
+    objc_setAssociatedObject(self, @selector(noDataTextEdgeInsets), [NSValue valueWithUIEdgeInsets:noDataTextEdgeInsets], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (void)setNoDataDetailEdgeInsets:(UIEdgeInsets)noDataDetailEdgeInsets {
+    objc_setAssociatedObject(self, @selector(noDataDetailEdgeInsets), [NSValue valueWithUIEdgeInsets:noDataDetailEdgeInsets], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (void)setNoDataImageEdgeInsets:(UIEdgeInsets)noDataImageEdgeInsets {
+    objc_setAssociatedObject(self, @selector(noDataImageEdgeInsets), [NSValue valueWithUIEdgeInsets:noDataImageEdgeInsets], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (void)setNoDataButtonEdgeInsets:(UIEdgeInsets)noDataButtonEdgeInsets {
+    objc_setAssociatedObject(self, @selector(noDataButtonEdgeInsets), [NSValue valueWithUIEdgeInsets:noDataButtonEdgeInsets], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 @end
@@ -630,7 +691,12 @@ titleLabel = _titleLabel,
 detailLabel = _detailLabel,
 imageView = _imageView,
 reloadButton = _reloadButton,
-customView = _customView;
+customView = _customView,
+titleEdgeInsets = _titleEdgeInsets,
+detailEdgeInsets = _detailEdgeInsets,
+imageEdgeInsets = _imageEdgeInsets,
+buttonEdgeInsets = _buttonEdgeInsets;
+
 
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - Initialize
@@ -679,6 +745,26 @@ customView = _customView;
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - set
 ////////////////////////////////////////////////////////////////////////
+
+- (void)setTitleEdgeInsets:(UIEdgeInsets)titleEdgeInsets {
+    _titleEdgeInsets = titleEdgeInsets;
+    _titleLabel.noDataPlaceholderViewContentEdgeInsets = titleEdgeInsets;
+}
+
+- (void)setImageEdgeInsets:(UIEdgeInsets)imageEdgeInsets {
+    _imageEdgeInsets = imageEdgeInsets;
+    _imageView.noDataPlaceholderViewContentEdgeInsets = imageEdgeInsets;
+}
+
+- (void)setDetailEdgeInsets:(UIEdgeInsets)detailEdgeInsets {
+    _detailEdgeInsets = detailEdgeInsets;
+    _detailLabel.noDataPlaceholderViewContentEdgeInsets = detailEdgeInsets;
+}
+
+- (void)setButtonEdgeInsets:(UIEdgeInsets)buttonEdgeInsets {
+    _buttonEdgeInsets = buttonEdgeInsets;
+    _reloadButton.noDataPlaceholderViewContentEdgeInsets = buttonEdgeInsets;
+}
 
 - (void)setCustomView:(UIView *)customView {
     
@@ -872,7 +958,29 @@ customView = _customView;
     return NO;
 }
 
+- (BOOL)canChangeInsets:(UIEdgeInsets)insets {
+    return !UIEdgeInsetsEqualToEdgeInsets(insets, UIEdgeInsetsZero);
+}
 
+- (UIEdgeInsets)titleEdgeInsets {
+    return _titleEdgeInsets = self.titleLabel.noDataPlaceholderViewContentEdgeInsets;
+}
+
+- (UIEdgeInsets)detailEdgeInsets {
+    return _detailEdgeInsets = self.detailLabel.noDataPlaceholderViewContentEdgeInsets;
+}
+
+- (UIEdgeInsets)imageEdgeInsets {
+    return _imageEdgeInsets = self.imageView.noDataPlaceholderViewContentEdgeInsets;
+}
+
+- (UIEdgeInsets)buttonEdgeInsets {
+    return _buttonEdgeInsets = self.reloadButton.noDataPlaceholderViewContentEdgeInsets;
+}
+
+////////////////////////////////////////////////////////////////////////
+#pragma mark - Events
+////////////////////////////////////////////////////////////////////////
 
 - (void)tapGestureRecognizer:(void (^)(UITapGestureRecognizer *))tapBlock {
     
@@ -885,10 +993,6 @@ customView = _customView;
     }
     self.tapGestureRecognizerBlock = tapBlock;
 }
-
-////////////////////////////////////////////////////////////////////////
-#pragma mark - Events
-////////////////////////////////////////////////////////////////////////
 
 /// 点击刷新按钮时处理事件
 - (void)clickReloadBtn:(UIButton *)btn {
@@ -951,19 +1055,36 @@ customView = _customView;
         
         // 无customView
         CGFloat width = CGRectGetWidth(self.frame) ?: CGRectGetWidth([UIScreen mainScreen].bounds);
-        CGFloat horizontalSpace = roundf(width / 16.0); // 计算间距  四舍五入
-        CGFloat verticalSpace = self.verticalSpace ?: 11.0; // 默认为11.0
+        CGFloat horizontalSpace = roundf(width / 16.0); // contentView的子控件横向间距  四舍五入
+        CGFloat globalverticalSpace = self.globalverticalSpace ?: 11.0; // contentView的子控件之间的垂直间距，默认为11.0
         
         NSMutableArray<NSString *> *subviewsNames = [NSMutableArray arrayWithCapacity:0];
         NSMutableDictionary *views = [NSMutableDictionary dictionaryWithCapacity:0];
-        NSDictionary *metrics = @{@"horizontalSpace": @(horizontalSpace)};
+        NSMutableDictionary *metrics = @{@"horizontalSpace": @(horizontalSpace)}.mutableCopy;
         
         // 设置imageView水平约束
         if ([self canShowImage]) {
-            [subviewsNames addObject:@"imageView"];
+            
+            [subviewsNames addObject:NSStringFromSelector(@selector(imageView))];
             views[[subviewsNames lastObject]] = _imageView;
             
-            [self.contentView addConstraint:[self.contentView equallyConstraintWithView:_imageView attribute:NSLayoutAttributeCenterX]];
+            CGFloat imageLeftSpace = horizontalSpace;
+            CGFloat imageRightSpace = horizontalSpace;
+            if ([self canChangeInsets:self.imageEdgeInsets]) {
+                imageLeftSpace = self.imageEdgeInsets.left;
+                imageRightSpace = self.imageEdgeInsets.right;
+                NSDictionary *imageMetrics = @{@"imageLeftSpace": @(imageLeftSpace), @"imageRightSpace": @(imageRightSpace)};
+                [metrics addEntriesFromDictionary:imageMetrics];
+                [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(imageLeftSpace@750)-[imageView(>=0)]-(imageRightSpace@750)-|"
+                                                                                         options:0
+                                                                                         metrics:metrics
+                                                                                           views:views]];
+
+            }
+            else {
+                [self.contentView addConstraint:[self.contentView equallyConstraintWithView:_imageView attribute:NSLayoutAttributeCenterX]];
+            }
+        
         } else {
             [_imageView removeFromSuperview];
             _imageView = nil;
@@ -971,10 +1092,18 @@ customView = _customView;
         
         // 根据title是否可以显示，设置titleLable的水平约束
         if ([self canShowTitle]) {
-            [subviewsNames addObject:@"titleLabel"];
+            CGFloat titleLeftSpace = horizontalSpace;
+            CGFloat titleRightSpace = horizontalSpace;
+            if ([self canChangeInsets:self.titleEdgeInsets]) {
+                titleLeftSpace = self.titleEdgeInsets.left;
+                titleRightSpace = self.titleEdgeInsets.right;
+            }
+            NSDictionary *titleMetrics = @{@"titleLeftSpace": @(titleLeftSpace), @"titleRightSpace": @(titleRightSpace)};
+            [metrics addEntriesFromDictionary:titleMetrics];
+            [subviewsNames addObject:NSStringFromSelector(@selector(titleLabel))];
             views[[subviewsNames lastObject]] = _titleLabel;
             
-            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(horizontalSpace@750)-[titleLabel(>=0)]-(horizontalSpace@750)-|"
+            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(titleLeftSpace@750)-[titleLabel(>=0)]-(titleRightSpace@750)-|"
                                                                                      options:0
                                                                                      metrics:metrics
                                                                                        views:views]];
@@ -986,10 +1115,20 @@ customView = _customView;
         
         // 根据是否可以显示detail, 设置detailLabel水平约束
         if ([self canShowDetail]) {
-            [subviewsNames addObject:@"detailLabel"];
+            
+            CGFloat detailLeftSpace = horizontalSpace;
+            CGFloat detailRightSpace = horizontalSpace;
+            if ([self canChangeInsets:self.detailEdgeInsets]) {
+                detailLeftSpace = self.detailEdgeInsets.left;
+                detailRightSpace = self.detailEdgeInsets.right;
+            }
+            NSDictionary *detailMetrics = @{@"detailLeftSpace": @(detailLeftSpace), @"detailRightSpace": @(detailRightSpace)};
+            [metrics addEntriesFromDictionary:detailMetrics];
+            
+            [subviewsNames addObject:NSStringFromSelector(@selector(detailLabel))];
             views[[subviewsNames lastObject]] = _detailLabel;
             
-            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-(horizontalSpace@750)-[detailLabel(>=0)]-(horizontalSpace@750)-|"
+            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-(detailLeftSpace@750)-[detailLabel(>=0)]-(detailRightSpace@750)-|"
                                                                                      options:0
                                                                                      metrics:metrics
                                                                                        views:views]];
@@ -1001,10 +1140,20 @@ customView = _customView;
         
         // 根据reloadButton是否能显示，设置其水平约束
         if ([self canShowReloadButton]) {
+            
+            CGFloat buttonLeftSpace = horizontalSpace;
+            CGFloat buttonRightSpace = horizontalSpace;
+            if ([self canChangeInsets:self.buttonEdgeInsets]) {
+                buttonLeftSpace = self.detailEdgeInsets.left;
+                buttonRightSpace = self.detailEdgeInsets.right;
+            }
+            NSDictionary *buttonMetrics = @{@"buttonLeftSpace": @(buttonLeftSpace), @"buttonRightSpace": @(buttonRightSpace)};
+            [metrics addEntriesFromDictionary:buttonMetrics];
+            
             [subviewsNames addObject:@"reloadButton"];
             views[[subviewsNames lastObject]] = _reloadButton;
             
-            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-(horizontalSpace@750)-[reloadButton(>=0)]-(horizontalSpace@750)-|"
+            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-(buttonLeftSpace@750)-[reloadButton(>=0)]-(buttonRightSpace@750)-|"
                                                                                      options:0
                                                                                      metrics:metrics
                                                                                        views:views]];
@@ -1016,17 +1165,33 @@ customView = _customView;
         
         // 设置垂直约束
         NSMutableString *verticalFormat = [NSMutableString new];
-        // 拼接字符串，添加每个控件垂直边缘之间的约束值, 默认为verticalSpace 11.0
+        // 拼接字符串，添加每个控件垂直边缘之间的约束值, 默认为globalverticalSpace 11.0，如果设置了子控件的contentEdgeInsets,则verticalSpace无效
+        UIView *previousView = nil;
         for (NSInteger i = 0; i < subviewsNames.count; ++i) {
+            CGFloat topSpace = globalverticalSpace;
             NSString *viewName = subviewsNames[i];
-            // 拼接控件的属性名
-            [verticalFormat appendFormat:@"[%@]", viewName];
-            if (i < subviewsNames.count - 1) {
-                // 拼接间距值
-                [verticalFormat appendFormat:@"-(%.f@750)-", verticalSpace];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+            UIView *view = [self performSelector:NSSelectorFromString(viewName)];
+#pragma clang diagnostic pop
+            // 拼接间距值
+            if ([self canChangeInsets:view.noDataPlaceholderViewContentEdgeInsets]) {
+                topSpace = view.noDataPlaceholderViewContentEdgeInsets.top;
             }
+            if ([self canChangeInsets:previousView.noDataPlaceholderViewContentEdgeInsets]) {
+                topSpace += view.noDataPlaceholderViewContentEdgeInsets.bottom;
+            }
+            if (i == subviewsNames.count - 1) {
+                // 最后一个控件把距离父控件底部的约束值也加上
+                [verticalFormat appendFormat:@"-(%.f@750)-[%@]-(%.f@750)-", topSpace, viewName, view.noDataPlaceholderViewContentEdgeInsets.bottom];
+            }
+            else {
+                [verticalFormat appendFormat:@"-(%.f@750)-[%@]", topSpace, viewName];
+            }
+            
+            previousView = view;
         }
-        
+        previousView = nil;
         // 向contentView分配垂直约束
         if (verticalFormat.length > 0) {
             [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:[NSString stringWithFormat:@"V:|%@|", verticalFormat]
@@ -1207,6 +1372,18 @@ void xy_orginalImplementation(id self, SEL _cmd) {
 
 - (NSMutableDictionary<ImplementationKey, _SwizzlingObject *> *)implementationDictionary {
     return self.class.implementationDictionary;
+}
+
+@end
+
+@implementation UIView (NoDataPlaceholderViewEdgeInsetsExtend)
+
+- (void)setNoDataPlaceholderViewContentEdgeInsets:(UIEdgeInsets)noDataPlaceholderViewContentEdgeInsets {
+    objc_setAssociatedObject(self, @selector(noDataPlaceholderViewContentEdgeInsets), [NSValue valueWithUIEdgeInsets:noDataPlaceholderViewContentEdgeInsets], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (UIEdgeInsets)noDataPlaceholderViewContentEdgeInsets {
+    return [objc_getAssociatedObject(self, _cmd) UIEdgeInsetsValue];
 }
 
 @end

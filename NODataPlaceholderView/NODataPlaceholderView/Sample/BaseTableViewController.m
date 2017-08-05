@@ -57,7 +57,7 @@
         return titleLabel;
     };
     
-    
+    self.tableView.noDataTextEdgeInsets = UIEdgeInsetsMake(50, 0, 5, 0);
     
     self.tableView.noDataDetailTextLabel = ^UILabel * _Nonnull{
         UILabel *detailLabel = [UILabel new];
