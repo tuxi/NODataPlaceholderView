@@ -1144,8 +1144,8 @@ buttonEdgeInsets = _buttonEdgeInsets;
             CGFloat buttonLeftSpace = horizontalSpace;
             CGFloat buttonRightSpace = horizontalSpace;
             if ([self canChangeInsets:self.buttonEdgeInsets]) {
-                buttonLeftSpace = self.detailEdgeInsets.left;
-                buttonRightSpace = self.detailEdgeInsets.right;
+                buttonLeftSpace = self.buttonEdgeInsets.left;
+                buttonRightSpace = self.buttonEdgeInsets.right;
             }
             NSDictionary *buttonMetrics = @{@"buttonLeftSpace": @(buttonLeftSpace), @"buttonRightSpace": @(buttonRightSpace)};
             [metrics addEntriesFromDictionary:buttonMetrics];

@@ -27,6 +27,13 @@
     _dataSource = [NSMutableArray array];
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"reuseIdentifier"];
     
+    [self setupNodataView];
+    
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"打开调试窗口" style:0 target:self action:@selector(openTestWindow)];
+}
+
+- (void)setupNodataView {
+    
     __weak typeof(self) weakSelf = self;
     
     self.tableView.noDataPlaceholderDelegate = self;
@@ -39,7 +46,7 @@
         }else {
             return nil;
         }
-  
+        
     };
     
     self.tableView.noDataTextLabel = ^UILabel * _Nonnull{
@@ -53,11 +60,11 @@
         titleLabel.numberOfLines = 0;
         // 通过accessibilityIdentifier来定位元素,相当于这个控件的id
         titleLabel.accessibilityIdentifier = @"no data placeholder title";
-        titleLabel.attributedText = [weakSelf titleAttributedStringForNoDataPlaceholder];
+        titleLabel.attributedText = [weakSelf attributedStringWithText:@"没有正在下载的歌曲" color:[UIColor grayColor] fontSize:16];;
         return titleLabel;
     };
     
-    self.tableView.noDataTextEdgeInsets = UIEdgeInsetsMake(50, 0, 5, 0);
+    self.tableView.noDataTextEdgeInsets = UIEdgeInsetsMake(20, 0, 5, 0);
     
     self.tableView.noDataDetailTextLabel = ^UILabel * _Nonnull{
         UILabel *detailLabel = [UILabel new];
@@ -70,9 +77,9 @@
         detailLabel.lineBreakMode = NSLineBreakByWordWrapping;
         detailLabel.numberOfLines = 0;
         detailLabel.accessibilityIdentifier = @"no data placeholder detail label";
-        detailLabel.attributedText = [weakSelf detailAttributedStringForNoDataPlaceholder];
+        detailLabel.attributedText = [weakSelf attributedStringWithText:@"可以去下载历史，批量找回下载过的歌曲" color:[UIColor grayColor] fontSize:16];
         return detailLabel;
-
+        
     };
     
     self.tableView.noDataImageView = ^UIImageView * _Nonnull{
@@ -97,76 +104,12 @@
         // 按钮内部控件垂直对齐方式为中心
         btn.contentVerticalAlignment = UIControlContentHorizontalAlignmentCenter;
         btn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
-        [btn setAttributedTitle:[weakSelf reloadbuttonTitleAttributedStringForNoDataPlaceholder] forState:UIControlStateNormal];
+        [btn setAttributedTitle:[weakSelf attributedStringWithText:@"查看下载历史" color:[UIColor colorWithRed:49/255.0 green:194/255.0 blue:124/255.0 alpha:1.0] fontSize:15.0] forState:UIControlStateNormal];
         [btn setTitleColor:[UIColor grayColor] forState:UIControlStateNormal];
         return btn;
     };
     
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"打开调试窗口" style:0 target:self action:@selector(openTestWindow)];
-}
-
-- (void)noDataPlaceholder:(UIScrollView *)scrollView didClickReloadButton:(UIButton *)button {
-    [self getDataFromNetwork];
-}
-
-- (BOOL)noDataPlaceholderShouldAllowScroll:(UIScrollView *)scrollView {
-    return YES;
-}
-
-- (void)noDataPlaceholder:(UIScrollView *)scrollView didTapOnContentView:(UITapGestureRecognizer *)tap {
-    [self getDataFromNetwork];
-}
-
-- (NSAttributedString *)titleAttributedStringForNoDataPlaceholder {
-    NSString *text = @"没有正在下载的歌曲";
-    UIFont *font = [UIFont boldSystemFontOfSize:18.0];
-    UIColor *textColor = [UIColor grayColor];
-    
-    NSMutableDictionary *attributeDict = [NSMutableDictionary dictionaryWithCapacity:0];
-    NSMutableParagraphStyle *style = [NSMutableParagraphStyle new];
-    style.lineBreakMode = NSLineBreakByWordWrapping;
-    style.alignment = NSTextAlignmentCenter;
-    
-    [attributeDict setObject:font forKey:NSFontAttributeName];
-    [attributeDict setObject:textColor forKey:NSForegroundColorAttributeName];
-    [attributeDict setObject:style forKey:NSParagraphStyleAttributeName];
-    
-    NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:text attributes:attributeDict];
-    
-    return attributedString;
-    
-}
-
-- (NSAttributedString *)detailAttributedStringForNoDataPlaceholder {
-    NSString *text = @"可以去下载历史，批量找回下载过的歌曲";
-    UIFont *font = [UIFont systemFontOfSize:16.0];
-    UIColor *textColor = [UIColor grayColor];
-    
-    NSMutableDictionary *attributeDict = [NSMutableDictionary new];
-    NSMutableParagraphStyle *style = [NSMutableParagraphStyle new];
-    style.lineBreakMode = NSLineBreakByWordWrapping;
-    style.alignment = NSTextAlignmentCenter;
-    style.lineSpacing = 4.0;
-    [attributeDict setObject:font forKey:NSFontAttributeName];
-    [attributeDict setObject:textColor forKey:NSForegroundColorAttributeName];
-    [attributeDict setObject:style forKey:NSParagraphStyleAttributeName];
-    
-    NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:text attributes:attributeDict];
-    
-    return attributedString;
-    
-}
-
-- (NSAttributedString *)reloadbuttonTitleAttributedStringForNoDataPlaceholder {
-    
-    NSString *text = @"查看下载历史";
-    UIFont *font = [UIFont systemFontOfSize:15.0];
-    UIColor *textColor = [UIColor colorWithRed:49/255.0 green:194/255.0 blue:124/255.0 alpha:1.0];
-    NSMutableDictionary *attributes = [NSMutableDictionary new];
-    if (font) [attributes setObject:font forKey:NSFontAttributeName];
-    if (textColor) [attributes setObject:textColor forKey:NSForegroundColorAttributeName];
-    
-    return [[NSAttributedString alloc] initWithString:text attributes:attributes];
+    self.tableView.noDataButtonEdgeInsets = UIEdgeInsetsMake(11, 100, 11, 100);
 }
 
 
@@ -175,20 +118,9 @@
     // Dispose of any resources that can be recreated.
 }
 
-
-#pragma mark - Other Events
-- (void)openTestWindow {
-    //     打开调试窗口
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored   "-Warc-performSelector-leaks"
-    Class someClass = NSClassFromString(@"UIDebuggingInformationOverlay");
-    id obj = [someClass performSelector:NSSelectorFromString(@"overlay")];
-    [obj performSelector:NSSelectorFromString(@"toggleVisibility")];
-#pragma clang diagnostic pop
-}
-
-
+////////////////////////////////////////////////////////////////////////
 #pragma mark - Table view data source
+////////////////////////////////////////////////////////////////////////
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
 
@@ -218,7 +150,9 @@
     [[[UIAlertView alloc] initWithTitle:@"请选择" message:nil delegate:self cancelButtonTitle:@"不" otherButtonTitles:@"好的", nil] show];
 }
 
-#pragma mark - <UIAlertViewDelegate>
+////////////////////////////////////////////////////////////////////////
+#pragma mark - UIAlertViewDelegate
+////////////////////////////////////////////////////////////////////////
 
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
     if (buttonIndex == 1) {
@@ -241,9 +175,11 @@
     }
 }
 
+////////////////////////////////////////////////////////////////////////
 #pragma mark - other
+////////////////////////////////////////////////////////////////////////
 
-- (void)getDataFromNetwork {
+- (void)getDataFromServer {
     
     self.tableView.loading = YES;
     
@@ -264,4 +200,62 @@
     }
     
 }
+
+
+////////////////////////////////////////////////////////////////////////
+#pragma mark - Other Events
+////////////////////////////////////////////////////////////////////////
+
+- (void)openTestWindow {
+    //     打开调试窗口
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored   "-Warc-performSelector-leaks"
+    Class someClass = NSClassFromString(@"UIDebuggingInformationOverlay");
+    id obj = [someClass performSelector:NSSelectorFromString(@"overlay")];
+    [obj performSelector:NSSelectorFromString(@"toggleVisibility")];
+#pragma clang diagnostic pop
+}
+
+
+////////////////////////////////////////////////////////////////////////
+#pragma mark - NoDataPlaceholderDelegate
+////////////////////////////////////////////////////////////////////////
+
+- (void)noDataPlaceholder:(UIScrollView *)scrollView didClickReloadButton:(UIButton *)button {
+    [self getDataFromServer];
+}
+
+- (BOOL)noDataPlaceholderShouldAllowScroll:(UIScrollView *)scrollView {
+    return YES;
+}
+
+- (void)noDataPlaceholder:(UIScrollView *)scrollView didTapOnContentView:(UITapGestureRecognizer *)tap {
+    [self getDataFromServer];
+}
+
+- (CGFloat)contentOffsetYForNoDataPlaceholder:(UIScrollView *)scrollView {
+    return -60;
+}
+
+- (NSAttributedString *)attributedStringWithText:(NSString *)string color:(UIColor *)color fontSize:(CGFloat)fontSize {
+    NSString *text = string;
+    UIFont *font = [UIFont systemFontOfSize:fontSize];
+    UIColor *textColor = color;
+    
+    NSMutableDictionary *attributeDict = [NSMutableDictionary new];
+    NSMutableParagraphStyle *style = [NSMutableParagraphStyle new];
+    style.lineBreakMode = NSLineBreakByWordWrapping;
+    style.alignment = NSTextAlignmentCenter;
+    style.lineSpacing = 4.0;
+    [attributeDict setObject:font forKey:NSFontAttributeName];
+    [attributeDict setObject:textColor forKey:NSForegroundColorAttributeName];
+    [attributeDict setObject:style forKey:NSParagraphStyleAttributeName];
+    
+    NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:text attributes:attributeDict];
+    
+    return attributedString;
+    
+}
+
+
 @end
