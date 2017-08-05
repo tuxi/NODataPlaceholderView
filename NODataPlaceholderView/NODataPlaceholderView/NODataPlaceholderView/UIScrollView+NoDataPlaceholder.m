@@ -690,7 +690,7 @@ customView = _customView;
         [_customView removeFromSuperview];
         _customView = nil;
     }
-    
+    [customView removeConstraints:customView.constraints];
     _customView = customView;
     _customView.translatesAutoresizingMaskIntoConstraints = NO;
     _customView.accessibilityIdentifier = @"no data placeholder custom view";
@@ -707,6 +707,7 @@ customView = _customView;
         return;
     }
     
+    [imageView removeConstraints:imageView.constraints];
     _imageView = imageView;
     _imageView.translatesAutoresizingMaskIntoConstraints = NO;
     _imageView.accessibilityIdentifier = @"no data placeholder image view";
@@ -722,7 +723,7 @@ customView = _customView;
     if (!titleLabel) {
         return;
     }
-    
+    [titleLabel removeConstraints:titleLabel.constraints];
     _titleLabel = titleLabel;
     _titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
     _titleLabel.accessibilityIdentifier = @"no data placeholder title label";
@@ -736,7 +737,7 @@ customView = _customView;
     if (!detailLabel) {
         return;
     }
-    
+    [detailLabel removeConstraints:detailLabel.constraints];
     _detailLabel = detailLabel;
     _detailLabel.translatesAutoresizingMaskIntoConstraints = NO;
     _detailLabel.accessibilityIdentifier = @"no data placeholder detail label";
@@ -751,7 +752,7 @@ customView = _customView;
     if (!reloadButton) {
         return;
     }
-    
+    [reloadButton removeConstraints:reloadButton.constraints];
     _reloadButton = reloadButton;
     _reloadButton.translatesAutoresizingMaskIntoConstraints = NO;
     _reloadButton.accessibilityIdentifier = @"no data placeholder reload button";
