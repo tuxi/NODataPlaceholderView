@@ -48,15 +48,15 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 @interface NoDataPlaceholderView : UIView
 
 /** 内容视图 */
-@property (nonatomic, weak, readonly) UIView *contentView;
+@property (nonatomic, weak) UIView *contentView;
 /** 标题label */
-@property (nonatomic, weak, readonly) UILabel *titleLabel;
+@property (nonatomic, weak) UILabel *titleLabel;
 /** 详情label */
-@property (nonatomic, weak, readonly) UILabel *detailLabel;
+@property (nonatomic, weak) UILabel *detailLabel;
 /** 图片视图 */
-@property (nonatomic, weak, readonly) UIImageView *imageView;
+@property (nonatomic, weak) UIImageView *imageView;
 /** 重新加载的button */
-@property (nonatomic, weak, readonly) UIButton *reloadButton;
+@property (nonatomic, weak) UIButton *reloadButton;
 /** 自定义视图 */
 @property (nonatomic, strong) UIView *customView;
 /** 点按手势 */
@@ -84,8 +84,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 @interface UIScrollView () <UIGestureRecognizerDelegate>
 
 @property (nonatomic, readonly) NoDataPlaceholderView *noDataPlaceholderView;
-@property (nonatomic, copy) NoDataPlaceholderContentViewAttribute noDataPlaceholderContentViewAttribute;
-
+@property (nonatomic, assign) BOOL registerNoDataPlaceholder;
 @end
 
 @implementation UIScrollView (NoDataPlaceholder)
@@ -96,6 +95,94 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 - (void)reloadNoDataView {
     [self xy_reloadNoDataView];
+}
+
+- (BOOL)registerNoDataPlaceholder {
+    
+    BOOL flag = objc_getAssociatedObject(self, _cmd);
+    if (!flag) {
+        if (![self xy_noDataPlacehodlerCanDisplay]) {
+            [self xy_removeNoDataPlacehodlerView];
+        }
+        
+        // 对reloadData方法的实现进行处理, 为加载reloadData时注入额外的实现
+        [self hockSelector:@selector(reloadData) swizzlingSelector:@selector(xy_reloadNoDataView) baseClass:xy_baseClassToSwizzlingForTarget(self)];
+        
+        if ([self isKindOfClass:[UITableView class]]) {
+            [self hockSelector:@selector(endUpdates) swizzlingSelector:@selector(xy_reloadNoDataView) baseClass:xy_baseClassToSwizzlingForTarget(self)];
+        }
+        objc_setAssociatedObject(self, _cmd, @(flag), OBJC_ASSOCIATION_ASSIGN);
+    }
+    return flag;
+}
+
+- (void)setCustomNoDataView:(UIView * _Nonnull (^)(void))customNoDataView {
+    objc_setAssociatedObject(self, @selector(customNoDataView), customNoDataView, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [self registerNoDataPlaceholder];
+}
+
+- (UIView * _Nonnull (^)(void))customNoDataView {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setNoDataTextLabel:(UILabel * _Nonnull (^)(void))noDataTextLabel {
+    objc_setAssociatedObject(self, @selector(noDataTextLabel), noDataTextLabel, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [self registerNoDataPlaceholder];
+}
+
+- (UILabel * _Nonnull (^)(void))noDataTextLabel {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setNoDataDetailTextLabel:(UILabel * _Nonnull (^)(void))noDataDetailTextLabel {
+    objc_setAssociatedObject(self, @selector(noDataDetailTextLabel), noDataDetailTextLabel, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [self registerNoDataPlaceholder];
+}
+
+- (UILabel * _Nonnull (^)(void))noDataDetailTextLabel {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setNoDataImageView:(UIImageView * _Nonnull (^)(void))noDataImageView {
+    objc_setAssociatedObject(self, @selector(noDataImageView), noDataImageView, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [self registerNoDataPlaceholder];
+}
+
+- (UIImageView * _Nonnull (^)(void))noDataImageView {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setNoDataReloadButton:(UIButton * _Nonnull (^)(void))noDataReloadButton {
+    objc_setAssociatedObject(self, @selector(noDataReloadButton), noDataReloadButton, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [self registerNoDataPlaceholder];
+}
+
+- (UIButton * _Nonnull (^)(void))noDataReloadButton {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setNoDataViewBackgroundColor:(UIColor *)noDataViewBackgroundColor {
+    objc_setAssociatedObject(self, @selector(noDataViewBackgroundColor), noDataViewBackgroundColor, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (UIColor *)noDataViewBackgroundColor {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setLoading:(BOOL)loading {
+    
+    if (self.isLoading == loading) {
+        return;
+    }
+    
+    objc_setAssociatedObject(self, @selector(isLoading), @(loading), OBJC_ASSOCIATION_ASSIGN);
+    
+    [self xy_reloadNoDataView];
+
+}
+
+- (BOOL)isLoading {
+    return [objc_getAssociatedObject(self, _cmd) integerValue];
 }
 
 
@@ -130,10 +217,8 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 // 是否符合显示
 - (BOOL)xy_noDataPlacehodlerCanDisplay {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource conformsToProtocol:@protocol(NoDataPlaceholderDataSource) ]) {
-        if ([self isKindOfClass:[UITableView class]] || [self isKindOfClass:[UICollectionView class]] || [self isKindOfClass:[UIScrollView class]]) {
-            return YES;
-        }
+    if ([self isKindOfClass:[UITableView class]] || [self isKindOfClass:[UICollectionView class]] || [self isKindOfClass:[UIScrollView class]]) {
+        return YES;
     }
     return NO;
 }
@@ -255,130 +340,21 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 ////////////////////////////////////////////////////////////////////////
 
 - (UIView *)xy_noDataPlacehodlerCustomView {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(customViewForNoDataPlaceholder:)]) {
-        UIView *view = [self.noDataPlaceholderDataSource customViewForNoDataPlaceholder:self];
-        if (view) {
-            NSAssert([view isKindOfClass:[UIView class]], @"-[customViewForNoDataPlaceholder:] 返回值必须为UIView类或其子类");
-            return view;
-        }
+    UIView *view = nil;
+    if (self.customNoDataView) {
+        view = self.customNoDataView();
     }
-    return nil;
+    if (view) {
+        NSAssert([view isKindOfClass:[UIView class]], @"-[customViewForNoDataPlaceholder:] 返回值必须为UIView类或其子类");
+        return view;
+    }
+    return view;
 }
 
-- (NSAttributedString *)xy_noDataPlacehodlerTitleLabelString {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(titleAttributedStringForNoDataPlaceholder:)]) {
-        NSAttributedString *string = [self.noDataPlaceholderDataSource titleAttributedStringForNoDataPlaceholder:self];
-        if (string) {
-            NSAssert([string isKindOfClass:[NSAttributedString class]], @"-[titleAttributedStringForNoDataPlaceholder:] 返回值必须是有效的NSAttributedString类型");
-            return string;
-        }
-    }
-    return nil;
-}
-
-- (NSAttributedString *)xy_noDataPlacehodlerDetailLabelString {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(detailAttributedStringForNoDataPlaceholder:)]) {
-        NSAttributedString *string = [self.noDataPlaceholderDataSource detailAttributedStringForNoDataPlaceholder:self];
-        if (string) {
-            NSAssert([string isKindOfClass:[NSAttributedString class]], @"-[detailAttributedStringForNoDataPlaceholder:]返回值必须是有效的NSAttributedString类型");
-            return string;
-        }
-    }
-    return nil;
-}
-
-- (UIImage *)xy_noDataPlacehodlerImage {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(imageForNoDataPlaceholder:)]) {
-        UIImage *image = [self.noDataPlaceholderDataSource imageForNoDataPlaceholder:self];
-        if (image) {
-            NSAssert([image isKindOfClass:[UIImage class]], @"-[imageForNoDataPlaceholder:]返回值必须是UIImage类型");
-            return image;
-        }
-    }
-    return nil;
-}
-
-- (CAAnimation *)xy_noDataPlacehodlerImageAnimation {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(imageAnimationForNoDataPlaceholder:)]) {
-        CAAnimation *imageAnimation = [self.noDataPlaceholderDataSource imageAnimationForNoDataPlaceholder:self];
-        if (imageAnimation) {
-            NSAssert([imageAnimation isKindOfClass:[CAAnimation class]], @"-[imageAnimationForNoDataPlaceholder:]返回值必须为CAAnimation类型");
-            return imageAnimation;
-        }
-    }
-    return nil;
-}
-
-- (UIColor *)xy_noDataPlacehodlerImageTintColor {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(imageTintColorForNoDataPlaceholder:)]) {
-        UIColor *color = [self.noDataPlaceholderDataSource imageTintColorForNoDataPlaceholder:self];
-        if (color) NSAssert([color isKindOfClass:[UIColor class]], @"-[imageTintColorForNoDataPlaceholder:]返回值必须是有效的UIColor类型");
-        return color;
-    }
-    return nil;
-}
-
-- (NSAttributedString *)xy_noDataPlacehodlerReloadButtonTitleForState:(UIControlState)state {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(reloadbuttonTitleAttributedStringForNoDataPlaceholder:forState:)]) {
-        NSAttributedString *string = [self.noDataPlaceholderDataSource reloadbuttonTitleAttributedStringForNoDataPlaceholder:self forState:state];
-        if (string) {
-            NSAssert([string isKindOfClass:[NSAttributedString class]], @"-[reloadbuttonTitleAttributedStringForNoDataPlaceholder:forState:]返回值必须为NSAttributedString类型");
-            return string;
-            
-        }
-    }
-    return nil;
-}
-
-- (UIImage *)xy_noDataPlacehodlerReloadButtonImageForState:(UIControlState)state {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(reloadButtonImageForNoDataPlaceholder:forState:)]) {
-        UIImage *image = [self.noDataPlaceholderDataSource reloadButtonImageForNoDataPlaceholder:self forState:state];
-        if (image) {
-            NSAssert([image isKindOfClass:[UIImage class]], @"-[reloadButtonImageForNoDataPlaceholder:forState:]返回值必须为UIImage类型");
-            return image;
-        }
-    }
-    return nil;
-}
-
-- (UIImage *)xy_noDataPlacehodlerReloadButtonBackgroundImageForState:(UIControlState)state {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(reloadButtonBackgroundImageForNoDataPlaceholder:forState:)]) {
-        UIImage *image = [self.noDataPlaceholderDataSource reloadButtonBackgroundImageForNoDataPlaceholder:self forState:state];
-        if (image) {
-            NSAssert([image isKindOfClass:[UIImage class]], @"-[reloadButtonBackgroundImageForNoDataPlaceholder:forState:]返回值必须为UIImage类型");
-            return image;
-            
-        }
-        
-    }
-    return nil;
-}
-
-- (UIColor *)xy_noDataPlacehodlerBackgroundColor {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(backgroundColorForNoDataPlaceholder:)]) {
-        UIColor *color = [self.noDataPlaceholderDataSource backgroundColorForNoDataPlaceholder:self];
-        if (color) {
-            NSAssert([color isKindOfClass:[UIColor class]], @"-[backgroundColorForNoDataPlaceholder:]返回值必须为UIColor");
-            return color;
-        }
-    }
-    return [UIColor clearColor];
-}
-
-- (UIColor *)xy_noDataPlacehodlerReloadButtonBackgroundColor {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(reloadButtonBackgroundColorForNoDataPlaceholder:)]) {
-        UIColor *color = [self.noDataPlaceholderDataSource reloadButtonBackgroundColorForNoDataPlaceholder:self];
-        if (color) {
-            NSAssert([color isKindOfClass:[UIColor class]], @"-[reloadButtonBackgroundColorForNoDataPlaceholder:]返回值必须为UIColor");
-            return color;
-        }
-    }
-    return [UIColor clearColor];
-}
 
 - (CGFloat)xy_noDataPlacehodlerVerticalSpace {
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(contentSubviewsVerticalSpaceFoNoDataPlaceholder:)]) {
-        return [self.noDataPlaceholderDataSource contentSubviewsVerticalSpaceFoNoDataPlaceholder:self];
+    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(contentSubviewsVerticalSpaceFoNoDataPlaceholder:)]) {
+        return [self.noDataPlaceholderDelegate contentSubviewsVerticalSpaceFoNoDataPlaceholder:self];
     }
     return 0.0;
 }
@@ -386,15 +362,71 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 - (CGFloat)xy_noDataPlacehodlerContentOffsetY {
     CGFloat offset = 0.0;
     
-    if (self.noDataPlaceholderDataSource && [self.noDataPlaceholderDataSource respondsToSelector:@selector(contentOffsetYForNoDataPlaceholder:)]) {
-        offset = [self.noDataPlaceholderDataSource contentOffsetYForNoDataPlaceholder:self];
+    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(contentOffsetYForNoDataPlaceholder:)]) {
+        offset = [self.noDataPlaceholderDelegate contentOffsetYForNoDataPlaceholder:self];
     }
     return offset;
 }
 
-/// 检查当前类是否符合，符合就返回当前类的基类，不符合返回nil
-/// 只能关联这三个类或其子类的， 基类为：UITableView  UICollectionView  UIScrollView
-Class xy_baseClassToSwizzleForTarget(id target) {
+- (UILabel *)xy_noDataPlacehodlerTitleLabel {
+    UILabel *titleLabel = nil;
+    if (self.noDataTextLabel) {
+        titleLabel = self.noDataTextLabel();
+    }
+    else {
+        titleLabel = self.noDataPlaceholderView.titleLabel;
+    }
+    if (titleLabel) {
+        NSAssert([titleLabel isKindOfClass:[UILabel class]], @"[- xy_noDataPlacehodlerTitleLabel:]返回值必须是UILabel或其子类对象");
+    }
+    return titleLabel;
+}
+
+- (UILabel *)xy_noDataPlacehodlerDetailLabel {
+    UILabel *detailLabel = nil;
+    if (self.noDataDetailTextLabel) {
+        detailLabel = self.noDataDetailTextLabel();
+    }
+    else {
+        detailLabel = self.noDataPlaceholderView.detailLabel;
+    }
+    if (detailLabel) {
+        NSAssert([detailLabel isKindOfClass:[UILabel class]], @"[- xy_noDataPlacehodlerDetailLabel:]返回值必须是UILabel或其子类对象");
+    }
+    return detailLabel;
+}
+
+- (UIImageView *)xy_noDataPlacehodlerImageView {
+    UIImageView *imageView = nil;
+    if (self.noDataImageView) {
+        imageView = self.noDataImageView();
+    }
+    else {
+        imageView = self.noDataPlaceholderView.imageView;
+    }
+    if (imageView) {
+        NSAssert([imageView isKindOfClass:[UIImageView class]], @"[- xy_noDataPlacehodlerImageView:]返回值必须是UIImageView或其子类对象");
+    }
+    return imageView;
+}
+
+- (UIButton *)xy_noDataPlacehodlerReloadButton {
+    UIButton *btn = nil;
+    if (self.noDataReloadButton) {
+        btn = self.noDataReloadButton();
+    }
+    else {
+        btn = self.noDataPlaceholderView.reloadButton;
+    }
+    if (btn) {
+        NSAssert([btn isKindOfClass:[UIButton class]], @"[- xy_noDataPlacehodlerReloadButton:]返回值必须是UIImageView或其子类对象");
+    }
+    return btn;
+}
+
+/// 由当前类所在的基类来完成Swizzling
+/// 基类分别为：UITableView  UICollectionView  UIScrollView
+Class xy_baseClassToSwizzlingForTarget(id target) {
     if ([target isKindOfClass:[UITableView class]]) {
         return [UITableView class];
     }
@@ -474,66 +506,16 @@ Class xy_baseClassToSwizzleForTarget(id target) {
         } else {
             
             // customView为nil时，则从dataSource中设置到默认的contentView
-            
-            if (self.noDataPlaceholderContentViewAttribute) {
-                self.noDataPlaceholderContentViewAttribute(noDataPlaceholderView.reloadButton, noDataPlaceholderView.titleLabel, noDataPlaceholderView.detailLabel, noDataPlaceholderView.imageView);
-            } else {
-                NSAttributedString *titleLabelString = [self xy_noDataPlacehodlerTitleLabelString];
-                NSAttributedString *detailLabelString = [self xy_noDataPlacehodlerDetailLabelString];
-                
-                NSAttributedString *reloadBtnTitle = [self xy_noDataPlacehodlerReloadButtonTitleForState:UIControlStateNormal];
-                UIImage *reloadBtnImage = [self xy_noDataPlacehodlerReloadButtonImageForState:UIControlStateNormal];
-                
-                UIImage *image = [self xy_noDataPlacehodlerImage];
-                UIColor *imageTintColor = [self xy_noDataPlacehodlerImageTintColor];
-                UIImageRenderingMode renderingMode = imageTintColor ? UIImageRenderingModeAlwaysTemplate : UIImageRenderingModeAlwaysOriginal;
-                
-                
-                // 设置ImageView
-                if (image) {
-                    noDataPlaceholderView.imageView.image = [image imageWithRenderingMode:renderingMode];
-                    noDataPlaceholderView.imageView.tintColor = imageTintColor;
-                    
-                }
-                // 设置imageView的动画
-                if ([self xy_noDataPlacehodlerIsAllowedImageViewAnimate]) {
-                    CAAnimation *animation = [self xy_noDataPlacehodlerImageAnimation];
-                    
-                    if (animation) {
-                        [noDataPlaceholderView.imageView.layer addAnimation:animation forKey:NoDataPlaceholderBackgroundImageViewAnimationKey];
-                    }
-                } else if ([noDataPlaceholderView.imageView.layer animationForKey:NoDataPlaceholderBackgroundImageViewAnimationKey]) {
-                    [noDataPlaceholderView.imageView.layer removeAnimationForKey:NoDataPlaceholderBackgroundImageViewAnimationKey];
-                }
-                
-                if (titleLabelString) {
-                    noDataPlaceholderView.titleLabel.attributedText = titleLabelString;
-                }
-                
-                // 设置detailLabel
-                if (detailLabelString) {
-                    noDataPlaceholderView.detailLabel.attributedText = detailLabelString;
-                }
-                
-                // 设置reloadButton
-                [noDataPlaceholderView.reloadButton setBackgroundColor:[self xy_noDataPlacehodlerReloadButtonBackgroundColor]];
-                if (reloadBtnImage) {
-                    [noDataPlaceholderView.reloadButton setImage:reloadBtnImage forState:UIControlStateNormal];
-                    [noDataPlaceholderView.reloadButton setImage:[self xy_noDataPlacehodlerReloadButtonImageForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
-                } else if (reloadBtnTitle) {
-                    [noDataPlaceholderView.reloadButton setAttributedTitle:reloadBtnTitle forState:UIControlStateNormal];
-                    [noDataPlaceholderView.reloadButton setAttributedTitle:[self xy_noDataPlacehodlerReloadButtonTitleForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
-                    [noDataPlaceholderView.reloadButton setBackgroundImage:[self xy_noDataPlacehodlerReloadButtonBackgroundImageForState:UIControlStateNormal] forState:UIControlStateNormal];
-                    [noDataPlaceholderView.reloadButton setBackgroundImage:[self xy_noDataPlacehodlerReloadButtonBackgroundImageForState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
-                }
-                
-            }
+
+            noDataPlaceholderView.titleLabel = [self xy_noDataPlacehodlerTitleLabel];
+            noDataPlaceholderView.detailLabel = [self xy_noDataPlacehodlerDetailLabel];
+            noDataPlaceholderView.imageView = [self xy_noDataPlacehodlerImageView];
+            noDataPlaceholderView.reloadButton = [self xy_noDataPlacehodlerReloadButton];
             
             // 设置noDataPlaceholderView子控件垂直间的间距
             noDataPlaceholderView.verticalSpace = [self xy_noDataPlacehodlerVerticalSpace];
             
         }
-        
         
         noDataPlaceholderView.contentOffsetY = [self xy_noDataPlacehodlerContentOffsetY];
         
@@ -578,6 +560,10 @@ Class xy_baseClassToSwizzleForTarget(id target) {
     [self xy_noDataPlacehodlerDidDisappear];
 }
 
+- (UIColor *)xy_noDataPlacehodlerBackgroundColor {
+    return self.noDataViewBackgroundColor ?: [UIColor clearColor];
+}
+
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - get
 ////////////////////////////////////////////////////////////////////////
@@ -601,10 +587,6 @@ Class xy_baseClassToSwizzleForTarget(id target) {
     return view;
 }
 
-- (id<NoDataPlaceholderDataSource>)noDataPlaceholderDataSource {
-    _WeakObjectContainer *container = objc_getAssociatedObject(self, _cmd);
-    return container.weakObject;
-}
 
 - (id<NoDataPlaceholderDelegate>)noDataPlaceholderDelegate {
     _WeakObjectContainer *container = objc_getAssociatedObject(self, _cmd);
@@ -612,37 +594,10 @@ Class xy_baseClassToSwizzleForTarget(id target) {
 }
 
 
-- (NoDataPlaceholderContentViewAttribute)noDataPlaceholderContentViewAttribute {
-    return objc_getAssociatedObject(self, _cmd);
-}
-
-
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - set
 ////////////////////////////////////////////////////////////////////////
 
-- (void)setNoDataPlaceholderDataSource:(id<NoDataPlaceholderDataSource>)noDataPlaceholderDataSource {
-    
-    if (noDataPlaceholderDataSource == self.noDataPlaceholderDataSource) {
-        return;
-    }
-    
-    if (!noDataPlaceholderDataSource || ![self xy_noDataPlacehodlerCanDisplay]) {
-        [self xy_removeNoDataPlacehodlerView];
-    }
-    
-    _WeakObjectContainer *container = [[_WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDataSource];
-    objc_setAssociatedObject(self, @selector(noDataPlaceholderDataSource), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    
-    // 对reloadData方法的实现进行处理
-    // 为加载reloadData时注入额外的实现
-    // 当它在调用原来的执行的方法时并及时更新 'isNoDatasetVisible'属性的值
-    [self hockSelector:@selector(reloadData) swizzlingSelector:@selector(xy_reloadNoDataView) baseClass:xy_baseClassToSwizzleForTarget(self)];
-    
-    if ([self isKindOfClass:[UITableView class]]) {
-        [self hockSelector:@selector(endUpdates) swizzlingSelector:@selector(xy_reloadNoDataView) baseClass:xy_baseClassToSwizzleForTarget(self)];
-    }
-}
 
 
 - (void)setNoDataPlaceholderDelegate:(id<NoDataPlaceholderDelegate>)noDataPlaceholderDelegate {
@@ -651,7 +606,7 @@ Class xy_baseClassToSwizzleForTarget(id target) {
         return;
     }
     
-    if (noDataPlaceholderDelegate == nil) {
+    if (!noDataPlaceholderDelegate || ![self xy_noDataPlacehodlerCanDisplay]) {
         [self xy_removeNoDataPlacehodlerView];
     }
     _WeakObjectContainer *container = [[_WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDelegate];
@@ -661,12 +616,6 @@ Class xy_baseClassToSwizzleForTarget(id target) {
 - (void)setNoDataPlaceholderView:(NoDataPlaceholderView *)noDataPlaceholderView {
     objc_setAssociatedObject(self, @selector(noDataPlaceholderView), noDataPlaceholderView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
-
-
-- (void)setNoDataPlaceholderContentViewAttribute:(NoDataPlaceholderContentViewAttribute)noDataPlaceholderContentViewAttribute {
-    objc_setAssociatedObject(self, @selector(noDataPlaceholderContentViewAttribute), noDataPlaceholderContentViewAttribute, OBJC_ASSOCIATION_COPY_NONATOMIC);
-}
-
 
 @end
 
@@ -732,6 +681,89 @@ customView = _customView;
     } else {
         fadeInBlock();
     }
+}
+
+////////////////////////////////////////////////////////////////////////
+#pragma mark - set
+////////////////////////////////////////////////////////////////////////
+
+- (void)setCustomView:(UIView *)customView {
+    
+    if (!customView) {
+        return;
+    }
+    
+    if (_customView) {
+        [_customView removeFromSuperview];
+        _customView = nil;
+    }
+    
+    _customView = customView;
+    _customView.translatesAutoresizingMaskIntoConstraints = NO;
+    _customView.accessibilityIdentifier = @"no data placeholder custom view";
+    [self.contentView addSubview:_customView];
+}
+
+
+- (void)setImageView:(UIImageView *)imageView {
+    
+    [_imageView removeFromSuperview];
+    _imageView = nil;
+    
+    if (!imageView) {
+        return;
+    }
+    
+    _imageView = imageView;
+    _imageView.translatesAutoresizingMaskIntoConstraints = NO;
+    _imageView.accessibilityIdentifier = @"no data placeholder image view";
+    [self.contentView addSubview:_imageView];
+    
+}
+
+- (void)setTitleLabel:(UILabel *)titleLabel {
+    
+    [_titleLabel removeFromSuperview];
+    _titleLabel = nil;
+    
+    if (!titleLabel) {
+        return;
+    }
+    
+    _titleLabel = titleLabel;
+    _titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    _titleLabel.accessibilityIdentifier = @"no data placeholder title label";
+    [self.contentView addSubview:_titleLabel];
+}
+
+- (void)setDetailLabel:(UILabel *)detailLabel {
+    [_detailLabel removeFromSuperview];
+    _detailLabel = nil;
+    
+    if (!detailLabel) {
+        return;
+    }
+    
+    _detailLabel = detailLabel;
+    _detailLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    _detailLabel.accessibilityIdentifier = @"no data placeholder detail label";
+    [self.contentView addSubview:_detailLabel];
+}
+
+- (void)setReloadButton:(UIButton *)reloadButton {
+    
+    [_reloadButton removeFromSuperview];
+    _reloadButton = nil;
+    
+    if (!reloadButton) {
+        return;
+    }
+    
+    _reloadButton = reloadButton;
+    _reloadButton.translatesAutoresizingMaskIntoConstraints = NO;
+    _reloadButton.accessibilityIdentifier = @"no data placeholder reload button";
+    [_reloadButton addTarget:self action:@selector(clickReloadBtn:) forControlEvents:UIControlEventTouchUpInside];
+    [self.contentView addSubview:_reloadButton];
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -846,25 +878,6 @@ customView = _customView;
     return NO;
 }
 
-////////////////////////////////////////////////////////////////////////
-#pragma mark - set
-////////////////////////////////////////////////////////////////////////
-
-- (void)setCustomView:(UIView *)customView {
-    if (!customView) {
-        return;
-    }
-    
-    if (_customView) {
-        [_customView removeFromSuperview];
-        _customView = nil;
-    }
-    
-    _customView = customView;
-    _customView.translatesAutoresizingMaskIntoConstraints = NO;
-    _customView.accessibilityIdentifier = @"no data placeholder custom view";
-    [self.contentView addSubview:_customView];
-}
 
 
 - (void)tapGestureRecognizer:(void (^)(UITapGestureRecognizer *))tapBlock {
@@ -1165,7 +1178,7 @@ NSString * xy_getImplementationKey(Class clas, SEL selector) {
 // 对原方法的实现进行加工
 void xy_orginalImplementation(id self, SEL _cmd) {
     
-    Class baseCls = xy_baseClassToSwizzleForTarget(self);
+    Class baseCls = xy_baseClassToSwizzlingForTarget(self);
     ImplementationKey key = xy_getImplementationKey(baseCls, _cmd);
     _SwizzlingObject *swizzleObject = [[self implementationDictionary] objectForKey:key];
     NSValue *implValue = swizzleObject.swizzlingImplPointer;

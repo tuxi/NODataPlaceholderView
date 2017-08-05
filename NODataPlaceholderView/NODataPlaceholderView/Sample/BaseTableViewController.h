@@ -7,7 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "UITableView+NoDataPlaceholderExtend.h"
 
 @interface BaseTableViewController : UITableViewController
 

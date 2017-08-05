@@ -10,21 +10,22 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef void(^NoDataPlaceholderContentViewAttribute)(UIButton * const reloadBtn, UILabel * const titleLabel, UILabel * const detailLabel, UIImageView * const imageView);
-
-@protocol NoDataPlaceholderDelegate, NoDataPlaceholderDataSource;
+@protocol NoDataPlaceholderDelegate;
 
 @interface UIScrollView (NoDataPlaceholder)
 
-@property (nonatomic, weak, nullable) id<NoDataPlaceholderDataSource> noDataPlaceholderDataSource;
 @property (nonatomic, weak, nullable) id<NoDataPlaceholderDelegate> noDataPlaceholderDelegate;
 
+@property (nonatomic, copy) UIView * _Nullable (^customNoDataView)(void);
+@property (nonatomic, copy) UILabel * _Nullable(^noDataTextLabel)(void);
+@property (nonatomic, copy) UILabel * _Nullable(^noDataDetailTextLabel)(void);
+@property (nonatomic, copy) UIImageView * _Nullable(^noDataImageView)(void);
+@property (nonatomic, copy) UIButton * _Nullable(^noDataReloadButton)(void);
 
-/// 刷新NoDataPlaceholder, 当执行reloadData时也会执行该方法内部的实现
+@property (nonatomic, strong) UIColor *noDataViewBackgroundColor;
+@property (nonatomic, assign, getter=isLoading) BOOL loading;
+
 - (void)reloadNoDataView;
-
-/// 通过此block可以对contentView的四个子控件设置，若使用了此属性，则与其相关的数据源方法不再调用
-- (void)setNoDataPlaceholderContentViewAttribute:(NoDataPlaceholderContentViewAttribute)noDataPlaceholderContentViewAttribute;
 
 @end
 
@@ -69,52 +70,6 @@ typedef void(^NoDataPlaceholderContentViewAttribute)(UIButton * const reloadBtn,
 
 - (void)noDataPlaceholder:(UIScrollView *)scrollView didClickReloadButton:(UIButton *)button;
 
-@end
-
-@protocol NoDataPlaceholderDataSource <NSObject>
-
-@optional
-
-/// 当需要显示customView时，默认的NoDataPlaceholder则为会被清空
-/// @return 自定义视图
-- (UIView *)customViewForNoDataPlaceholder:(UIScrollView *)scrollview;
-
-/// NoDataPlaceholder需要显示的标题富文本
-/// @return NSAttributedString
-- (NSAttributedString *)titleAttributedStringForNoDataPlaceholder:(UIScrollView *)scrollView;
-
-/// NoDataPlaceholder需要显示的详情富文本
-/// @return NSAttributedString
-- (NSAttributedString *)detailAttributedStringForNoDataPlaceholder:(UIScrollView *)scrollView;
-
-/// NoDataPlaceholder的图片
-///@return UIImage
-- (UIImage *)imageForNoDataPlaceholder:(UIScrollView *)scrollView;
-
-/// 图片的动画，默认为nil
-/// @return CAAnimation
-- (CAAnimation *)imageAnimationForNoDataPlaceholder:(UIScrollView *)scrollView;
-
-/// 图片的tintColor , 默认无
-/// @return UIColor
-- (UIColor *)imageTintColorForNoDataPlaceholder:(UIScrollView *)scrollView;
-
-/// 指定reloadButton对应state的富文本
-/// @return NSAttributedString类型
-- (NSAttributedString *)reloadbuttonTitleAttributedStringForNoDataPlaceholder:(UIScrollView *)scrollView forState:(UIControlState)state;
-
-/// 指定reloadButton对应state的image
-- (UIImage *)reloadButtonImageForNoDataPlaceholder:(UIScrollView *)scrollView forState:(UIControlState)state;
-
-/// reloadButton背景image
-- (UIImage *)reloadButtonBackgroundImageForNoDataPlaceholder:(UIScrollView *)scrollView forState:(UIControlState)state;
-
-/// NoDataPlaceholder的背景颜色
-- (UIColor *)backgroundColorForNoDataPlaceholder:(UIScrollView *)scrollView;
-
-/// reloadButton背景颜色
-- (UIColor *)reloadButtonBackgroundColorForNoDataPlaceholder:(UIScrollView *)scrollView;
-
 /// NoDataPlaceholderView各子控件之间垂直的间距，默认为11
 - (CGFloat)contentSubviewsVerticalSpaceFoNoDataPlaceholder:(UIScrollView *)scrollView;
 
@@ -123,5 +78,6 @@ typedef void(^NoDataPlaceholderContentViewAttribute)(UIButton * const reloadBtn,
 - (CGFloat)contentOffsetYForNoDataPlaceholder:(UIScrollView *)scrollView;
 
 @end
+
 
 NS_ASSUME_NONNULL_END
