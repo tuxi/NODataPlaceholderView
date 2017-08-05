@@ -1,5 +1,5 @@
 //
-//  UIScrollView+NoDataPlaceholder.h
+//  UIScrollView+NoDataExtend.h
 //  NODataPlaceholderView
 //
 //  Created by Ossey on 2017/5/29.
@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol NoDataPlaceholderDelegate;
 
-@interface UIScrollView (NoDataPlaceholder)
+@interface UIScrollView (NoDataExtend)
 
 @property (nonatomic, weak, nullable) id<NoDataPlaceholderDelegate> noDataPlaceholderDelegate;
 

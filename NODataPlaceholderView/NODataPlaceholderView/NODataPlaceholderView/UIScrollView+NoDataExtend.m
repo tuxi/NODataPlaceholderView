@@ -1,12 +1,12 @@
 //
-//  UIScrollView+NoDataPlaceholder.m
+//  UIScrollView+NoDataExtend.m
 //  NODataPlaceholderView
 //
 //  Created by Ossey on 2017/5/29.
 //  Copyright © 2017年 Ossey. All rights reserved.
 //
 
-#import "UIScrollView+NoDataPlaceholder.h"
+#import "UIScrollView+NoDataExtend.h"
 #import <objc/runtime.h>
 
 
@@ -98,7 +98,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 @property (nonatomic, assign) BOOL registerNoDataPlaceholder;
 @end
 
-@implementation UIScrollView (NoDataPlaceholder)
+@implementation UIScrollView (NoDataExtend)
 
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - Public methods

@@ -7,7 +7,7 @@
 //
 
 #import "BaseTableViewController.h"
-#import "UIScrollView+NoDataPlaceholder.h"
+#import "UIScrollView+NoDataExtend.h"
 
 @interface BaseTableViewController () <UIAlertViewDelegate, NoDataPlaceholderDelegate>
 {
