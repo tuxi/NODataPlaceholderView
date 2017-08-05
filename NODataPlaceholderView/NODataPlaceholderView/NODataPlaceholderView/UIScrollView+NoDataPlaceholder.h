@@ -41,7 +41,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)noDataPlaceholderShouldDisplay:(UIScrollView *)scrollView;
 
 /// 当前所在页面的数据源itemCount>0时，是否应该实现NoDataPlaceholder，默认是不显示的
-/// @return 如果需要强制显示NoDataPlaceholder，返回YES即可
+/// @return 如果需要强制显示NoDataPlaceholder，return YES即可
 - (BOOL)noDataPlaceholderShouldBeForcedToDisplay:(UIScrollView *)scrollView;
 
 /// 当noDataPlaceholder即将显示的回调
@@ -61,10 +61,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// noDataPlaceholder是否可以滚动，默认NO
 - (BOOL)noDataPlaceholderShouldAllowScroll:(UIScrollView *)scrollView;
-
-/// imageview是否可以有动画，默认为NO
-- (BOOL)noDataPlaceholderShouldAnimateImageView:(UIScrollView *)scrollView;
-
 
 - (void)noDataPlaceholder:(UIScrollView *)scrollView didTapOnContentView:(UITapGestureRecognizer *)tap;
 

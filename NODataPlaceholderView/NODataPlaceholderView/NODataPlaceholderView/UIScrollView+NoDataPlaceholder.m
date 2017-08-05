@@ -307,13 +307,6 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return NO;
 }
 
-/// 是否运行imageView展示动画
-- (BOOL)xy_noDataPlacehodlerIsAllowedImageViewAnimate {
-    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldAnimateImageView:)]) {
-        return [self.noDataPlaceholderDelegate noDataPlaceholderShouldAnimateImageView:self];
-    }
-    return NO;
-}
 
 - (void)xy_noDataPlacehodlerDidAppear {
     if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderDidAppear:)]) {
