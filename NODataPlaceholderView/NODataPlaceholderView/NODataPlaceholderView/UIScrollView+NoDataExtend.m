@@ -39,7 +39,8 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 @property (nonatomic, class, readonly) NSMutableDictionary<ImplementationKey, _SwizzlingObject *> *implementationDictionary;
 
-- (void)hockSelector:(SEL)orginSelector swizzlingSelector:(SEL)swizzlingSelector baseClass:(Class)baseClas;
+- (Class)xy_baseClassToSwizzling;
+- (void)hockSelector:(SEL)orginSelector swizzlingSelector:(SEL)swizzlingSelector;
 
 @end
 
@@ -117,10 +118,10 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
         }
         
         // 对reloadData方法的实现进行处理, 为加载reloadData时注入额外的实现
-        [self hockSelector:@selector(reloadData) swizzlingSelector:@selector(xy_reloadNoDataView) baseClass:xy_baseClassToSwizzlingForTarget(self)];
+        [self hockSelector:@selector(reloadData) swizzlingSelector:@selector(xy_reloadNoDataView)];
         
         if ([self isKindOfClass:[UITableView class]]) {
-            [self hockSelector:@selector(endUpdates) swizzlingSelector:@selector(xy_reloadNoDataView) baseClass:xy_baseClassToSwizzlingForTarget(self)];
+            [self hockSelector:@selector(endUpdates) swizzlingSelector:@selector(xy_reloadNoDataView)];
         }
         objc_setAssociatedObject(self, _cmd, @(flag), OBJC_ASSOCIATION_ASSIGN);
     }
@@ -360,16 +361,17 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return btn;
 }
 
+
 /// 由当前类所在的基类来完成Swizzling
 /// 基类分别为：UITableView  UICollectionView  UIScrollView
-Class xy_baseClassToSwizzlingForTarget(id target) {
-    if ([target isKindOfClass:[UITableView class]]) {
+- (Class)xy_baseClassToSwizzling {
+    if ([self isKindOfClass:[UITableView class]]) {
         return [UITableView class];
     }
-    if ([target isKindOfClass:[UICollectionView class]]) {
+    if ([self isKindOfClass:[UICollectionView class]]) {
         return [UICollectionView class];
     }
-    if ([target isKindOfClass:[UIScrollView class]]) {
+    if ([self isKindOfClass:[UIScrollView class]]) {
         return [UIScrollView class];
     }
     return nil;
@@ -1284,7 +1286,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
 ////////////////////////////////////////////////////////////////////////
 
 
-- (void)hockSelector:(SEL)orginSelector swizzlingSelector:(SEL)swizzlingSelector baseClass:(Class)baseClas {
+- (void)hockSelector:(SEL)orginSelector swizzlingSelector:(SEL)swizzlingSelector {
     
     // 本类未实现则return
     if (![self respondsToSelector:orginSelector]) {
@@ -1300,6 +1302,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
         }
     }
     
+    Class baseClas = [self xy_baseClassToSwizzling];
     ImplementationKey key = xy_getImplementationKey(baseClas, orginSelector);
     _SwizzlingObject *swizzleObjcet = [self.implementationDictionary objectForKey:key];
     NSValue *implValue = swizzleObjcet.swizzlingImplPointer;
@@ -1337,7 +1340,7 @@ NSString * xy_getImplementationKey(Class clas, SEL selector) {
 // 对原方法的实现进行加工
 void xy_orginalImplementation(id self, SEL _cmd) {
     
-    Class baseCls = xy_baseClassToSwizzlingForTarget(self);
+    Class baseCls = [self xy_baseClassToSwizzling];
     ImplementationKey key = xy_getImplementationKey(baseCls, _cmd);
     _SwizzlingObject *swizzleObject = [[self implementationDictionary] objectForKey:key];
     NSValue *implValue = swizzleObject.swizzlingImplPointer;
@@ -1372,6 +1375,10 @@ void xy_orginalImplementation(id self, SEL _cmd) {
 
 - (NSMutableDictionary<ImplementationKey, _SwizzlingObject *> *)implementationDictionary {
     return self.class.implementationDictionary;
+}
+
+- (Class)xy_baseClassToSwizzling {
+    return [self class];
 }
 
 @end
