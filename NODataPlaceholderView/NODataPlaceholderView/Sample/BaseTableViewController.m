@@ -43,7 +43,7 @@
     self.tableView.noDataPlaceholderDelegate = self;
 
     self.tableView.customNoDataView = ^UIView * _Nonnull{
-        if (weakSelf.tableView.isLoading) {
+        if (weakSelf.tableView.xy_loading) {
             UIActivityIndicatorView *activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
             [activityView startAnimating];
             return activityView;
@@ -109,7 +109,7 @@
     self.tableView.noDataPlaceholderDelegate = self;
     
     self.tableView.customNoDataView = ^UIView * _Nonnull{
-        if (weakSelf.tableView.isLoading) {
+        if (weakSelf.tableView.xy_loading) {
             UIActivityIndicatorView *activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
             [activityView startAnimating];
             return activityView;
@@ -247,12 +247,12 @@
 
 - (void)getDataFromServer {
     
-    self.tableView.loading = YES;
+    self.tableView.xy_loading = YES;
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self addData];
         [self.tableView reloadData];
-        self.tableView.loading = NO;
+        self.tableView.xy_loading = NO;
     });
 }
 

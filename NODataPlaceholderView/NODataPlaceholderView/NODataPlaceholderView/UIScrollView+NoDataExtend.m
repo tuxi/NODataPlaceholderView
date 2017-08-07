@@ -580,7 +580,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return objc_getAssociatedObject(self, _cmd);
 }
 
-- (BOOL)isLoading {
+- (BOOL)xy_loading {
     return [objc_getAssociatedObject(self, _cmd) integerValue];
 }
 
@@ -677,18 +677,15 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     objc_setAssociatedObject(self, @selector(noDataViewBackgroundColor), noDataViewBackgroundColor, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
-
-
-- (void)setLoading:(BOOL)loading {
-    
-    if (self.isLoading == loading) {
+- (void)setXy_loading:(BOOL)xy_loading {
+    if (self.xy_loading == xy_loading) {
         return;
     }
     
-    objc_setAssociatedObject(self, @selector(isLoading), @(loading), OBJC_ASSOCIATION_ASSIGN);
+    objc_setAssociatedObject(self, @selector(xy_loading), @(xy_loading), OBJC_ASSOCIATION_ASSIGN);
     
     [self xy_reloadNoDataView];
-    
+
 }
 
 

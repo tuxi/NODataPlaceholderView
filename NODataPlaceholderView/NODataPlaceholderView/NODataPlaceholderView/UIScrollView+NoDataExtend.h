@@ -35,7 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) UIEdgeInsets noDataButtonEdgeInsets;
 
 @property (nonatomic, strong) UIColor *noDataViewBackgroundColor;
-@property (nonatomic, assign, getter=isLoading) BOOL loading;
+@property (nonatomic, assign) BOOL xy_loading;
 
 - (void)reloadNoDataView;
 
