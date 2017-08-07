@@ -248,7 +248,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldAllowScroll:)]) {
         return [self.noDataPlaceholderDelegate noDataPlaceholderShouldAllowScroll:self];
     }
-    return NO;
+    return YES;
 }
 
 
