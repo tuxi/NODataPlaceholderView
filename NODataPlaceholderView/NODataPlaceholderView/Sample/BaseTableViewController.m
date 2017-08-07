@@ -27,12 +27,82 @@
     _dataSource = [NSMutableArray array];
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"reuseIdentifier"];
     
+    // 自定义NoDataPlaceholder的子控件
+//    [self setupNodataViewForNewSubviews];
+    
+    // 使用默认的子控件 配置
     [self setupNodataView];
     
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"打开调试窗口" style:0 target:self action:@selector(openTestWindow)];
 }
 
+// 使用默认的子控件进行配置
 - (void)setupNodataView {
+    __weak typeof(self) weakSelf = self;
+    
+    self.tableView.noDataPlaceholderDelegate = self;
+
+    self.tableView.customNoDataView = ^UIView * _Nonnull{
+        if (weakSelf.tableView.isLoading) {
+            UIActivityIndicatorView *activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+            [activityView startAnimating];
+            return activityView;
+        }else {
+            return nil;
+        }
+        
+    };
+    
+    self.tableView.noDataTextLabelBlock = ^(UILabel * _Nonnull textLabel) {
+        textLabel.backgroundColor = [UIColor clearColor];
+        textLabel.font = [UIFont systemFontOfSize:27.0];
+        textLabel.textColor = [UIColor colorWithWhite:0.6 alpha:1.0];
+        textLabel.textAlignment = NSTextAlignmentCenter;
+        textLabel.lineBreakMode = NSLineBreakByWordWrapping;
+        textLabel.numberOfLines = 0;
+        textLabel.attributedText = [weakSelf attributedStringWithText:@"没有正在下载的歌曲" color:[UIColor grayColor] fontSize:16];;
+    };
+    
+    self.tableView.noDataDetailTextLabelBlock = ^(UILabel * _Nonnull detailTextLabel) {
+        detailTextLabel.backgroundColor = [UIColor clearColor];
+        detailTextLabel.font = [UIFont systemFontOfSize:17.0];
+        detailTextLabel.textColor = [UIColor colorWithWhite:0.6 alpha:1.0];
+        detailTextLabel.textAlignment = NSTextAlignmentCenter;
+        detailTextLabel.lineBreakMode = NSLineBreakByWordWrapping;
+        detailTextLabel.numberOfLines = 0;
+        detailTextLabel.attributedText = [weakSelf attributedStringWithText:@"可以去下载历史，批量找回下载过的歌曲" color:[UIColor grayColor] fontSize:16];
+    };
+    
+    self.tableView.noDataTextEdgeInsets = UIEdgeInsetsMake(20, 0, 5, 0);
+    
+    self.tableView.noDataImageViewBlock = ^(UIImageView * _Nonnull imageView) {
+        imageView.backgroundColor = [UIColor clearColor];
+        imageView.contentMode = UIViewContentModeScaleAspectFit;
+        imageView.userInteractionEnabled = NO;
+        imageView.image = [UIImage imageNamed:@"qqMusic_empty"];
+
+    };
+    
+    self.tableView.noDataReloadButtonBlock = ^(UIButton * _Nonnull reloadButton) {
+        reloadButton.backgroundColor = [UIColor clearColor];
+        reloadButton.layer.borderWidth = 0.5;
+        reloadButton.layer.borderColor = [UIColor colorWithRed:49/255.0 green:194/255.0 blue:124/255.0 alpha:1.0].CGColor;
+        reloadButton.layer.cornerRadius = 2.0;
+        [reloadButton.layer setMasksToBounds:YES];
+        // 按钮内部控件垂直对齐方式为中心
+        reloadButton.contentVerticalAlignment = UIControlContentHorizontalAlignmentCenter;
+        reloadButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+        [reloadButton setAttributedTitle:[weakSelf attributedStringWithText:@"查看下载历史" color:[UIColor colorWithRed:49/255.0 green:194/255.0 blue:124/255.0 alpha:1.0] fontSize:15.0] forState:UIControlStateNormal];
+        [reloadButton setTitleColor:[UIColor grayColor] forState:UIControlStateNormal];
+
+    };
+    
+    self.tableView.noDataButtonEdgeInsets = UIEdgeInsetsMake(11, 100, 11, 100);
+}
+
+
+// 创建新的子控件，可以自定义子控件，只要符合回调的类型即可
+- (void)setupNodataViewForNewSubviews {
     
     __weak typeof(self) weakSelf = self;
     
@@ -51,7 +121,6 @@
     
     self.tableView.noDataTextLabel = ^UILabel * _Nonnull{
         UILabel *titleLabel = [UILabel new];
-        titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
         titleLabel.backgroundColor = [UIColor clearColor];
         titleLabel.font = [UIFont systemFontOfSize:27.0];
         titleLabel.textColor = [UIColor colorWithWhite:0.6 alpha:1.0];
@@ -68,7 +137,6 @@
     
     self.tableView.noDataDetailTextLabel = ^UILabel * _Nonnull{
         UILabel *detailLabel = [UILabel new];
-        detailLabel.translatesAutoresizingMaskIntoConstraints = NO;
         detailLabel.backgroundColor = [UIColor clearColor];
         
         detailLabel.font = [UIFont systemFontOfSize:17.0];
@@ -84,7 +152,6 @@
     
     self.tableView.noDataImageView = ^UIImageView * _Nonnull{
         UIImageView *imageView = [UIImageView new];
-        imageView.translatesAutoresizingMaskIntoConstraints = NO;
         imageView.backgroundColor = [UIColor clearColor];
         imageView.contentMode = UIViewContentModeScaleAspectFit;
         imageView.userInteractionEnabled = NO;
@@ -95,7 +162,6 @@
     
     self.tableView.noDataReloadButton = ^UIButton * _Nonnull{
         UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
-        btn.translatesAutoresizingMaskIntoConstraints = NO;
         btn.backgroundColor = [UIColor clearColor];
         btn.layer.borderWidth = 0.5;
         btn.layer.borderColor = [UIColor colorWithRed:49/255.0 green:194/255.0 blue:124/255.0 alpha:1.0].CGColor;

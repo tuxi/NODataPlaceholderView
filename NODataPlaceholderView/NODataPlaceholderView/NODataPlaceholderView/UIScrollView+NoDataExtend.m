@@ -273,7 +273,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 
 
 ////////////////////////////////////////////////////////////////////////
-#pragma mark - Private methods (dataSource privete api)
+#pragma mark - Private methods (block privete api)
 ////////////////////////////////////////////////////////////////////////
 
 - (UIView *)xy_noDataPlacehodlerCustomView {
@@ -361,6 +361,9 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
     return btn;
 }
 
+////////////////////////////////////////////////////////////////////////
+#pragma mark - Swizzling
+////////////////////////////////////////////////////////////////////////
 
 /// 由当前类所在的基类来完成Swizzling
 /// 基类分别为：UITableView  UICollectionView  UIScrollView
@@ -443,12 +446,29 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
             noDataPlaceholderView.customView = customView;
         } else {
             
-            // customView为nil时，则从dataSource中设置到默认的contentView
-
-            noDataPlaceholderView.titleLabel = [self xy_noDataPlacehodlerTitleLabel];
-            noDataPlaceholderView.detailLabel = [self xy_noDataPlacehodlerDetailLabel];
-            noDataPlaceholderView.imageView = [self xy_noDataPlacehodlerImageView];
-            noDataPlaceholderView.reloadButton = [self xy_noDataPlacehodlerReloadButton];
+            // customView为nil时，则通过block回到获取子控件 设置 
+            if (self.noDataTextLabelBlock) {
+                self.noDataTextLabelBlock(noDataPlaceholderView.titleLabel);
+            } else {
+                noDataPlaceholderView.titleLabel = [self xy_noDataPlacehodlerTitleLabel];
+            }
+            if (self.noDataDetailTextLabelBlock) {
+                self.noDataDetailTextLabelBlock(noDataPlaceholderView.detailLabel);
+            } else {
+                noDataPlaceholderView.detailLabel = [self xy_noDataPlacehodlerDetailLabel];
+            }
+            
+            if (self.noDataImageViewBlock) {
+                self.noDataImageViewBlock(noDataPlaceholderView.imageView);
+            } else {
+                noDataPlaceholderView.imageView = [self xy_noDataPlacehodlerImageView];
+            }
+            
+            if (self.noDataReloadButtonBlock) {
+                self.noDataReloadButtonBlock(noDataPlaceholderView.reloadButton);
+            } else {
+                noDataPlaceholderView.reloadButton = [self xy_noDataPlacehodlerReloadButton];
+            }
             
             // 设置子控件之间的边距
             noDataPlaceholderView.titleEdgeInsets = self.noDataTextEdgeInsets;
@@ -587,6 +607,38 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - set
 ////////////////////////////////////////////////////////////////////////
+
+- (void)setNoDataTextLabelBlock:(void (^)(UILabel * _Nonnull))noDataTextLabelBlock {
+    objc_setAssociatedObject(self, @selector(noDataTextLabelBlock), noDataTextLabelBlock, OBJC_ASSOCIATION_COPY_NONATOMIC);
+}
+
+- (void (^)(UILabel * _Nonnull))noDataTextLabelBlock {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setNoDataDetailTextLabelBlock:(void (^)(UILabel * _Nonnull))noDataDetailTextLabelBlock {
+    objc_setAssociatedObject(self, @selector(noDataDetailTextLabelBlock), noDataDetailTextLabelBlock, OBJC_ASSOCIATION_COPY_NONATOMIC);
+}
+
+- (void (^)(UILabel * _Nonnull))noDataDetailTextLabelBlock {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setNoDataImageViewBlock:(void (^)(UIImageView * _Nonnull))noDataImageViewBlock {
+    objc_setAssociatedObject(self, @selector(noDataImageViewBlock), noDataImageViewBlock, OBJC_ASSOCIATION_COPY_NONATOMIC);
+}
+
+- (void (^)(UIImageView * _Nonnull))noDataImageViewBlock {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setNoDataReloadButtonBlock:(void (^)(UIButton * _Nonnull))noDataReloadButtonBlock {
+    objc_setAssociatedObject(self, @selector(noDataReloadButtonBlock), noDataReloadButtonBlock, OBJC_ASSOCIATION_COPY_NONATOMIC);
+}
+
+- (void (^)(UIButton * _Nonnull))noDataReloadButtonBlock {
+    return objc_getAssociatedObject(self, _cmd);
+}
 
 - (void)setCustomNoDataView:(UIView * _Nonnull (^)(void))customNoDataView {
     objc_setAssociatedObject(self, @selector(customNoDataView), customNoDataView, OBJC_ASSOCIATION_COPY_NONATOMIC);
