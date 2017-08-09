@@ -9,10 +9,10 @@
 #import "UIScrollView+NoDataExtend.h"
 #import <objc/runtime.h>
 
-
 typedef NSString * ImplementationKey NS_EXTENSIBLE_STRING_ENUM;
 
 static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoDataPlaceholderBackgroundImageViewAnimation";
+static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 #pragma mark *** _WeakObjectContainer ***
 
@@ -1106,7 +1106,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
         
         // 无customView
         CGFloat width = CGRectGetWidth(self.frame) ?: CGRectGetWidth([UIScreen mainScreen].bounds);
-        CGFloat horizontalSpace = roundf(width / 16.0); // contentView的子控件横向间距  四舍五入
+        CGFloat horizontalSpace = roundf(width / NoDataPlaceholderHorizontalSpaceRatioValue); // contentView的子控件横向间距  四舍五入
         CGFloat globalverticalSpace = self.globalverticalSpace ?: 11.0; // contentView的子控件之间的垂直间距，默认为11.0
         
         NSMutableArray<NSString *> *subviewKeyArray = [NSMutableArray arrayWithCapacity:0];
