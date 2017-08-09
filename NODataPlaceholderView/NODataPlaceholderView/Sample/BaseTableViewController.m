@@ -36,6 +36,7 @@
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"打开调试窗口" style:0 target:self action:@selector(openTestWindow)];
 }
 
+// 第一种方式：
 // 使用默认的子控件进行配置
 - (void)setupNodataView {
     __weak typeof(self) weakSelf = self;
@@ -100,7 +101,7 @@
     self.tableView.noDataButtonEdgeInsets = UIEdgeInsetsMake(11, 100, 11, 100);
 }
 
-
+// 第二种方式：
 // 创建新的子控件，可以自定义子控件，只要符合回调的类型即可
 - (void)setupNodataViewForNewSubviews {
     
@@ -300,8 +301,9 @@
 }
 
 - (CGFloat)contentOffsetYForNoDataPlaceholder:(UIScrollView *)scrollView {
-    return -60;
+    return -80;
 }
+
 
 - (NSAttributedString *)attributedStringWithText:(NSString *)string color:(UIColor *)color fontSize:(CGFloat)fontSize {
     NSString *text = string;

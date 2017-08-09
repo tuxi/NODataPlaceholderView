@@ -68,7 +68,7 @@ static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoD
 @property (nonatomic, strong) UIView *customView;
 /** 点按手势 */
 @property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
-/** 中心点y的偏移量 */
+/** contentView中心点y轴的偏移量 */
 @property (nonatomic, assign) CGFloat contentOffsetY;
 /** 所有子控件之间垂直间距 */
 @property (nonatomic, assign) CGFloat globalverticalSpace;
@@ -1087,7 +1087,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
                                                                  metrics:nil
                                                                    views:@{@"contentView": self.contentView}]];
     
-    // 当verticalOffset(自定义的垂直偏移量)有值时，需要调整垂直偏移量的约束值
+    // 当contentOffsetY(自定义的垂直偏移量)有值时，需要调整垂直偏移量的约束值
     if (self.contentOffsetY != 0.0 && self.constraints.count > 0) {
         contentViewY.constant = self.contentOffsetY;
     }
@@ -1109,33 +1109,34 @@ buttonEdgeInsets = _buttonEdgeInsets;
         CGFloat horizontalSpace = roundf(width / 16.0); // contentView的子控件横向间距  四舍五入
         CGFloat globalverticalSpace = self.globalverticalSpace ?: 11.0; // contentView的子控件之间的垂直间距，默认为11.0
         
-        NSMutableArray<NSString *> *subviewsNames = [NSMutableArray arrayWithCapacity:0];
-        NSMutableDictionary *views = [NSMutableDictionary dictionaryWithCapacity:0];
+        NSMutableArray<NSString *> *subviewKeyArray = [NSMutableArray arrayWithCapacity:0];
+        NSMutableDictionary *subviewDict = [NSMutableDictionary dictionaryWithCapacity:0];
         NSMutableDictionary *metrics = @{@"horizontalSpace": @(horizontalSpace)}.mutableCopy;
         
         // 设置imageView水平约束
         if ([self canShowImage]) {
             
-            [subviewsNames addObject:NSStringFromSelector(@selector(imageView))];
-            views[[subviewsNames lastObject]] = _imageView;
+            [subviewKeyArray addObject:NSStringFromSelector(@selector(imageView))];
+            subviewDict[[subviewKeyArray lastObject]] = _imageView;
             
             CGFloat imageLeftSpace = horizontalSpace;
             CGFloat imageRightSpace = horizontalSpace;
             if ([self canChangeInsets:self.imageEdgeInsets]) {
                 imageLeftSpace = self.imageEdgeInsets.left;
                 imageRightSpace = self.imageEdgeInsets.right;
-                NSDictionary *imageMetrics = @{@"imageLeftSpace": @(imageLeftSpace), @"imageRightSpace": @(imageRightSpace)};
+                NSDictionary *imageMetrics = @{@"imageLeftSpace": @(imageLeftSpace),
+                                               @"imageRightSpace": @(imageRightSpace)};
                 [metrics addEntriesFromDictionary:imageMetrics];
                 [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(imageLeftSpace@750)-[imageView(>=0)]-(imageRightSpace@750)-|"
                                                                                          options:0
                                                                                          metrics:metrics
-                                                                                           views:views]];
-
+                                                                                           views:subviewDict]];
+                
             }
             else {
                 [self.contentView addConstraint:[self.contentView equallyConstraintWithView:_imageView attribute:NSLayoutAttributeCenterX]];
             }
-        
+            
         } else {
             [_imageView removeFromSuperview];
             _imageView = nil;
@@ -1149,15 +1150,16 @@ buttonEdgeInsets = _buttonEdgeInsets;
                 titleLeftSpace = self.titleEdgeInsets.left;
                 titleRightSpace = self.titleEdgeInsets.right;
             }
-            NSDictionary *titleMetrics = @{@"titleLeftSpace": @(titleLeftSpace), @"titleRightSpace": @(titleRightSpace)};
+            NSDictionary *titleMetrics = @{@"titleLeftSpace": @(titleLeftSpace),
+                                           @"titleRightSpace": @(titleRightSpace)};
             [metrics addEntriesFromDictionary:titleMetrics];
-            [subviewsNames addObject:NSStringFromSelector(@selector(titleLabel))];
-            views[[subviewsNames lastObject]] = _titleLabel;
+            [subviewKeyArray addObject:NSStringFromSelector(@selector(titleLabel))];
+            subviewDict[[subviewKeyArray lastObject]] = _titleLabel;
             
             [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(titleLeftSpace@750)-[titleLabel(>=0)]-(titleRightSpace@750)-|"
                                                                                      options:0
                                                                                      metrics:metrics
-                                                                                       views:views]];
+                                                                                       views:subviewDict]];
         } else {
             // 不显示就移除
             [_titleLabel removeFromSuperview];
@@ -1173,16 +1175,17 @@ buttonEdgeInsets = _buttonEdgeInsets;
                 detailLeftSpace = self.detailEdgeInsets.left;
                 detailRightSpace = self.detailEdgeInsets.right;
             }
-            NSDictionary *detailMetrics = @{@"detailLeftSpace": @(detailLeftSpace), @"detailRightSpace": @(detailRightSpace)};
+            NSDictionary *detailMetrics = @{@"detailLeftSpace": @(detailLeftSpace),
+                                            @"detailRightSpace": @(detailRightSpace)};
             [metrics addEntriesFromDictionary:detailMetrics];
             
-            [subviewsNames addObject:NSStringFromSelector(@selector(detailLabel))];
-            views[[subviewsNames lastObject]] = _detailLabel;
+            [subviewKeyArray addObject:NSStringFromSelector(@selector(detailLabel))];
+            subviewDict[[subviewKeyArray lastObject]] = _detailLabel;
             
             [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-(detailLeftSpace@750)-[detailLabel(>=0)]-(detailRightSpace@750)-|"
                                                                                      options:0
                                                                                      metrics:metrics
-                                                                                       views:views]];
+                                                                                       views:subviewDict]];
         } else {
             // 不显示就移除
             [_detailLabel removeFromSuperview];
@@ -1198,16 +1201,17 @@ buttonEdgeInsets = _buttonEdgeInsets;
                 buttonLeftSpace = self.buttonEdgeInsets.left;
                 buttonRightSpace = self.buttonEdgeInsets.right;
             }
-            NSDictionary *buttonMetrics = @{@"buttonLeftSpace": @(buttonLeftSpace), @"buttonRightSpace": @(buttonRightSpace)};
+            NSDictionary *buttonMetrics = @{@"buttonLeftSpace": @(buttonLeftSpace),
+                                            @"buttonRightSpace": @(buttonRightSpace)};
             [metrics addEntriesFromDictionary:buttonMetrics];
             
-            [subviewsNames addObject:@"reloadButton"];
-            views[[subviewsNames lastObject]] = _reloadButton;
+            [subviewKeyArray addObject:NSStringFromSelector(@selector(reloadButton))];
+            subviewDict[[subviewKeyArray lastObject]] = _reloadButton;
             
             [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-(buttonLeftSpace@750)-[reloadButton(>=0)]-(buttonRightSpace@750)-|"
                                                                                      options:0
                                                                                      metrics:metrics
-                                                                                       views:views]];
+                                                                                       views:subviewDict]];
         } else {
             // 不显示就移除
             [_reloadButton removeFromSuperview];
@@ -1218,9 +1222,9 @@ buttonEdgeInsets = _buttonEdgeInsets;
         NSMutableString *verticalFormat = [NSMutableString new];
         // 拼接字符串，添加每个控件垂直边缘之间的约束值, 默认为globalverticalSpace 11.0，如果设置了子控件的contentEdgeInsets,则verticalSpace无效
         UIView *previousView = nil;
-        for (NSInteger i = 0; i < subviewsNames.count; ++i) {
+        for (NSInteger i = 0; i < subviewKeyArray.count; ++i) {
             CGFloat topSpace = globalverticalSpace;
-            NSString *viewName = subviewsNames[i];
+            NSString *viewName = subviewKeyArray[i];
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
             UIView *view = [self performSelector:NSSelectorFromString(viewName)];
@@ -1232,7 +1236,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
             if ([self canChangeInsets:previousView.noDataPlaceholderViewContentEdgeInsets]) {
                 topSpace += view.noDataPlaceholderViewContentEdgeInsets.bottom;
             }
-            if (i == subviewsNames.count - 1) {
+            if (i == subviewKeyArray.count - 1) {
                 // 最后一个控件把距离父控件底部的约束值也加上
                 [verticalFormat appendFormat:@"-(%.f@750)-[%@]-(%.f@750)-", topSpace, viewName, view.noDataPlaceholderViewContentEdgeInsets.bottom];
             }
@@ -1248,7 +1252,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
             [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:[NSString stringWithFormat:@"V:|%@|", verticalFormat]
                                                                                      options:0
                                                                                      metrics:metrics
-                                                                                       views:views]];
+                                                                                       views:subviewDict]];
         }
     }
     
@@ -1269,7 +1273,8 @@ buttonEdgeInsets = _buttonEdgeInsets;
     }
     
     // 如果hitView是contentView或customView, 就返回此实例
-    if ([hitView isEqual:_contentView] || [hitView isEqual:_customView]) {
+    if ([hitView isEqual:_contentView] ||
+        [hitView isEqual:_customView]) {
         return hitView;
     }
     
@@ -1286,6 +1291,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
     
     [self removeAllConstraints];
 }
+
 
 @end
 
