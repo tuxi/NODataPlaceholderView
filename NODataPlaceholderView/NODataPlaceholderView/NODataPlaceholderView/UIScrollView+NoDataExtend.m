@@ -45,7 +45,18 @@ __unused NS_INLINE NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlags
     return flags;
 }
 
+@interface UIView (ConstraintLayoutExtension)
 
+- (NSLayoutConstraint *)equallyConstraintWithView:(UIView *)view
+                                        attribute:(NSLayoutAttribute)attribute;
+- (NSLayoutConstraint *)greaterThanOrEqualConstraintWithView:(UIView *)view
+                                                   attribute:(NSLayoutAttribute)attribute
+                                                    constant:(CGFloat)constant;
+- (NSLayoutConstraint *)lessThanOrEqualConstraintWithView:(UIView *)view
+                                                attribute:(NSLayoutAttribute)attribute
+                                                 constant:(CGFloat)constant;
+
+@end
 
 typedef NSString * ImplementationKey NS_EXTENSIBLE_STRING_ENUM;
 
@@ -149,43 +160,6 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     [self xy_reloadNoDataView];
 }
 
-- (BOOL)registerNoDataPlaceholder {
-    
-    BOOL flag = objc_getAssociatedObject(self, _cmd);
-    if (!flag) {
-        if (![self xy_noDataPlacehodlerCanDisplay]) {
-            [self xy_removeNoDataPlacehodlerView];
-        }
-        
-        // 对reloadData方法的实现进行处理, 为加载reloadData时注入额外的实现
-        [self hockSelector:@selector(reloadData) swizzlingSelector:@selector(xy_reloadNoDataView)];
-        
-        if ([self isKindOfClass:[UITableView class]]) {
-            [self hockSelector:@selector(endUpdates) swizzlingSelector:@selector(xy_reloadNoDataView)];
-        }
-        objc_setAssociatedObject(self, _cmd, @(flag), OBJC_ASSOCIATION_ASSIGN);
-    }
-    return flag;
-}
-
-
-
-////////////////////////////////////////////////////////////////////////
-#pragma mark - Events
-////////////////////////////////////////////////////////////////////////
-
-/// 点击NODataPlaceholderView contentView的回调
-- (void)xy_didTapContentView:(UITapGestureRecognizer *)tap {
-    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholder:didTapOnContentView:)]) {
-        [self.noDataPlaceholderDelegate noDataPlaceholder:self didTapOnContentView:tap];
-    }
-}
-
-- (void)xy_clickReloadBtn:(UIButton *)btn {
-    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholder:didClickReloadButton:)]) {
-        [self.noDataPlaceholderDelegate noDataPlaceholder:self didClickReloadButton:btn];
-    }
-}
 
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - Private methods (delegate private api)
@@ -211,7 +185,6 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 - (NSInteger)xy_itemCount {
     NSInteger itemCount = 0;
     
-    // UIScrollView 没有dataSource属性, 所以返回0
     if (![self respondsToSelector:@selector(dataSource)]) {
         return itemCount;
     }
@@ -226,7 +199,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
             sections = [dataSource numberOfSectionsInTableView:tableView];
         }
         if (dataSource && [dataSource respondsToSelector:@selector(tableView:numberOfRowsInSection:)]) {
-            // 遍历所有组获取每组的行数，就相加得到所有item的个数，一行就是一个item
+            // 遍历所有组获取每组的行数，就相加得到所有item的数量
             for (NSInteger section = 0; section < sections; ++section) {
                 itemCount += [dataSource tableView:tableView numberOfRowsInSection:section];
             }
@@ -243,7 +216,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
             sections = [dataSource numberOfSectionsInCollectionView:collectionView];
         }
         if (dataSource && [dataSource respondsToSelector:@selector(collectionView:numberOfItemsInSection:)]) {
-            // 遍历所有组获取每组的行数，就相加得到所有item的个数，一行就是一个item
+            // 遍历所有组获取每组的行数，就相加得到所有item的数量
             for (NSInteger section = 0; section < sections; ++section) {
                 itemCount += [dataSource collectionView:collectionView numberOfItemsInSection:section];
             }
@@ -354,7 +327,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         titleLabel = self.noDataPlaceholderView.titleLabel;
     }
     if (titleLabel) {
-        NSAssert([titleLabel isKindOfClass:[UILabel class]], @"[- xy_noDataPlacehodlerTitleLabel:]返回值必须是UILabel或其子类对象");
+        NSParameterAssert([titleLabel isKindOfClass:[UILabel class]]);
     }
     return titleLabel;
 }
@@ -368,7 +341,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         detailLabel = self.noDataPlaceholderView.detailLabel;
     }
     if (detailLabel) {
-        NSAssert([detailLabel isKindOfClass:[UILabel class]], @"[- xy_noDataPlacehodlerDetailLabel:]返回值必须是UILabel或其子类对象");
+         NSParameterAssert([detailLabel isKindOfClass:[UILabel class]]);
     }
     return detailLabel;
 }
@@ -382,7 +355,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         imageView = self.noDataPlaceholderView.imageView;
     }
     if (imageView) {
-        NSAssert([imageView isKindOfClass:[UIImageView class]], @"[- xy_noDataPlacehodlerImageView:]返回值必须是UIImageView或其子类对象");
+         NSParameterAssert([imageView isKindOfClass:[UIImageView class]]);
     }
     return imageView;
 }
@@ -396,9 +369,22 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         btn = self.noDataPlaceholderView.reloadButton;
     }
     if (btn) {
-        NSAssert([btn isKindOfClass:[UIButton class]], @"[- xy_noDataPlacehodlerReloadButton:]返回值必须是UIImageView或其子类对象");
+        NSParameterAssert([btn isKindOfClass:[UIButton class]]);
     }
     return btn;
+}
+
+/// 点击NODataPlaceholderView contentView的回调
+- (void)xy_didTapContentView:(UITapGestureRecognizer *)tap {
+    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholder:didTapOnContentView:)]) {
+        [self.noDataPlaceholderDelegate noDataPlaceholder:self didTapOnContentView:tap];
+    }
+}
+
+- (void)xy_clickReloadBtn:(UIButton *)btn {
+    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholder:didClickReloadButton:)]) {
+        [self.noDataPlaceholderDelegate noDataPlaceholder:self didClickReloadButton:btn];
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -478,19 +464,22 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         [self xy_noDataPlaceholderViewWillAppear];
         
         NoDataPlaceholderView *noDataPlaceholderView = self.noDataPlaceholderView;
+        
         // 设置是否需要淡入淡出效果
         noDataPlaceholderView.fadeInOnDisplay = self.delegateFlags.noDataPlacehodlerShouldFadeInOnDisplay;
         
         if (noDataPlaceholderView.superview == nil) {
-            if (([self isKindOfClass:[UITableView class]] || [self isKindOfClass:[UICollectionView class]]) && [self.subviews count] > 1) {
+            if (([self isKindOfClass:[UITableView class]] || [self isKindOfClass:[UICollectionView class]]) &&
+                [self.subviews count] > 1) {
                 [self insertSubview:noDataPlaceholderView atIndex:0];
             } else {
                 [self addSubview:noDataPlaceholderView];
             }
         }
         
-        // 重置视图及其约束对于保证良好状态
+        // 重置视图及其约束
         [noDataPlaceholderView resetSubviews];
+    
         
         UIView *customView = [self xy_noDataPlacehodlerCustomView];
         if (customView) {
@@ -557,6 +546,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     
 }
 
+
 - (void)xy_removeNoDataPlacehodlerView {
     // 通知代理即将消失
     [self xy_noDataPlacehodlerWillDisappear];
@@ -577,6 +567,26 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 - (UIColor *)xy_noDataPlacehodlerBackgroundColor {
     return self.noDataViewBackgroundColor ?: [UIColor clearColor];
 }
+
+- (BOOL)registerNoDataPlaceholder {
+    
+    BOOL flag = objc_getAssociatedObject(self, _cmd);
+    if (!flag) {
+        if (![self xy_noDataPlacehodlerCanDisplay]) {
+            [self xy_removeNoDataPlacehodlerView];
+        }
+        
+        // 对reloadData方法的实现进行处理, 为加载reloadData时注入额外的实现
+        [self hockSelector:@selector(reloadData) swizzlingSelector:@selector(xy_reloadNoDataView)];
+        
+        if ([self isKindOfClass:[UITableView class]]) {
+            [self hockSelector:@selector(endUpdates) swizzlingSelector:@selector(xy_reloadNoDataView)];
+        }
+        objc_setAssociatedObject(self, _cmd, @(flag), OBJC_ASSOCIATION_ASSIGN);
+    }
+    return flag;
+}
+
 
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - get
@@ -788,19 +798,6 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 @end
 
-@interface UIView (ConstraintLayoutExtension)
-
-- (NSLayoutConstraint *)equallyConstraintWithView:(UIView *)view
-                                        attribute:(NSLayoutAttribute)attribute;
-- (NSLayoutConstraint *)greaterThanOrEqualConstraintWithView:(UIView *)view
-                                                   attribute:(NSLayoutAttribute)attribute
-                                                    constant:(CGFloat)constant;
-- (NSLayoutConstraint *)lessThanOrEqualConstraintWithView:(UIView *)view
-                                                attribute:(NSLayoutAttribute)attribute
-                                                 constant:(CGFloat)constant;
-
-@end
-
 #pragma mark *** NoDataPlaceholderView ***
 
 @implementation NoDataPlaceholderView
@@ -899,7 +896,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
     [customView removeConstraints:customView.constraints];
     _customView = customView;
     _customView.translatesAutoresizingMaskIntoConstraints = NO;
-    _customView.accessibilityIdentifier = @"no data placeholder custom view";
+    _customView.accessibilityIdentifier = @"customView";
     [self.contentView addSubview:_customView];
 }
 
@@ -916,7 +913,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
     [imageView removeConstraints:imageView.constraints];
     _imageView = imageView;
     _imageView.translatesAutoresizingMaskIntoConstraints = NO;
-    _imageView.accessibilityIdentifier = @"no data placeholder image view";
+    _imageView.accessibilityIdentifier = NSStringFromSelector(@selector(imageView));
     [self.contentView addSubview:_imageView];
     
 }
@@ -932,7 +929,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
     [titleLabel removeConstraints:titleLabel.constraints];
     _titleLabel = titleLabel;
     _titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    _titleLabel.accessibilityIdentifier = @"no data placeholder title label";
+    _titleLabel.accessibilityIdentifier = NSStringFromSelector(@selector(titleLabel));
     [self.contentView addSubview:_titleLabel];
 }
 
@@ -946,7 +943,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
     [detailLabel removeConstraints:detailLabel.constraints];
     _detailLabel = detailLabel;
     _detailLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    _detailLabel.accessibilityIdentifier = @"no data placeholder detail label";
+    _detailLabel.accessibilityIdentifier = NSStringFromSelector(@selector(detailLabel));
     [self.contentView addSubview:_detailLabel];
 }
 
@@ -961,7 +958,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
     [reloadButton removeConstraints:reloadButton.constraints];
     _reloadButton = reloadButton;
     _reloadButton.translatesAutoresizingMaskIntoConstraints = NO;
-    _reloadButton.accessibilityIdentifier = @"no data placeholder reload button";
+    _reloadButton.accessibilityIdentifier = NSStringFromSelector(@selector(reloadButton));
     [_reloadButton addTarget:self action:@selector(clickReloadBtn:) forControlEvents:UIControlEventTouchUpInside];
     [self.contentView addSubview:_reloadButton];
 }
@@ -976,7 +973,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
         contentView.backgroundColor = [UIColor clearColor];
         contentView.userInteractionEnabled = YES;
         contentView.alpha = 0;
-        contentView.accessibilityIdentifier = @"no data placeholder contentView";
+        contentView.accessibilityIdentifier = NSStringFromSelector(_cmd);
         _contentView = contentView;
         [self addSubview:contentView];
     }
@@ -991,7 +988,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
         imageView.contentMode = UIViewContentModeScaleAspectFit;
         imageView.userInteractionEnabled = NO;
         _imageView = imageView;
-        _imageView.accessibilityIdentifier = @"no data placeholder image view";
+        _imageView.accessibilityIdentifier = NSStringFromSelector(_cmd);
         [[self contentView] addSubview:_imageView];
     }
     return _imageView;
@@ -1008,7 +1005,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
         titleLabel.lineBreakMode = NSLineBreakByWordWrapping;
         titleLabel.numberOfLines = 0;
         // 通过accessibilityIdentifier来定位元素,相当于这个控件的id
-        titleLabel.accessibilityIdentifier = @"no data placeholder title";
+        titleLabel.accessibilityIdentifier = NSStringFromSelector(_cmd);
         _titleLabel = titleLabel;
         
         [[self contentView] addSubview:_titleLabel];
@@ -1027,7 +1024,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
         detailLabel.textAlignment = NSTextAlignmentCenter;
         detailLabel.lineBreakMode = NSLineBreakByWordWrapping;
         detailLabel.numberOfLines = 0;
-        detailLabel.accessibilityIdentifier = @"no data placeholder detail label";
+        detailLabel.accessibilityIdentifier = NSStringFromSelector(_cmd);
         _detailLabel = detailLabel;
         
         [[self contentView] addSubview:_detailLabel];
@@ -1160,6 +1157,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
     if (self.contentOffsetY != 0.0 && self.constraints.count > 0) {
         contentViewY.constant = self.contentOffsetY;
     }
+    
     
     // 若有customView 则 让其与contentView的约束相同
     if (_customView) {

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12118" systemVersion="16E195" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="Ozb-3d-5FF">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12118" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="Ozb-3d-5FF">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
@@ -12,7 +12,7 @@
         <!--Root View Controller-->
         <scene sceneID="fd6-fP-WVq">
             <objects>
-                <tableViewController id="E8D-te-fjl" customClass="ViewController" sceneMemberID="viewController">
+                <tableViewController id="E8D-te-fjl" customClass="BaseTableViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" id="eoE-Eu-u1O">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -31,6 +31,7 @@
         <!--Navigation Controller-->
         <scene sceneID="3wd-rM-xVf">
             <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="wTy-f8-Czm" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <navigationController id="Ozb-3d-5FF" sceneMemberID="viewController">
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="To1-ah-A3k">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
@@ -40,7 +41,6 @@
                         <segue destination="E8D-te-fjl" kind="relationship" relationship="rootViewController" id="m6v-ej-4hG"/>
                     </connections>
                 </navigationController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="wTy-f8-Czm" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-569" y="-74"/>
         </scene>

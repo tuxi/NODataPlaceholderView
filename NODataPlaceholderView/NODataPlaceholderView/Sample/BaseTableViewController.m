@@ -23,6 +23,9 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+//    self.edgesForExtendedLayout = UIRectEdgeNone;
 
     _dataSource = [NSMutableArray array];
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"reuseIdentifier"];
@@ -301,7 +304,7 @@
 }
 
 - (CGFloat)contentOffsetYForNoDataPlaceholder:(UIScrollView *)scrollView {
-    return -80;
+    return -100;
 }
 
 
