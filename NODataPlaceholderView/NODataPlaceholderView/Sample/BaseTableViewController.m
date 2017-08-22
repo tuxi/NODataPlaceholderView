@@ -77,7 +77,7 @@
         detailTextLabel.attributedText = [weakSelf attributedStringWithText:@"可以去下载历史，批量找回下载过的歌曲" color:[UIColor grayColor] fontSize:16];
     };
     
-    self.tableView.noDataTextEdgeInsets = UIEdgeInsetsMake(20, 0, 5, 0);
+    
     
     self.tableView.noDataImageViewBlock = ^(UIImageView * _Nonnull imageView) {
         imageView.backgroundColor = [UIColor clearColor];
@@ -101,7 +101,9 @@
 
     };
     
-    self.tableView.noDataButtonEdgeInsets = UIEdgeInsetsMake(11, 100, 11, 100);
+
+    self.tableView.noDataTextEdgeInsets = UIEdgeInsetsMake(20, 0, 20, 0);
+    self.tableView.noDataButtonEdgeInsets = UIEdgeInsetsMake(20, 100, 11, 100);
 }
 
 // 第二种方式：
@@ -302,6 +304,7 @@
 - (void)noDataPlaceholder:(UIScrollView *)scrollView didTapOnContentView:(UITapGestureRecognizer *)tap {
     [self getDataFromServer];
 }
+
 
 - (CGFloat)contentOffsetYForNoDataPlaceholder:(UIScrollView *)scrollView {
     return -100;
