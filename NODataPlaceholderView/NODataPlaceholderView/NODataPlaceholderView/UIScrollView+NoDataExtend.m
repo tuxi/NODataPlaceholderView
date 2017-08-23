@@ -175,7 +175,9 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 // 是否符合显示
 - (BOOL)xy_noDataPlacehodlerCanDisplay {
-    if ([self isKindOfClass:[UITableView class]] || [self isKindOfClass:[UICollectionView class]] || [self isKindOfClass:[UIScrollView class]]) {
+    if ([self isKindOfClass:[UITableView class]] ||
+        [self isKindOfClass:[UICollectionView class]] ||
+        [self isKindOfClass:[UIScrollView class]]) {
         return YES;
     }
     return NO;
@@ -228,7 +230,8 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 /// 是否应该显示
 - (BOOL)xy_noDataPlacehodlerShouldDisplay {
-    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldDisplay:)]) {
+    if (self.noDataPlaceholderDelegate &&
+        [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldDisplay:)]) {
         return [self.noDataPlaceholderDelegate noDataPlaceholderShouldDisplay:self];
     }
     return YES;
@@ -236,21 +239,24 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 /// 是否应该强制显示,默认不需要的
 - (BOOL)xy_noDataPlacehodlerShouldBeForcedToDisplay {
-    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldBeForcedToDisplay:)]) {
+    if (self.noDataPlaceholderDelegate &&
+        [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldBeForcedToDisplay:)]) {
         return [self.noDataPlaceholderDelegate noDataPlaceholderShouldBeForcedToDisplay:self];
     }
     return NO;
 }
 
 - (void)xy_noDataPlaceholderViewWillAppear {
-    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderWillAppear:)]) {
+    if (self.noDataPlaceholderDelegate &&
+        [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderWillAppear:)]) {
         [self.noDataPlaceholderDelegate noDataPlaceholderWillAppear:self];
     }
 }
 
 /// 是否允许响应事件
 - (BOOL)xy_noDataPlacehodlerIsAllowedResponseEvent {
-    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldAllowResponseEvent:)]) {
+    if (self.noDataPlaceholderDelegate &&
+        [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderShouldAllowResponseEvent:)]) {
         return [self.noDataPlaceholderDelegate noDataPlaceholderShouldAllowResponseEvent:self];
     }
     return YES;
@@ -266,19 +272,22 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 
 - (void)xy_noDataPlacehodlerDidAppear {
-    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderDidAppear:)]) {
+    if (self.noDataPlaceholderDelegate &&
+        [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderDidAppear:)]) {
         [self.noDataPlaceholderDelegate noDataPlaceholderDidAppear:self];
     }
 }
 
 - (void)xy_noDataPlacehodlerWillDisappear {
-    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderWillDisappear:)]) {
+    if (self.noDataPlaceholderDelegate &&
+        [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderWillDisappear:)]) {
         [self.noDataPlaceholderDelegate noDataPlaceholderWillDisappear:self];
     }
 }
 
 - (void)xy_noDataPlacehodlerDidDisappear {
-    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderDidDisappear:)]) {
+    if (self.noDataPlaceholderDelegate &&
+        [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderDidDisappear:)]) {
         [self.noDataPlaceholderDelegate noDataPlaceholderDidDisappear:self];
     }
 }
@@ -303,7 +312,8 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 
 - (CGFloat)xy_noDataPlacehodlerGlobalVerticalSpace {
-    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(contentSubviewsGlobalVerticalSpaceFoNoDataPlaceholder:)]) {
+    if (self.noDataPlaceholderDelegate &&
+        [self.noDataPlaceholderDelegate respondsToSelector:@selector(contentSubviewsGlobalVerticalSpaceFoNoDataPlaceholder:)]) {
         return [self.noDataPlaceholderDelegate contentSubviewsGlobalVerticalSpaceFoNoDataPlaceholder:self];
     }
     return 10.0;
@@ -312,7 +322,8 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 - (CGFloat)xy_noDataPlacehodlerContentOffsetY {
     CGFloat offset = 0.0;
     
-    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(contentOffsetYForNoDataPlaceholder:)]) {
+    if (self.noDataPlaceholderDelegate &&
+        [self.noDataPlaceholderDelegate respondsToSelector:@selector(contentOffsetYForNoDataPlaceholder:)]) {
         offset = [self.noDataPlaceholderDelegate contentOffsetYForNoDataPlaceholder:self];
     }
     return offset;
@@ -1486,11 +1497,9 @@ void xy_orginalImplementation(id self, SEL _cmd) {
 }
 + (NSMutableDictionary *)implementationDictionary {
     static NSMutableDictionary *table = nil;
-    table = objc_getAssociatedObject(self, _cmd);
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         table = [NSMutableDictionary dictionary];
-        objc_setAssociatedObject(self, _cmd, table, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     });
     return table;
 }
