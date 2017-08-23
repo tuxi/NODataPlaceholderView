@@ -1312,15 +1312,16 @@ buttonEdgeInsets = _buttonEdgeInsets;
                 topSpace = view.noDataPlaceholderViewContentEdgeInsets.top;
             }
             if ([self canChangeInsets:previousView.noDataPlaceholderViewContentEdgeInsets]) {
-                topSpace += view.noDataPlaceholderViewContentEdgeInsets.bottom;
+                topSpace += previousView.noDataPlaceholderViewContentEdgeInsets.bottom;
             }
+            
+            [verticalFormat appendFormat:@"-(%.f@750)-[%@]", topSpace, viewName];
+
             if (i == subviewKeyArray.count - 1) {
                 // 最后一个控件把距离父控件底部的约束值也加上
-                [verticalFormat appendFormat:@"-(%.f@750)-[%@]-(%.f@750)-", topSpace, viewName, view.noDataPlaceholderViewContentEdgeInsets.bottom];
+                [verticalFormat appendFormat:@"-(%.f@750)-", view.noDataPlaceholderViewContentEdgeInsets.bottom];
             }
-            else {
-                [verticalFormat appendFormat:@"-(%.f@750)-[%@]", topSpace, viewName];
-            }
+
             
             previousView = view;
         }
