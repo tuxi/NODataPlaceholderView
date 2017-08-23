@@ -45,18 +45,6 @@ __unused NS_INLINE NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlags
     return flags;
 }
 
-@interface UIView (ConstraintLayoutExtension)
-
-- (NSLayoutConstraint *)equallyConstraintWithView:(UIView *)view
-                                        attribute:(NSLayoutAttribute)attribute;
-- (NSLayoutConstraint *)greaterThanOrEqualConstraintWithView:(UIView *)view
-                                                   attribute:(NSLayoutAttribute)attribute
-                                                    constant:(CGFloat)constant;
-- (NSLayoutConstraint *)lessThanOrEqualConstraintWithView:(UIView *)view
-                                                attribute:(NSLayoutAttribute)attribute
-                                                 constant:(CGFloat)constant;
-
-@end
 
 typedef NSString * ImplementationKey NS_EXTENSIBLE_STRING_ENUM;
 
@@ -131,8 +119,6 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 /** tap手势回调block */
 @property (nonatomic, copy) void (^tapGestureRecognizerBlock)(UITapGestureRecognizer *tap);
 
-/// 设置子控件的约束
-- (void)setupConstraints;
 /// 移除所有子控件及其约束
 - (void)resetSubviews;
 /// 设置tap手势
@@ -539,7 +525,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         
         noDataPlaceholderView.userInteractionEnabled = self.delegateFlags.noDataPlacehodlerIsAllowedResponseEvent;
         
-        [noDataPlaceholderView setupConstraints];
+        [noDataPlaceholderView setNeedsUpdateConstraints];
         
         // 此方法会先检查动画当前是否启用，然后禁止动画，执行block块语句
         [UIView performWithoutAnimation:^{
@@ -1150,19 +1136,25 @@ buttonEdgeInsets = _buttonEdgeInsets;
 - (void)removeAllConstraints {
     [self removeConstraints:self.constraints];
     [_contentView removeConstraints:_contentView.constraints];
+    
 }
 
-- (void)setupConstraints {
+- (void)updateConstraints {
     
+    [self removeAllConstraints];
+    
+    NSMutableArray *contentViewConstraints = @[].mutableCopy;
     // contentView 与 父视图 保持一致
-    NSLayoutConstraint *contentViewX = [self equallyConstraintWithView:self.contentView attribute:NSLayoutAttributeCenterX];
-    NSLayoutConstraint *contentViewY = [self equallyConstraintWithView:self.contentView attribute:NSLayoutAttributeCenterY];
-    [self addConstraint:contentViewX];
-    [self addConstraint:contentViewY];
-    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[contentView]|"
+    NSLayoutConstraint *contentViewX = [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0.0];
+    NSLayoutConstraint *contentViewY = [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0];
+    [contentViewConstraints addObjectsFromArray:@[contentViewX, contentViewY]];
+
+    [contentViewConstraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[contentView]|"
                                                                  options:0
                                                                  metrics:nil
                                                                    views:@{@"contentView": self.contentView}]];
+    [self applyPriority:997.0 toConstraints:contentViewConstraints];
+    [self addConstraints:contentViewConstraints];
     
     // 当contentOffsetY(自定义的垂直偏移量)有值时，需要调整垂直偏移量的约束值
     if (self.contentOffsetY != 0.0 && self.constraints.count > 0) {
@@ -1212,7 +1204,8 @@ buttonEdgeInsets = _buttonEdgeInsets;
                 
             }
             else {
-                [self.contentView addConstraint:[self.contentView equallyConstraintWithView:_imageView attribute:NSLayoutAttributeCenterX]];
+                NSLayoutConstraint *imageViewCenterX = [NSLayoutConstraint constraintWithItem:_imageView attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0.0];
+                [self.contentView addConstraint:imageViewCenterX];
             }
             
         } else {
@@ -1316,12 +1309,12 @@ buttonEdgeInsets = _buttonEdgeInsets;
             }
             
             [verticalFormat appendFormat:@"-(%.f@750)-[%@]", topSpace, viewName];
-
+            
             if (i == subviewKeyArray.count - 1) {
                 // 最后一个控件把距离父控件底部的约束值也加上
                 [verticalFormat appendFormat:@"-(%.f@750)-", view.noDataPlaceholderViewContentEdgeInsets.bottom];
             }
-
+            
             
             previousView = view;
         }
@@ -1335,6 +1328,15 @@ buttonEdgeInsets = _buttonEdgeInsets;
         }
     }
     
+
+    
+    [super updateConstraints];
+}
+
+- (void)applyPriority:(UILayoutPriority)priority toConstraints:(NSArray *)constraints {
+    for (NSLayoutConstraint *constraint in constraints) {
+        constraint.priority = priority;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1511,48 +1513,6 @@ void xy_orginalImplementation(id self, SEL _cmd) {
 
 - (Class)xy_baseClassToSwizzling {
     return [self class];
-}
-
-@end
-
-@implementation UIView (ConstraintLayoutExtension)
-
-- (NSLayoutConstraint *)equallyConstraintWithView:(UIView *)view
-                                        attribute:(NSLayoutAttribute)attribute {
-    
-    return [self constraintWithView:view attribute:attribute
-                          relatedBy:NSLayoutRelationEqual
-                           constant:0.0];
-}
-
-- (NSLayoutConstraint *)lessThanOrEqualConstraintWithView:(UIView *)view
-                                                attribute:(NSLayoutAttribute)attribute
-                                                 constant:(CGFloat)constant {
-    return [self constraintWithView:view attribute:attribute
-                          relatedBy:NSLayoutRelationLessThanOrEqual
-                           constant:constant];
-    
-}
-
-- (NSLayoutConstraint *)greaterThanOrEqualConstraintWithView:(UIView *)view
-                                                   attribute:(NSLayoutAttribute)attribute
-                                                    constant:(CGFloat)constant {
-    return [self constraintWithView:view attribute:attribute
-                          relatedBy:NSLayoutRelationGreaterThanOrEqual
-                           constant:constant];
-}
-
-- (NSLayoutConstraint *)constraintWithView:(UIView *)view
-                                 attribute:(NSLayoutAttribute)attribute
-                                 relatedBy:(NSLayoutRelation)relation
-                                  constant:(CGFloat)constant {
-    
-    return [NSLayoutConstraint constraintWithItem:view
-                                        attribute:attribute
-                                        relatedBy:relation
-                                           toItem:self attribute:attribute
-                                       multiplier:1.0
-                                         constant:constant];
 }
 
 @end
