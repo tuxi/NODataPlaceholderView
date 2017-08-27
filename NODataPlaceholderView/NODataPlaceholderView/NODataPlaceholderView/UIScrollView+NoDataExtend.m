@@ -19,6 +19,7 @@ struct _NoDataPlaceholderDelegateFlags {
     BOOL noDataPlacehodlerIsAllowedScroll : YES; // 是否可以滚动
     CGFloat noDataPlacehodlerGlobalVerticalSpace; // noDataView 各子控件垂直之间的间距值，默认为10.0
     CGFloat noDataPlacehodlerContentOffsetY; // noDataView y轴中心的的偏移量
+    CGFloat noDataPlacehodlerContentViewHorizontaSpace; // contentView 左右距离父控件的间距值，默认为0
 };
 
 typedef struct _NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlags;
@@ -31,7 +32,7 @@ __unused NS_INLINE NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlags
                                                                                      BOOL noDataPlacehodlerIsAllowedResponseEvent,
                                                                                      BOOL noDataPlacehodlerIsAllowedScroll,
                                                                                      CGFloat noDataPlacehodlerGlobalVerticalSpace,
-                                                                                     CGFloat noDataPlacehodlerContentOffsetY) {
+                                                                                     CGFloat noDataPlacehodlerContentOffsetY, CGFloat noDataPlacehodlerContentViewHorizontaSpace) {
     NoDataPlaceholderDelegateFlags flags = {
         noDataPlacehodlerShouldDisplay,
         noDataPlacehodlerShouldBeForcedToDisplay,
@@ -41,7 +42,9 @@ __unused NS_INLINE NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlags
         noDataPlacehodlerIsAllowedResponseEvent,
         noDataPlacehodlerIsAllowedScroll,
         noDataPlacehodlerGlobalVerticalSpace,
-        noDataPlacehodlerContentOffsetY};
+        noDataPlacehodlerContentOffsetY,
+        noDataPlacehodlerContentViewHorizontaSpace
+    };
     return flags;
 }
 
@@ -107,6 +110,8 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 @property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
 /** contentView中心点y轴的偏移量 */
 @property (nonatomic, assign) CGFloat contentOffsetY;
+/** contentView 左右距离父控件的间距 */
+@property (nonatomic, assign) CGFloat contentViewHorizontalSpace;
 /** 所有子控件之间垂直间距 */
 @property (nonatomic, assign) CGFloat globalverticalSpace;
 /** 各子控件之间的边距，若设置此边距则 */
@@ -305,6 +310,14 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     return 10.0;
 }
 
+- (CGFloat)xy_noDataPlacehodlerContenViewHorizontalSpace {
+    if (self.noDataPlaceholderDelegate &&
+        [self.noDataPlaceholderDelegate respondsToSelector:@selector(contentViewHorizontalSpaceFoNoDataPlaceholder:)]) {
+        return [self.noDataPlaceholderDelegate contentViewHorizontalSpaceFoNoDataPlaceholder:self];
+    }
+    return 0.0;
+}
+
 - (CGFloat)xy_noDataPlacehodlerContentOffsetY {
     CGFloat offset = 0.0;
     
@@ -448,7 +461,8 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
                                                             [self xy_noDataPlacehodlerIsAllowedResponseEvent],
                                                             [self xy_noDataPlacehodlerIsAllowedScroll],
                                                             [self xy_noDataPlacehodlerGlobalVerticalSpace],
-                                                            [self xy_noDataPlacehodlerContentOffsetY]);
+                                                            [self xy_noDataPlacehodlerContentOffsetY],
+                                                            [self xy_noDataPlacehodlerContenViewHorizontalSpace]);
     
     if (!self.delegateFlags.noDataPlacehodlerCanDisplay) {
         return;
@@ -518,7 +532,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         }
         
         noDataPlaceholderView.contentOffsetY = self.delegateFlags.noDataPlacehodlerContentOffsetY;
-        
+        noDataPlaceholderView.contentViewHorizontalSpace = self.delegateFlags.noDataPlacehodlerContentViewHorizontaSpace;
         noDataPlaceholderView.backgroundColor = [self xy_noDataPlacehodlerBackgroundColor];
         noDataPlaceholderView.contentView.backgroundColor = [self xy_noDataPlacehodlerContentBackgroundColor];
         noDataPlaceholderView.hidden = NO;
@@ -833,7 +847,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
 {
     self = [super initWithFrame:frame];
     if (self) {
-        [self setup];
+        [self setupViews];
     }
     return self;
 }
@@ -842,12 +856,12 @@ buttonEdgeInsets = _buttonEdgeInsets;
 {
     self = [super initWithCoder:coder];
     if (self) {
-        [self setup];
+        [self setupViews];
     }
     return self;
 }
 
-- (void)setup {
+- (void)setupViews {
     [self contentView];
 }
 
@@ -1161,10 +1175,9 @@ buttonEdgeInsets = _buttonEdgeInsets;
     NSLayoutConstraint *contentViewX = [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0.0];
     NSLayoutConstraint *contentViewY = [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0];
     [contentViewConstraints addObjectsFromArray:@[contentViewX, contentViewY]];
-    
-    [contentViewConstraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[contentView]|"
+    [contentViewConstraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(contentViewHorizontalSpace)-[contentView]-(contentViewHorizontalSpace)-|"
                                                                                         options:0
-                                                                                        metrics:nil
+                                                                                        metrics:@{@"contentViewHorizontalSpace": @(_contentViewHorizontalSpace)}
                                                                                           views:@{@"contentView": self.contentView}]];
     [self applyPriority:997.0 toConstraints:contentViewConstraints];
     [self addConstraints:contentViewConstraints];
@@ -1541,4 +1554,3 @@ void xy_orginalImplementation(id self, SEL _cmd) {
 }
 
 @end
-

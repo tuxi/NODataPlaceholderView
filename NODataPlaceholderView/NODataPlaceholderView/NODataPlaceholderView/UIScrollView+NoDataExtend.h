@@ -29,12 +29,18 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) void  (^ _Nullable noDataImageViewBlock)(UIImageView *imageView);
 @property (nonatomic, copy) void  (^ _Nullable noDataReloadButtonBlock)(UIButton *reloadButton);
 
+/// titleLabel 的间距
 @property (nonatomic, assign) UIEdgeInsets noDataTextEdgeInsets;
+/// imageView 的间距
 @property (nonatomic, assign) UIEdgeInsets noDataImageEdgeInsets;
+/// detaileLable 的间距
 @property (nonatomic, assign) UIEdgeInsets noDataDetailEdgeInsets;
+/// reloadButton 的间距
 @property (nonatomic, assign) UIEdgeInsets noDataButtonEdgeInsets;
 
+/// noDataPlaceholderView 的背景颜色
 @property (nonatomic, strong) UIColor *noDataViewBackgroundColor;
+/// noDataPlaceholderView中contentView的背景颜色
 @property (nonatomic, strong) UIColor *noDataViewContentBackgroundColor;
 @property (nonatomic, assign) BOOL xy_loading;
 
@@ -82,6 +88,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// NoDataPlaceholderView各子控件之间垂直的间距，默认为11
 - (CGFloat)contentSubviewsGlobalVerticalSpaceFoNoDataPlaceholder:(UIScrollView *)scrollView;
 
+/// NoDataPlaceholderView 的 contentView左右距离父控件的间距值
+- (CGFloat)contentViewHorizontalSpaceFoNoDataPlaceholder:(UIScrollView *)scrollView;
+
 /// NoDataPlaceholderView contenView 中心点y 轴 距离 父控件scrollView 中心点y 的偏移量
 /// 默认为0，与所在scrollView的中心点显示
 - (CGFloat)contentOffsetYForNoDataPlaceholder:(UIScrollView *)scrollView;
@@ -90,4 +99,3 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 NS_ASSUME_NONNULL_END
-
