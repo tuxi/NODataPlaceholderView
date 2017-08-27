@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) UIImageView * _Nullable(^noDataImageView)(void);
 @property (nonatomic, copy) UIButton * _Nullable(^noDataReloadButton)(void);
 
-// 使用默认的子控件 
+// 使用默认的子控件
 @property (nonatomic, copy) void  (^ _Nullable noDataTextLabelBlock)(UILabel *textLabel);
 @property (nonatomic, copy) void  (^ _Nullable noDataDetailTextLabelBlock)(UILabel *detailTextLabel);
 @property (nonatomic, copy) void  (^ _Nullable noDataImageViewBlock)(UIImageView *imageView);
@@ -35,6 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) UIEdgeInsets noDataButtonEdgeInsets;
 
 @property (nonatomic, strong) UIColor *noDataViewBackgroundColor;
+@property (nonatomic, strong) UIColor *noDataViewContentBackgroundColor;
 @property (nonatomic, assign) BOOL xy_loading;
 
 - (void)reloadNoDataView;
@@ -71,7 +72,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// noDataPlaceholder是否可以响应事件，默认YES
 - (BOOL)noDataPlaceholderShouldAllowResponseEvent:(UIScrollView *)scrollView;
 
-/// noDataPlaceholder是否可以滚动，默认NO
+/// noDataPlaceholder是否可以滚动，默认YES
 - (BOOL)noDataPlaceholderShouldAllowScroll:(UIScrollView *)scrollView;
 
 - (void)noDataPlaceholder:(UIScrollView *)scrollView didTapOnContentView:(UITapGestureRecognizer *)tap;
@@ -89,3 +90,4 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 NS_ASSUME_NONNULL_END
+

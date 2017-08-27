@@ -24,14 +24,14 @@ struct _NoDataPlaceholderDelegateFlags {
 typedef struct _NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlags;
 
 __unused NS_INLINE NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlagsMake(BOOL noDataPlacehodlerShouldDisplay,
-                                                                            BOOL noDataPlacehodlerShouldBeForcedToDisplay,
-                                                                            BOOL noDataPlacehodlerShouldFadeInOnDisplay,
-                                                                            BOOL noDataPlacehodlerCanDisplay,
-                                                                            NSInteger itemCount,
-                                                                            BOOL noDataPlacehodlerIsAllowedResponseEvent,
-                                                                            BOOL noDataPlacehodlerIsAllowedScroll,
-                                                                            CGFloat noDataPlacehodlerGlobalVerticalSpace,
-                                                                            CGFloat noDataPlacehodlerContentOffsetY) {
+                                                                                     BOOL noDataPlacehodlerShouldBeForcedToDisplay,
+                                                                                     BOOL noDataPlacehodlerShouldFadeInOnDisplay,
+                                                                                     BOOL noDataPlacehodlerCanDisplay,
+                                                                                     NSInteger itemCount,
+                                                                                     BOOL noDataPlacehodlerIsAllowedResponseEvent,
+                                                                                     BOOL noDataPlacehodlerIsAllowedScroll,
+                                                                                     CGFloat noDataPlacehodlerGlobalVerticalSpace,
+                                                                                     CGFloat noDataPlacehodlerContentOffsetY) {
     NoDataPlaceholderDelegateFlags flags = {
         noDataPlacehodlerShouldDisplay,
         noDataPlacehodlerShouldBeForcedToDisplay,
@@ -338,7 +338,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         detailLabel = self.noDataPlaceholderView.detailLabel;
     }
     if (detailLabel) {
-         NSParameterAssert([detailLabel isKindOfClass:[UILabel class]]);
+        NSParameterAssert([detailLabel isKindOfClass:[UILabel class]]);
     }
     return detailLabel;
 }
@@ -352,7 +352,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         imageView = self.noDataPlaceholderView.imageView;
     }
     if (imageView) {
-         NSParameterAssert([imageView isKindOfClass:[UIImageView class]]);
+        NSParameterAssert([imageView isKindOfClass:[UIImageView class]]);
     }
     return imageView;
 }
@@ -439,7 +439,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 // 刷新NoDataPlaceholderView 当调用reloadData时也会调用此方法
 - (void)xy_reloadNoDataView {
-
+    
     self.delegateFlags = NoDataPlaceholderDelegateFlagsMake([self xy_noDataPlacehodlerShouldDisplay],
                                                             [self xy_noDataPlacehodlerShouldBeForcedToDisplay],
                                                             [self xy_noDataPlacehodlerShouldFadeInOnDisplay],
@@ -476,14 +476,14 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         
         // 重置视图及其约束
         [noDataPlaceholderView resetSubviews];
-    
+        
         
         UIView *customView = [self xy_noDataPlacehodlerCustomView];
         if (customView) {
             noDataPlaceholderView.customView = customView;
         } else {
             
-            // customView为nil时，则通过block回到获取子控件 设置 
+            // customView为nil时，则通过block回到获取子控件 设置
             if (self.noDataTextLabelBlock) {
                 self.noDataTextLabelBlock(noDataPlaceholderView.titleLabel);
             } else {
@@ -520,6 +520,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         noDataPlaceholderView.contentOffsetY = self.delegateFlags.noDataPlacehodlerContentOffsetY;
         
         noDataPlaceholderView.backgroundColor = [self xy_noDataPlacehodlerBackgroundColor];
+        noDataPlaceholderView.contentView.backgroundColor = [self xy_noDataPlacehodlerContentBackgroundColor];
         noDataPlaceholderView.hidden = NO;
         noDataPlaceholderView.clipsToBounds = YES;
         
@@ -565,6 +566,10 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     return self.noDataViewBackgroundColor ?: [UIColor clearColor];
 }
 
+- (UIColor *)xy_noDataPlacehodlerContentBackgroundColor {
+    return self.noDataViewContentBackgroundColor ?: [UIColor clearColor];
+}
+
 - (BOOL)registerNoDataPlaceholder {
     
     BOOL flag = objc_getAssociatedObject(self, _cmd);
@@ -579,7 +584,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         if ([self isKindOfClass:[UITableView class]]) {
             [self hockSelector:@selector(endUpdates) swizzlingSelector:@selector(xy_reloadNoDataView)];
         }
-        objc_setAssociatedObject(self, _cmd, @(flag), OBJC_ASSOCIATION_ASSIGN);
+        objc_setAssociatedObject(self, _cmd, @(flag), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
     return flag;
 }
@@ -635,6 +640,10 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 }
 
 - (UIColor *)noDataViewBackgroundColor {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (UIColor *)noDataViewContentBackgroundColor {
     return objc_getAssociatedObject(self, _cmd);
 }
 
@@ -748,15 +757,19 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     objc_setAssociatedObject(self, @selector(noDataViewBackgroundColor), noDataViewBackgroundColor, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
+- (void)setNoDataViewContentBackgroundColor:(UIColor *)noDataViewContentBackgroundColor {
+    objc_setAssociatedObject(self, @selector(noDataViewContentBackgroundColor), noDataViewContentBackgroundColor, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
 - (void)setXy_loading:(BOOL)xy_loading {
     if (self.xy_loading == xy_loading) {
         return;
     }
     
-    objc_setAssociatedObject(self, @selector(xy_loading), @(xy_loading), OBJC_ASSOCIATION_ASSIGN);
+    objc_setAssociatedObject(self, @selector(xy_loading), @(xy_loading), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     
     [self xy_reloadNoDataView];
-
+    
 }
 
 
@@ -1148,11 +1161,11 @@ buttonEdgeInsets = _buttonEdgeInsets;
     NSLayoutConstraint *contentViewX = [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0.0];
     NSLayoutConstraint *contentViewY = [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0];
     [contentViewConstraints addObjectsFromArray:@[contentViewX, contentViewY]];
-
+    
     [contentViewConstraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[contentView]|"
-                                                                 options:0
-                                                                 metrics:nil
-                                                                   views:@{@"contentView": self.contentView}]];
+                                                                                        options:0
+                                                                                        metrics:nil
+                                                                                          views:@{@"contentView": self.contentView}]];
     [self applyPriority:997.0 toConstraints:contentViewConstraints];
     [self addConstraints:contentViewConstraints];
     
@@ -1328,7 +1341,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
         }
     }
     
-
+    
     
     [super updateConstraints];
 }
@@ -1528,3 +1541,4 @@ void xy_orginalImplementation(id self, SEL _cmd) {
 }
 
 @end
+
