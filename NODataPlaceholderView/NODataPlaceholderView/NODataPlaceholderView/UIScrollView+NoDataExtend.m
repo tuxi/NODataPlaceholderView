@@ -897,12 +897,8 @@ buttonEdgeInsets = _buttonEdgeInsets;
 - (void)setupViews {
     [self contentView];
     self.translatesAutoresizingMaskIntoConstraints = NO;
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(willChangeStatusBarOrientation) name:UIApplicationWillChangeStatusBarOrientationNotification object:nil];
 }
 
-- (void)willChangeStatusBarOrientation {
-    [self.superview performSelectorOnMainThread:@selector(xy_reloadNoDataView) withObject:nil waitUntilDone:NO];
-}
 
 - (void)didMoveToSuperview {
     //    CGRect superviewBounds = self.superview.bounds;
@@ -1442,10 +1438,6 @@ buttonEdgeInsets = _buttonEdgeInsets;
     _reloadButton = nil;
     
     [self removeAllConstraints];
-}
-
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 

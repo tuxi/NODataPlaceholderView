@@ -273,6 +273,10 @@
     
 }
 
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
+    [self.tableView reloadNoDataView];
+    
+}
 
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - Other Events
