@@ -588,7 +588,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 - (BOOL)registerNoDataPlaceholder {
     
-    BOOL flag = objc_getAssociatedObject(self, _cmd);
+    BOOL flag = [objc_getAssociatedObject(self, _cmd) boolValue];
     if (!flag) {
         if (![self xy_noDataPlacehodlerCanDisplay]) {
             [self xy_removeNoDataPlacehodlerView];
