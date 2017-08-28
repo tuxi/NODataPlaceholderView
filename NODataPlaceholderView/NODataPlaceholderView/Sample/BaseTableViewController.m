@@ -307,7 +307,10 @@
 
 
 - (CGFloat)contentOffsetYForNoDataPlaceholder:(UIScrollView *)scrollView {
-    return -100;
+    if ([UIDevice currentDevice].orientation == UIDeviceOrientationPortrait) {
+        return 80;
+    }
+    return 30;
 }
 
 

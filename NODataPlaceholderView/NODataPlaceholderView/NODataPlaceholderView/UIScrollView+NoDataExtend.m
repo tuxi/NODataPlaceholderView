@@ -18,7 +18,7 @@ struct _NoDataPlaceholderDelegateFlags {
     BOOL noDataPlacehodlerIsAllowedResponseEvent : YES; // noDataView是否可以响应事件
     BOOL noDataPlacehodlerIsAllowedScroll : YES; // 是否可以滚动
     CGFloat noDataPlacehodlerGlobalVerticalSpace; // noDataView 各子控件垂直之间的间距值，默认为10.0
-    CGFloat noDataPlacehodlerContentOffsetY; // noDataView y轴中心的的偏移量
+    CGFloat noDataPlacehodlerContentOffsetY; // nNoDataPlaceholderView 的 contentView左右距离父控件的间距值
     CGFloat noDataPlacehodlerContentViewHorizontaSpace; // contentView 左右距离父控件的间距值，默认为0
 };
 
@@ -128,6 +128,8 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 - (void)resetSubviews;
 /// 设置tap手势
 - (void)tapGestureRecognizer:(void (^)(UITapGestureRecognizer *))tapBlock;
+
+- (instancetype)initWithView:(UIView *)view;
 
 @end
 
@@ -613,7 +615,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     NoDataPlaceholderView *view = objc_getAssociatedObject(self, _cmd);
     
     if (view == nil) {
-        view = [NoDataPlaceholderView new];
+        view = [[NoDataPlaceholderView alloc] initWithView:self];
         view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         view.hidden = YES;
         view.tapGesture.delegate = self;
@@ -825,6 +827,10 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 #pragma mark *** NoDataPlaceholderView ***
 
 @implementation NoDataPlaceholderView
+{
+    __weak NSLayoutConstraint *_selfTopConstraint;
+     __weak NSLayoutConstraint *_selfBottomConstraint;
+}
 
 @synthesize
 contentView = _contentView,
@@ -842,6 +848,33 @@ buttonEdgeInsets = _buttonEdgeInsets;
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - Initialize
 ////////////////////////////////////////////////////////////////////////
+
+- (instancetype)initWithView:(UIView *)view {
+    self = [self initWithFrame:view.bounds];
+    [view addSubview:self];
+    
+    NSLayoutConstraint *selfTopConstraint = [NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.superview attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0];
+    _selfTopConstraint = selfTopConstraint;
+    NSLayoutConstraint *selfBottomConstraint = [NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:self.superview attribute:NSLayoutAttributeBottom multiplier:1.0 constant:0.0];
+    _selfBottomConstraint = selfBottomConstraint;
+    NSArray *selfConstraints = @[
+                                 @[
+                                     selfTopConstraint,
+                                     selfBottomConstraint
+                                     ],
+                                 @[[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeWidth multiplier:1.0 constant:0.0],
+                                   [NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeHeight multiplier:1.0 constant:0.0]
+                                   ],
+                                 
+                                 [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[self]|"
+                                                                         options:0
+                                                                         metrics:nil
+                                                                           views:@{@"self": self}],
+                                 ];
+    
+    [self.superview addConstraints:[selfConstraints valueForKeyPath:@"@unionOfArrays.self"]];
+    return self;
+}
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
@@ -863,17 +896,25 @@ buttonEdgeInsets = _buttonEdgeInsets;
 
 - (void)setupViews {
     [self contentView];
+    self.translatesAutoresizingMaskIntoConstraints = NO;
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(willChangeStatusBarOrientation) name:UIApplicationWillChangeStatusBarOrientationNotification object:nil];
+}
+
+- (void)willChangeStatusBarOrientation {
+    [self.superview performSelectorOnMainThread:@selector(xy_reloadNoDataView) withObject:nil waitUntilDone:NO];
 }
 
 - (void)didMoveToSuperview {
-    CGRect superviewBounds = self.superview.bounds;
-    self.frame = CGRectMake(0.0,
-                            0.0,
-                            CGRectGetWidth(superviewBounds),
-                            CGRectGetHeight(superviewBounds));
+    //    CGRect superviewBounds = self.superview.bounds;
+    //    self.frame = CGRectMake(0.0,
+    //                            0.0,
+    //                            CGRectGetWidth(superviewBounds),
+    //                            CGRectGetHeight(superviewBounds));
+    
     // 当需要淡入淡出时结合动画执行
     void (^fadeInBlock)(void) = ^{
         _contentView.alpha = 1.0;
+        [self layoutIfNeeded];
     };
     
     if (self.fadeInOnDisplay) {
@@ -1170,34 +1211,38 @@ buttonEdgeInsets = _buttonEdgeInsets;
     
     [self removeAllConstraints];
     
-    NSMutableArray *contentViewConstraints = @[].mutableCopy;
-    // contentView 与 父视图 保持一致
-    NSLayoutConstraint *contentViewX = [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0.0];
-    NSLayoutConstraint *contentViewY = [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0];
-    [contentViewConstraints addObjectsFromArray:@[contentViewX, contentViewY]];
-    [contentViewConstraints addObjectsFromArray:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(contentViewHorizontalSpace)-[contentView]-(contentViewHorizontalSpace)-|"
-                                                                                        options:0
-                                                                                        metrics:@{@"contentViewHorizontalSpace": @(_contentViewHorizontalSpace)}
-                                                                                          views:@{@"contentView": self.contentView}]];
-    [self applyPriority:997.0 toConstraints:contentViewConstraints];
-    [self addConstraints:contentViewConstraints];
+    // contentView 与 父视图 保持一致, 根据子控件的高度而改变
+    NSArray *contentViewConstraints = @[
+                                        @[[NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0.0],
+                                          [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0]
+                                          ],
+                                        [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(contentViewHorizontalSpace)-[contentView]-(contentViewHorizontalSpace)-|"
+                                                                                options:0
+                                                                                metrics:@{@"contentViewHorizontalSpace": @(_contentViewHorizontalSpace)}
+                                                                                  views:@{@"contentView": self.contentView}]
+                                        ];
+    
+    [self addConstraints:[contentViewConstraints valueForKeyPath:@"@unionOfArrays.self"]];
     
     // 当contentOffsetY(自定义的垂直偏移量)有值时，需要调整垂直偏移量的约束值
-    if (self.contentOffsetY != 0.0 && self.constraints.count > 0) {
-        contentViewY.constant = self.contentOffsetY;
+    if (self.contentOffsetY != 0.0 && self.constraints.count > 0 && _selfTopConstraint && _selfBottomConstraint) {
+        _selfTopConstraint.constant = self.contentOffsetY;
+        _selfBottomConstraint.constant = self.contentOffsetY;
     }
-    
     
     // 若有customView 则 让其与contentView的约束相同
     if (_customView) {
-        [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[customView]|"
-                                                                                 options:0
-                                                                                 metrics:nil
-                                                                                   views:@{@"customView": _customView}]];
-        [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[customView]|"
-                                                                                 options:0
-                                                                                 metrics:nil
-                                                                                   views:@{@"customView": _customView}]];
+        NSArray *customViewConstraints = @[
+                                           [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[customView]|"
+                                                                                   options:0
+                                                                                   metrics:nil
+                                                                                     views:@{@"customView": _customView}],
+                                           [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[customView]|"
+                                                                                   options:0
+                                                                                   metrics:nil
+                                                                                     views:@{@"customView": _customView}]
+                                           ];
+        [self.contentView addConstraints:[customViewConstraints valueForKeyPath:@"@unionOfArrays.self"]];
     } else {
         
         // 无customView
@@ -1399,21 +1444,10 @@ buttonEdgeInsets = _buttonEdgeInsets;
     [self removeAllConstraints];
 }
 
-
-@end
-
-@implementation UIView (ConstraintBasedLayoutExtensions)
-
-- (NSLayoutConstraint *)equallyConstraintWithView:(UIView *)view
-                                        attribute:(NSLayoutAttribute)attribute {
-    
-    return [NSLayoutConstraint constraintWithItem:view
-                                        attribute:attribute
-                                        relatedBy:NSLayoutRelationEqual
-                                           toItem:self attribute:attribute
-                                       multiplier:1.0
-                                         constant:0.0];
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
+
 
 @end
 
@@ -1554,3 +1588,4 @@ void xy_orginalImplementation(id self, SEL _cmd) {
 }
 
 @end
+

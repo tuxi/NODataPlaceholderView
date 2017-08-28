@@ -91,7 +91,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// NoDataPlaceholderView 的 contentView左右距离父控件的间距值
 - (CGFloat)contentViewHorizontalSpaceFoNoDataPlaceholder:(UIScrollView *)scrollView;
 
-/// NoDataPlaceholderView contenView 中心点y 轴 距离 父控件scrollView 中心点y 的偏移量
+/// NoDataPlaceholderView 顶部 距离 父控件scrollView 顶部 的偏移量
 /// 默认为0，与所在scrollView的中心点显示
 - (CGFloat)contentOffsetYForNoDataPlaceholder:(UIScrollView *)scrollView;
 
@@ -99,3 +99,4 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 NS_ASSUME_NONNULL_END
+

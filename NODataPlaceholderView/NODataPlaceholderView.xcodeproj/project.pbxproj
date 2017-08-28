@@ -14,8 +14,8 @@
 		1809F6331EDBA419006929CF /* NODataPlaceholderViewTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1809F6321EDBA419006929CF /* NODataPlaceholderViewTests.m */; };
 		1809F63E1EDBA419006929CF /* NODataPlaceholderViewUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1809F63D1EDBA419006929CF /* NODataPlaceholderViewUITests.m */; };
 		1809F6511EDBA4B8006929CF /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 1809F64E1EDBA4B8006929CF /* AppDelegate.m */; };
-		1809F6551EDBA6F0006929CF /* UIScrollView+NoDataExtend.m in Sources */ = {isa = PBXBuildFile; fileRef = 1809F6541EDBA6F0006929CF /* UIScrollView+NoDataExtend.m */; };
 		187CA6F71EDD633D0003A4EF /* BaseTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 187CA6F61EDD633D0003A4EF /* BaseTableViewController.m */; };
+		18A2A8071F5481B000EDDD5B /* UIScrollView+NoDataExtend.m in Sources */ = {isa = PBXBuildFile; fileRef = 18A2A8051F5481AC00EDDD5B /* UIScrollView+NoDataExtend.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,9 +51,9 @@
 		1809F64D1EDBA4B8006929CF /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		1809F64E1EDBA4B8006929CF /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		1809F6531EDBA6F0006929CF /* UIScrollView+NoDataExtend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIScrollView+NoDataExtend.h"; sourceTree = "<group>"; };
-		1809F6541EDBA6F0006929CF /* UIScrollView+NoDataExtend.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIScrollView+NoDataExtend.m"; sourceTree = "<group>"; };
 		187CA6F51EDD633D0003A4EF /* BaseTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BaseTableViewController.h; sourceTree = "<group>"; };
 		187CA6F61EDD633D0003A4EF /* BaseTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BaseTableViewController.m; sourceTree = "<group>"; };
+		18A2A8051F5481AC00EDDD5B /* UIScrollView+NoDataExtend.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIScrollView+NoDataExtend.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -145,7 +145,7 @@
 			isa = PBXGroup;
 			children = (
 				1809F6531EDBA6F0006929CF /* UIScrollView+NoDataExtend.h */,
-				1809F6541EDBA6F0006929CF /* UIScrollView+NoDataExtend.m */,
+				18A2A8051F5481AC00EDDD5B /* UIScrollView+NoDataExtend.m */,
 			);
 			path = NODataPlaceholderView;
 			sourceTree = "<group>";
@@ -297,7 +297,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1809F6551EDBA6F0006929CF /* UIScrollView+NoDataExtend.m in Sources */,
+				18A2A8071F5481B000EDDD5B /* UIScrollView+NoDataExtend.m in Sources */,
 				1809F6511EDBA4B8006929CF /* AppDelegate.m in Sources */,
 				1809F61A1EDBA419006929CF /* main.m in Sources */,
 				187CA6F71EDD633D0003A4EF /* BaseTableViewController.m in Sources */,
