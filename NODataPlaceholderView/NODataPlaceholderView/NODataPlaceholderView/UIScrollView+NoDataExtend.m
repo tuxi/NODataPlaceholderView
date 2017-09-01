@@ -594,6 +594,19 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
             [self xy_removeNoDataPlacehodlerView];
         }
         
+        NoDataPlaceholderView *view = self.noDataPlaceholderView;
+        if (view == nil) {
+            view = [[NoDataPlaceholderView alloc] initWithView:self];
+            view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+            view.hidden = YES;
+            view.tapGesture.delegate = self;
+            __weak typeof(self) weakSelf = self;
+            [view tapGestureRecognizer:^(UITapGestureRecognizer *tap) {
+                [weakSelf xy_didTapContentView:tap];
+            }];
+            self.noDataPlaceholderView = view;
+        }
+        
         // 对reloadData方法的实现进行处理, 为加载reloadData时注入额外的实现
         [self hockSelector:@selector(reloadData) swizzlingSelector:@selector(xy_reloadNoDataView)];
         
@@ -611,24 +624,8 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 ////////////////////////////////////////////////////////////////////////
 
 - (NoDataPlaceholderView *)noDataPlaceholderView {
-    
-    NoDataPlaceholderView *view = objc_getAssociatedObject(self, _cmd);
-    
-    if (view == nil) {
-        view = [[NoDataPlaceholderView alloc] initWithView:self];
-        view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        view.hidden = YES;
-        view.tapGesture.delegate = self;
-        __weak typeof(self) weakSelf = self;
-        [view tapGestureRecognizer:^(UITapGestureRecognizer *tap) {
-            [weakSelf xy_didTapContentView:tap];
-        }];
-        self.noDataPlaceholderView = view;
-    }
-    
-    return view;
+    return objc_getAssociatedObject(self, _cmd);
 }
-
 
 - (id<NoDataPlaceholderDelegate>)noDataPlaceholderDelegate {
     _WeakObjectContainer *container = objc_getAssociatedObject(self, _cmd);
@@ -829,7 +826,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 @implementation NoDataPlaceholderView
 {
     __weak NSLayoutConstraint *_selfTopConstraint;
-     __weak NSLayoutConstraint *_selfBottomConstraint;
+    __weak NSLayoutConstraint *_selfBottomConstraint;
 }
 
 @synthesize
@@ -851,6 +848,9 @@ buttonEdgeInsets = _buttonEdgeInsets;
 
 - (instancetype)initWithView:(UIView *)view {
     self = [self initWithFrame:view.bounds];
+    if (!self) {
+        return nil;
+    }
     [view addSubview:self];
     
     NSLayoutConstraint *selfTopConstraint = [NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.superview attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0];
@@ -1580,4 +1580,5 @@ void xy_orginalImplementation(id self, SEL _cmd) {
 }
 
 @end
+
 
