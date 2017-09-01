@@ -477,7 +477,9 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         [self xy_noDataPlaceholderViewWillAppear];
         
         NoDataPlaceholderView *noDataPlaceholderView = self.noDataPlaceholderView;
-        
+        if (!noDataPlaceholderView) {
+            noDataPlaceholderView = [self setupNoDataPlaceholderView];
+        }
         // 设置是否需要淡入淡出效果
         noDataPlaceholderView.fadeInOnDisplay = self.delegateFlags.noDataPlacehodlerShouldFadeInOnDisplay;
         
@@ -593,19 +595,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         if (![self xy_noDataPlacehodlerCanDisplay]) {
             [self xy_removeNoDataPlacehodlerView];
         }
-        
-        NoDataPlaceholderView *view = self.noDataPlaceholderView;
-        if (view == nil) {
-            view = [[NoDataPlaceholderView alloc] initWithView:self];
-            view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-            view.hidden = YES;
-            view.tapGesture.delegate = self;
-            __weak typeof(self) weakSelf = self;
-            [view tapGestureRecognizer:^(UITapGestureRecognizer *tap) {
-                [weakSelf xy_didTapContentView:tap];
-            }];
-            self.noDataPlaceholderView = view;
-        }
+        [self setupNoDataPlaceholderView];
         
         // 对reloadData方法的实现进行处理, 为加载reloadData时注入额外的实现
         [self hockSelector:@selector(reloadData) swizzlingSelector:@selector(xy_reloadNoDataView)];
@@ -616,6 +606,22 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         objc_setAssociatedObject(self, _cmd, @(flag), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
     return flag;
+}
+
+- (NoDataPlaceholderView *)setupNoDataPlaceholderView {
+    NoDataPlaceholderView *view = self.noDataPlaceholderView;
+    if (view == nil) {
+        view = [[NoDataPlaceholderView alloc] initWithView:self];
+        view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        view.hidden = YES;
+        view.tapGesture.delegate = self;
+        __weak typeof(self) weakSelf = self;
+        [view tapGestureRecognizer:^(UITapGestureRecognizer *tap) {
+            [weakSelf xy_didTapContentView:tap];
+        }];
+        self.noDataPlaceholderView = view;
+    }
+    return view;
 }
 
 
