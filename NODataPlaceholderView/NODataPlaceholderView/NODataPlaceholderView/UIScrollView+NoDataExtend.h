@@ -40,6 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) UIColor *noDataViewContentBackgroundColor;
 @property (nonatomic, assign) BOOL xy_loading;
 
+/// 刷新NoDataView, 当执行tableView的readData、endUpdates或者CollectionView的readData时会调用此方法
 - (void)xy_reloadNoData;
 
 @end
