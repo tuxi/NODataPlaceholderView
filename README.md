@@ -1,7 +1,7 @@
 
 # The UI use of auto layout, support screen adaptation
 
-![image](https://raw.githubusercontent.com/Ossey/NODataPlaceholderView/master/NODataPlaceholderView/NODataPlaceholderView/2017-09-03%2017_31_53.giff)
+![image](https://github.com/Ossey/NODataPlaceholderView/blob/master/NODataPlaceholderView/NODataPlaceholderView/2017-09-03%2017_31_53.gif)
 
 # Quick Start
 
