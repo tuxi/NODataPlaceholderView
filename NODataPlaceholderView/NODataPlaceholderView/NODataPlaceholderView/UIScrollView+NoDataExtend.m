@@ -12,7 +12,6 @@
 struct _NoDataPlaceholderDelegateFlags {
     BOOL noDataPlacehodlerShouldDisplay : YES; // 通过delegate方法决定是否应该显示noData
     BOOL noDataPlacehodlerShouldBeForcedToDisplay; // 当不可以显示noData时，是否强制显示
-    BOOL noDataPlacehodlerShouldFadeInOnDisplay : YES; // 当显示noData时，是否有淡入淡出的动画效果
     BOOL noDataPlacehodlerCanDisplay : YES; // 是否可以显示noData，根据当前noDataView所在的父控件确定
     NSInteger itemCount; // 当前tableView或collectionView的总行数
     BOOL noDataPlacehodlerIsAllowedResponseEvent : YES; // noDataView是否可以响应事件
@@ -26,7 +25,6 @@ typedef struct _NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlags;
 
 __unused NS_INLINE NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlagsMake(BOOL noDataPlacehodlerShouldDisplay,
                                                                                      BOOL noDataPlacehodlerShouldBeForcedToDisplay,
-                                                                                     BOOL noDataPlacehodlerShouldFadeInOnDisplay,
                                                                                      BOOL noDataPlacehodlerCanDisplay,
                                                                                      NSInteger itemCount,
                                                                                      BOOL noDataPlacehodlerIsAllowedResponseEvent,
@@ -36,7 +34,6 @@ __unused NS_INLINE NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlags
     NoDataPlaceholderDelegateFlags flags = {
         noDataPlacehodlerShouldDisplay,
         noDataPlacehodlerShouldBeForcedToDisplay,
-        noDataPlacehodlerShouldFadeInOnDisplay,
         noDataPlacehodlerCanDisplay,
         itemCount,
         noDataPlacehodlerIsAllowedResponseEvent,
@@ -119,8 +116,6 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 @property (nonatomic, assign) UIEdgeInsets imageEdgeInsets;
 @property (nonatomic, assign) UIEdgeInsets detailEdgeInsets;
 @property (nonatomic, assign) UIEdgeInsets buttonEdgeInsets;
-/** 是否淡入淡出显示 */
-@property (nonatomic, assign) BOOL fadeInOnDisplay;
 /** tap手势回调block */
 @property (nonatomic, copy) void (^tapGestureRecognizerBlock)(UITapGestureRecognizer *tap);
 
@@ -130,7 +125,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 - (void)tapGestureRecognizer:(void (^)(UITapGestureRecognizer *))tapBlock;
 
 - (instancetype)initWithView:(UIView *)view;
-
++ (instancetype)showTo:(UIView *)view animated:(BOOL)animated;
 @end
 
 #pragma mark *** UIScrollView (NoDataPlaceholder) ***
@@ -459,7 +454,6 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     
     self.delegateFlags = NoDataPlaceholderDelegateFlagsMake([self xy_noDataPlacehodlerShouldDisplay],
                                                             [self xy_noDataPlacehodlerShouldBeForcedToDisplay],
-                                                            [self xy_noDataPlacehodlerShouldFadeInOnDisplay],
                                                             [self xy_noDataPlacehodlerCanDisplay],
                                                             [self xy_itemCount],
                                                             [self xy_noDataPlacehodlerIsAllowedResponseEvent],
@@ -482,8 +476,6 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         if (!noDataPlaceholderView) {
             noDataPlaceholderView = [self setupNoDataPlaceholderView];
         }
-        // 设置是否需要淡入淡出效果
-        noDataPlaceholderView.fadeInOnDisplay = self.delegateFlags.noDataPlacehodlerShouldFadeInOnDisplay;
         
         if (noDataPlaceholderView.superview == nil) {
             if (([self isKindOfClass:[UITableView class]] || [self isKindOfClass:[UICollectionView class]]) &&
@@ -613,7 +605,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 - (NoDataPlaceholderView *)setupNoDataPlaceholderView {
     NoDataPlaceholderView *view = self.noDataPlaceholderView;
     if (view == nil) {
-        view = [[NoDataPlaceholderView alloc] initWithView:self];
+        view = [NoDataPlaceholderView showTo:self animated:[self xy_noDataPlacehodlerShouldFadeInOnDisplay]];
         view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         view.hidden = YES;
         view.tapGesture.delegate = self;
@@ -854,6 +846,12 @@ buttonEdgeInsets = _buttonEdgeInsets;
 #pragma mark - Initialize
 ////////////////////////////////////////////////////////////////////////
 
++ (instancetype)showTo:(UIView *)view animated:(BOOL)animated {
+    NoDataPlaceholderView *noDataView = [[self alloc] initWithView:view];
+    [noDataView showAnimated:animated];
+    return noDataView;
+}
+
 - (instancetype)initWithView:(UIView *)view {
     self = [self initWithFrame:view.bounds];
     if (!self) {
@@ -881,6 +879,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
                                  ];
     
     [self.superview addConstraints:[selfConstraints valueForKeyPath:@"@unionOfArrays.self"]];
+    
     return self;
 }
 
@@ -907,25 +906,13 @@ buttonEdgeInsets = _buttonEdgeInsets;
     self.translatesAutoresizingMaskIntoConstraints = NO;
 }
 
-
-- (void)didMoveToSuperview {
-    //    CGRect superviewBounds = self.superview.bounds;
-    //    self.frame = CGRectMake(0.0,
-    //                            0.0,
-    //                            CGRectGetWidth(superviewBounds),
-    //                            CGRectGetHeight(superviewBounds));
-    
-    // 当需要淡入淡出时结合动画执行
-    void (^fadeInBlock)(void) = ^{
+- (void)showAnimated:(BOOL)animated {
+    void (^ animatedBlock)(void) = ^{
         _contentView.alpha = 1.0;
-        [self layoutIfNeeded];
     };
+        
+    [UIView animateWithDuration:animated ? 0.3 : 0.0 animations:animatedBlock];
     
-    if (self.fadeInOnDisplay) {
-        [UIView animateWithDuration:0.35 animations:fadeInBlock];
-    } else {
-        fadeInBlock();
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////

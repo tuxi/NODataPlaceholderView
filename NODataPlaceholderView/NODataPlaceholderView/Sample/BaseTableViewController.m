@@ -38,7 +38,8 @@
             UIActivityIndicatorView *activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
             [activityView startAnimating];
             return activityView;
-        }else {
+        }
+        else {
             return nil;
         }
         
@@ -80,9 +81,6 @@
         reloadButton.layer.borderColor = [UIColor colorWithRed:49/255.0 green:194/255.0 blue:124/255.0 alpha:1.0].CGColor;
         reloadButton.layer.cornerRadius = 2.0;
         [reloadButton.layer setMasksToBounds:YES];
-        // 按钮内部控件垂直对齐方式为中心
-        reloadButton.contentVerticalAlignment = UIControlContentHorizontalAlignmentCenter;
-        reloadButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
         [reloadButton setAttributedTitle:[weakSelf attributedStringWithText:@"查看下载历史" color:[UIColor colorWithRed:49/255.0 green:194/255.0 blue:124/255.0 alpha:1.0] fontSize:15.0] forState:UIControlStateNormal];
         [reloadButton setTitleColor:[UIColor grayColor] forState:UIControlStateNormal];
 
@@ -221,6 +219,9 @@
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
 }
 
+- (BOOL)noDataPlaceholderShouldFadeInOnDisplay:(UIScrollView *)scrollView {
+    return YES;
+}
 
 - (NSAttributedString *)attributedStringWithText:(NSString *)string color:(UIColor *)color fontSize:(CGFloat)fontSize {
     NSString *text = string;
