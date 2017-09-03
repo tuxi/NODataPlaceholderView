@@ -17,11 +17,6 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored   "-Warc-performSelector-leaks"
-    Class debugClass = NSClassFromString(@"UIDebuggingInformationOverlay");
-    [debugClass performSelector:NSSelectorFromString(@"prepareDebuggingOverlay")];
-#pragma clang diagnostic pop
     return YES;
 }
 

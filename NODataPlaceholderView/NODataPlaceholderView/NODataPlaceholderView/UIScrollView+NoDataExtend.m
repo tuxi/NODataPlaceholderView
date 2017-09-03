@@ -155,10 +155,6 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 #pragma mark - Public methods
 ////////////////////////////////////////////////////////////////////////
 
-- (void)reloadNoDataView {
-    [self xy_reloadNoDataView];
-}
-
 
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - Private methods (delegate private api)
@@ -455,11 +451,11 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 
 ////////////////////////////////////////////////////////////////////////
-#pragma mark - Privite method (reload subviews)
+#pragma mark - Public method (reload subviews)
 ////////////////////////////////////////////////////////////////////////
 
-// 刷新NoDataPlaceholderView 当调用reloadData时也会调用此方法
-- (void)xy_reloadNoDataView {
+// 刷新 当调用reloadData时也会调用此方法
+- (void)xy_reloadNoData {
     
     self.delegateFlags = NoDataPlaceholderDelegateFlagsMake([self xy_noDataPlacehodlerShouldDisplay],
                                                             [self xy_noDataPlacehodlerShouldBeForcedToDisplay],
@@ -604,10 +600,10 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         [self setupNoDataPlaceholderView];
         
         // 对reloadData方法的实现进行处理, 为加载reloadData时注入额外的实现
-        [self hockSelector:@selector(reloadData) swizzlingSelector:@selector(xy_reloadNoDataView)];
+        [self hockSelector:@selector(reloadData) swizzlingSelector:@selector(xy_reloadNoData)];
         
         if ([self isKindOfClass:[UITableView class]]) {
-            [self hockSelector:@selector(endUpdates) swizzlingSelector:@selector(xy_reloadNoDataView)];
+            [self hockSelector:@selector(endUpdates) swizzlingSelector:@selector(xy_reloadNoData)];
         }
         objc_setAssociatedObject(self, _cmd, @(flag), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
@@ -793,7 +789,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     
     objc_setAssociatedObject(self, @selector(xy_loading), @(xy_loading), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     
-    [self xy_reloadNoDataView];
+    [self xy_reloadNoData];
     
 }
 

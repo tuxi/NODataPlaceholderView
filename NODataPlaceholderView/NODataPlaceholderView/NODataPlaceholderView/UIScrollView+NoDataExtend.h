@@ -40,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) UIColor *noDataViewContentBackgroundColor;
 @property (nonatomic, assign) BOOL xy_loading;
 
-- (void)reloadNoDataView;
+- (void)xy_reloadNoData;
 
 @end
 

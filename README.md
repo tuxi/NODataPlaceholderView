@@ -1,8 +1,19 @@
+
+# The UI use of auto layout, support screen adaptation
+
+![image](https://raw.githubusercontent.com/Ossey/NODataPlaceholderView/master/NODataPlaceholderView/NODataPlaceholderView/2017-09-03%2017_31_53.giff)
+
 # Quick Start
 
-In your [Podfile]:
-```pod 'NODataPlaceholderView', '~> 0.0.1'
+1.In your [Podfile]:
 ```
+pod 'NODataPlaceholderView', '~> 0.0.1'
+```
+
+Or move 'UIScrollView+NoDataExtend' to your project
+
+2.#Import "UIScrollView+NoDataExtend.h"
+
 # Documentation
 
 * set up subviews
@@ -98,5 +109,14 @@ if ([UIDevice currentDevice].orientation == UIDeviceOrientationPortrait) {
 return 80;
 }
 return 30;
+}
+
+- (void)noDataPlaceholderWillAppear:(UIScrollView *)scrollView {
+self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+
+}
+
+- (void)noDataPlaceholderDidDisappear:(UIScrollView *)scrollView {
+self.tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
 }
 ```

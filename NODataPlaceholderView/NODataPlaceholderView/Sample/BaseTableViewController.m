@@ -10,7 +10,7 @@
 #import "UIScrollView+NoDataExtend.h"
 
 @interface BaseTableViewController () <UIAlertViewDelegate, NoDataPlaceholderDelegate> {
-    NSMutableArray<NSString *> *_dataSource;
+    NSMutableArray<NSString *> *_dataArray;
     NSInteger _currentClickRow;
 }
 
@@ -20,15 +20,11 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
-
-    _dataSource = [NSMutableArray array];
+    _dataArray = [NSMutableArray array];
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"reuseIdentifier"];
     
-    // 使用默认的子控件 配置
     [self setupNodataView];
-    
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"打开调试窗口" style:0 target:self action:@selector(openTestWindow)];
+
 }
 
 
@@ -109,7 +105,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
 
-    return _dataSource.count;
+    return _dataArray.count;
 }
 
 
@@ -117,11 +113,11 @@
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"reuseIdentifier" forIndexPath:indexPath];
     
     if (indexPath.row == 0) {
-        cell.textLabel.text = @"添加10条数据";
+        cell.textLabel.text = @"add";
     } else if (indexPath.row == 1) {
-        cell.textLabel.text = @"删除全部数据";
+        cell.textLabel.text = @"delete all";
     } else {
-        cell.textLabel.text = [NSString stringWithFormat:@"删除第%ld行",indexPath.row];
+        cell.textLabel.text = @"delete current row";
     }
     
     cell.backgroundColor = [UIColor colorWithRed:arc4random_uniform(256)/255.0 green:arc4random_uniform(256)/255.0 blue:arc4random_uniform(256)/255.0 alpha:1.0];
@@ -132,7 +128,7 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     _currentClickRow = indexPath.row;
-    [[[UIAlertView alloc] initWithTitle:@"请选择" message:nil delegate:self cancelButtonTitle:@"不" otherButtonTitles:@"好的", nil] show];
+    [[[UIAlertView alloc] initWithTitle:@"请选择" message:nil delegate:self cancelButtonTitle:@"NO" otherButtonTitles:@"OK", nil] show];
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -145,12 +141,12 @@
         if (_currentClickRow == 0) {
             [self addData];
         } else if (_currentClickRow == 1) {
-            [_dataSource removeAllObjects];
+            [_dataArray removeAllObjects];
         } else {
-            if (_currentClickRow < _dataSource.count) {
-                [_dataSource removeObjectAtIndex:_currentClickRow];
+            if (_currentClickRow < _dataArray.count) {
+                [_dataArray removeObjectAtIndex:_currentClickRow];
             } else {
-                NSAssert(_currentClickRow < _dataSource.count, @"要删除的数据索引超出了数组的长度");
+                NSAssert(_currentClickRow < _dataArray.count, @"要删除的数据索引超出了数组的长度");
             }
         }
         
@@ -179,7 +175,7 @@
     int i = 0;
     while (i < 10) {
         
-        [_dataSource addObject:[NSString stringWithFormat:@"%d", i]];
+        [_dataArray addObject:[NSString stringWithFormat:@"%d", i]];
         
         i++;
     }
@@ -187,22 +183,8 @@
 }
 
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
-    [self.tableView reloadNoDataView];
+    [self.tableView xy_reloadNoData];
     
-}
-
-////////////////////////////////////////////////////////////////////////
-#pragma mark - Other Events
-////////////////////////////////////////////////////////////////////////
-
-- (void)openTestWindow {
-    //     打开调试窗口
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored   "-Warc-performSelector-leaks"
-    Class someClass = NSClassFromString(@"UIDebuggingInformationOverlay");
-    id obj = [someClass performSelector:NSSelectorFromString(@"overlay")];
-    [obj performSelector:NSSelectorFromString(@"toggleVisibility")];
-#pragma clang diagnostic pop
 }
 
 
@@ -228,6 +210,15 @@
         return 80;
     }
     return 30;
+}
+
+- (void)noDataPlaceholderWillAppear:(UIScrollView *)scrollView {
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    
+}
+
+- (void)noDataPlaceholderDidDisappear:(UIScrollView *)scrollView {
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
 }
 
 
