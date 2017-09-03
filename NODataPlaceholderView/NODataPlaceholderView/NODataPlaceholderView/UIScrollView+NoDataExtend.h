@@ -16,14 +16,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, weak, nullable) id<NoDataPlaceholderDelegate> noDataPlaceholderDelegate;
 
-/// 获取子控件
+/// use custom view
 @property (nonatomic, copy) UIView * _Nullable (^customNoDataView)(void);
-@property (nonatomic, copy) UILabel * _Nullable(^noDataTextLabel)(void);
-@property (nonatomic, copy) UILabel * _Nullable(^noDataDetailTextLabel)(void);
-@property (nonatomic, copy) UIImageView * _Nullable(^noDataImageView)(void);
-@property (nonatomic, copy) UIButton * _Nullable(^noDataReloadButton)(void);
 
-// 使用默认的子控件
+// setup subviews
 @property (nonatomic, copy) void  (^ _Nullable noDataTextLabelBlock)(UILabel *textLabel);
 @property (nonatomic, copy) void  (^ _Nullable noDataDetailTextLabelBlock)(UILabel *detailTextLabel);
 @property (nonatomic, copy) void  (^ _Nullable noDataImageViewBlock)(UIImageView *imageView);

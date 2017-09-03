@@ -9,12 +9,9 @@
 #import "BaseTableViewController.h"
 #import "UIScrollView+NoDataExtend.h"
 
-@interface BaseTableViewController () <UIAlertViewDelegate, NoDataPlaceholderDelegate>
-{
+@interface BaseTableViewController () <UIAlertViewDelegate, NoDataPlaceholderDelegate> {
     NSMutableArray<NSString *> *_dataSource;
-    
     NSInteger _currentClickRow;
-    
 }
 
 @end
@@ -23,15 +20,10 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
-//    self.edgesForExtendedLayout = UIRectEdgeNone;
 
     _dataSource = [NSMutableArray array];
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"reuseIdentifier"];
-    
-    // 自定义NoDataPlaceholder的子控件
-//    [self setupNodataViewForNewSubviews];
     
     // 使用默认的子控件 配置
     [self setupNodataView];
@@ -39,8 +31,7 @@
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"打开调试窗口" style:0 target:self action:@selector(openTestWindow)];
 }
 
-// 第一种方式：
-// 使用默认的子控件进行配置
+
 - (void)setupNodataView {
     __weak typeof(self) weakSelf = self;
     
@@ -104,84 +95,6 @@
 
     self.tableView.noDataTextEdgeInsets = UIEdgeInsetsMake(20, 0, 20, 0);
     self.tableView.noDataButtonEdgeInsets = UIEdgeInsetsMake(20, 100, 11, 100);
-}
-
-// 第二种方式：
-// 创建新的子控件，可以自定义子控件，只要符合回调的类型即可
-- (void)setupNodataViewForNewSubviews {
-    
-    __weak typeof(self) weakSelf = self;
-    
-    self.tableView.noDataPlaceholderDelegate = self;
-    
-    self.tableView.customNoDataView = ^UIView * _Nonnull{
-        if (weakSelf.tableView.xy_loading) {
-            UIActivityIndicatorView *activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-            [activityView startAnimating];
-            return activityView;
-        }else {
-            return nil;
-        }
-        
-    };
-    
-    self.tableView.noDataTextLabel = ^UILabel * _Nonnull{
-        UILabel *titleLabel = [UILabel new];
-        titleLabel.backgroundColor = [UIColor clearColor];
-        titleLabel.font = [UIFont systemFontOfSize:27.0];
-        titleLabel.textColor = [UIColor colorWithWhite:0.6 alpha:1.0];
-        titleLabel.textAlignment = NSTextAlignmentCenter;
-        titleLabel.lineBreakMode = NSLineBreakByWordWrapping;
-        titleLabel.numberOfLines = 0;
-        // 通过accessibilityIdentifier来定位元素,相当于这个控件的id
-        titleLabel.accessibilityIdentifier = @"no data placeholder title";
-        titleLabel.attributedText = [weakSelf attributedStringWithText:@"没有正在下载的歌曲" color:[UIColor grayColor] fontSize:16];;
-        return titleLabel;
-    };
-    
-    self.tableView.noDataTextEdgeInsets = UIEdgeInsetsMake(20, 0, 5, 0);
-    
-    self.tableView.noDataDetailTextLabel = ^UILabel * _Nonnull{
-        UILabel *detailLabel = [UILabel new];
-        detailLabel.backgroundColor = [UIColor clearColor];
-        
-        detailLabel.font = [UIFont systemFontOfSize:17.0];
-        detailLabel.textColor = [UIColor colorWithWhite:0.6 alpha:1.0];
-        detailLabel.textAlignment = NSTextAlignmentCenter;
-        detailLabel.lineBreakMode = NSLineBreakByWordWrapping;
-        detailLabel.numberOfLines = 0;
-        detailLabel.accessibilityIdentifier = @"no data placeholder detail label";
-        detailLabel.attributedText = [weakSelf attributedStringWithText:@"可以去下载历史，批量找回下载过的歌曲" color:[UIColor grayColor] fontSize:16];
-        return detailLabel;
-        
-    };
-    
-    self.tableView.noDataImageView = ^UIImageView * _Nonnull{
-        UIImageView *imageView = [UIImageView new];
-        imageView.backgroundColor = [UIColor clearColor];
-        imageView.contentMode = UIViewContentModeScaleAspectFit;
-        imageView.userInteractionEnabled = NO;
-        imageView.accessibilityIdentifier = @"no data placeholder image view";
-        imageView.image = [UIImage imageNamed:@"qqMusic_empty"];
-        return imageView;
-    };
-    
-    self.tableView.noDataReloadButton = ^UIButton * _Nonnull{
-        UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
-        btn.backgroundColor = [UIColor clearColor];
-        btn.layer.borderWidth = 0.5;
-        btn.layer.borderColor = [UIColor colorWithRed:49/255.0 green:194/255.0 blue:124/255.0 alpha:1.0].CGColor;
-        btn.layer.cornerRadius = 2.0;
-        [btn.layer setMasksToBounds:YES];
-        // 按钮内部控件垂直对齐方式为中心
-        btn.contentVerticalAlignment = UIControlContentHorizontalAlignmentCenter;
-        btn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
-        [btn setAttributedTitle:[weakSelf attributedStringWithText:@"查看下载历史" color:[UIColor colorWithRed:49/255.0 green:194/255.0 blue:124/255.0 alpha:1.0] fontSize:15.0] forState:UIControlStateNormal];
-        [btn setTitleColor:[UIColor grayColor] forState:UIControlStateNormal];
-        return btn;
-    };
-    
-    self.tableView.noDataButtonEdgeInsets = UIEdgeInsetsMake(11, 100, 11, 100);
 }
 
 

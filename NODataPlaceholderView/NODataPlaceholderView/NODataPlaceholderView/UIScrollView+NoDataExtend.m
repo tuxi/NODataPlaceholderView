@@ -141,6 +141,12 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 @property (nonatomic, assign) BOOL registerNoDataPlaceholder;
 @property (nonatomic, assign) NoDataPlaceholderDelegateFlags delegateFlags;
 
+@property (nonatomic, copy) UILabel * _Nullable(^noDataTextLabel)(void);
+@property (nonatomic, copy) UILabel * _Nullable(^noDataDetailTextLabel)(void);
+@property (nonatomic, copy) UIImageView * _Nullable(^noDataImageView)(void);
+@property (nonatomic, copy) UIButton * _Nullable(^noDataReloadButton)(void);
+
+
 @end
 
 @implementation UIScrollView (NoDataExtend)
