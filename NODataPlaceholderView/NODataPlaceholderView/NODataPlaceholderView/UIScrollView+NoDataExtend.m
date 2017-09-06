@@ -477,15 +477,6 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
             noDataPlaceholderView = [self setupNoDataPlaceholderView];
         }
         
-        if (noDataPlaceholderView.superview == nil) {
-            if (([self isKindOfClass:[UITableView class]] || [self isKindOfClass:[UICollectionView class]]) &&
-                [self.subviews count] > 1) {
-                [self insertSubview:noDataPlaceholderView atIndex:0];
-            } else {
-                [self addSubview:noDataPlaceholderView];
-            }
-        }
-        
         // 重置视图及其约束
         [noDataPlaceholderView resetSubviews];
         
@@ -857,7 +848,14 @@ buttonEdgeInsets = _buttonEdgeInsets;
     if (!self) {
         return nil;
     }
-    [view addSubview:self];
+    if (self.superview == nil) {
+        if (([view isKindOfClass:[UITableView class]] || [view isKindOfClass:[UICollectionView class]]) &&
+            [view.subviews count] > 1) {
+            [view insertSubview:self atIndex:0];
+        } else {
+            [view addSubview:self];
+        }
+    }
     
     NSLayoutConstraint *selfTopConstraint = [NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.superview attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0];
     _selfTopConstraint = selfTopConstraint;
