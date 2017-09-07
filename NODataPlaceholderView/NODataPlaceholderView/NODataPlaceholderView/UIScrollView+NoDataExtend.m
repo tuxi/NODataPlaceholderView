@@ -480,7 +480,6 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         // 重置视图及其约束
         [noDataPlaceholderView resetSubviews];
         
-        
         UIView *customView = [self xy_noDataPlacehodlerCustomView];
         if (customView) {
             noDataPlaceholderView.customView = customView;
@@ -1356,10 +1355,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
         for (NSInteger i = 0; i < subviewKeyArray.count; ++i) {
             CGFloat topSpace = globalverticalSpace;
             NSString *viewName = subviewKeyArray[i];
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-            UIView *view = [self performSelector:NSSelectorFromString(viewName)];
-#pragma clang diagnostic pop
+            UIView *view = subviewDict[viewName];
             // 拼接间距值
             if ([self canChangeInsets:view.noDataPlaceholderViewContentEdgeInsets]) {
                 topSpace = view.noDataPlaceholderViewContentEdgeInsets.top;
@@ -1393,17 +1389,10 @@ buttonEdgeInsets = _buttonEdgeInsets;
     [super updateConstraints];
 }
 
-- (void)applyPriority:(UILayoutPriority)priority toConstraints:(NSArray *)constraints {
-    for (NSLayoutConstraint *constraint in constraints) {
-        constraint.priority = priority;
-    }
-}
-
 ////////////////////////////////////////////////////////////////////////
 #pragma mark -
 ////////////////////////////////////////////////////////////////////////
 
-// 控制器事件的响应
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
     
     UIView *hitView = [super hitTest:point withEvent:event];
