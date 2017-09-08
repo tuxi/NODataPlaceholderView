@@ -1090,7 +1090,6 @@ buttonEdgeInsets = _buttonEdgeInsets;
         UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
         btn.translatesAutoresizingMaskIntoConstraints = NO;
         btn.backgroundColor = [UIColor clearColor];
-        // 按钮内部控件垂直对齐方式为中心
         btn.contentVerticalAlignment = UIControlContentHorizontalAlignmentCenter;
         btn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
         [btn addTarget:self action:@selector(clickReloadBtn:) forControlEvents:UIControlEventTouchUpInside];
@@ -1190,6 +1189,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
 ////////////////////////////////////////////////////////////////////////
 /// 移除所有约束
 - (void)removeAllConstraints {
+    [self.superview removeConstraints:self.constraints];
     [self removeConstraints:self.constraints];
     [_contentView removeConstraints:_contentView.constraints];
     
