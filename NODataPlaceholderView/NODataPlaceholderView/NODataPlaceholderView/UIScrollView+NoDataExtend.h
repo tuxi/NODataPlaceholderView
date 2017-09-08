@@ -92,6 +92,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// 默认为0，与所在scrollView的中心点显示
 - (CGFloat)contentOffsetYForNoDataPlaceholder:(UIScrollView *)scrollView;
 
+/// imageView的size, 有的时候图片本身太大，导致imageView的尺寸并不是我们想要的，可以通过此方法设置, 当为CGSizeZero时不设置,默认为CGSizeZero
+- (CGSize)imageViewSizeForNoDataPlaceholder:(UIScrollView *)scrollView;
 @end
 
 
