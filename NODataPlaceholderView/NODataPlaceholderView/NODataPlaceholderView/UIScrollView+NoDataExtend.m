@@ -48,7 +48,6 @@ __unused NS_INLINE NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlags
 
 typedef NSString * ImplementationKey NS_EXTENSIBLE_STRING_ENUM;
 
-static NSString * const NoDataPlaceholderBackgroundImageViewAnimationKey = @"NoDataPlaceholderBackgroundImageViewAnimation";
 static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 #pragma mark *** _WeakObjectContainer ***
@@ -583,6 +582,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     
     BOOL flag = [objc_getAssociatedObject(self, _cmd) boolValue];
     if (!flag) {
+        flag = YES;
         if (![self xy_noDataPlacehodlerCanDisplay]) {
             [self xy_removeNoDataPlacehodlerView];
         }
