@@ -7,7 +7,7 @@
 
 1.In your [Podfile]:
 ```
-pod 'NODataPlaceholderView', '~> 0.0.2'
+pod 'NODataPlaceholderView', '~> 0.0.3'
 ```
 
 Or move 'UIScrollView+NoDataExtend' to your project
@@ -70,7 +70,6 @@ reloadButton.layer.borderWidth = 0.5;
 reloadButton.layer.borderColor = [UIColor colorWithRed:49/255.0 green:194/255.0 blue:124/255.0 alpha:1.0].CGColor;
 reloadButton.layer.cornerRadius = 2.0;
 [reloadButton.layer setMasksToBounds:YES];
-// 按钮内部控件垂直对齐方式为中心
 reloadButton.contentVerticalAlignment = UIControlContentHorizontalAlignmentCenter;
 reloadButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
 [reloadButton setAttributedTitle:[weakSelf attributedStringWithText:@"查看下载历史" color:[UIColor colorWithRed:49/255.0 green:194/255.0 blue:124/255.0 alpha:1.0] fontSize:15.0] forState:UIControlStateNormal];
