@@ -88,9 +88,8 @@ NS_ASSUME_NONNULL_BEGIN
 /// NoDataPlaceholderView 的 contentView左右距离父控件的间距值
 - (CGFloat)contentViewHorizontalSpaceFoNoDataPlaceholder:(UIScrollView *)scrollView;
 
-/// NoDataPlaceholderView 顶部 距离 父控件scrollView 顶部 的偏移量
-/// 默认为0，与所在scrollView的中心点显示
-- (CGFloat)contentOffsetYForNoDataPlaceholder:(UIScrollView *)scrollView;
+/// NoDataPlaceholderView 顶部 和 左侧 相对 父控件scrollView 顶部 的偏移量, default is 0,0
+- (CGPoint)contentOffsetForNoDataPlaceholder:(UIScrollView *)scrollView;
 
 /// imageView的size, 有的时候图片本身太大，导致imageView的尺寸并不是我们想要的，可以通过此方法设置, 当为CGSizeZero时不设置,默认为CGSizeZero
 - (CGSize)imageViewSizeForNoDataPlaceholder:(UIScrollView *)scrollView;

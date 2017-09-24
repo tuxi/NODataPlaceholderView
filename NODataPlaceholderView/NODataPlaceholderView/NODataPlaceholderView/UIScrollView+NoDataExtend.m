@@ -17,8 +17,8 @@ struct _NoDataPlaceholderDelegateFlags {
     BOOL noDataPlacehodlerIsAllowedResponseEvent : YES; // noDataView是否可以响应事件
     BOOL noDataPlacehodlerIsAllowedScroll : YES; // 是否可以滚动
     CGFloat noDataPlacehodlerGlobalVerticalSpace; // noDataView 各子控件垂直之间的间距值，默认为10.0
-    CGFloat noDataPlacehodlerContentOffsetY; // nNoDataPlaceholderView 的 contentView左右距离父控件的间距值
     CGFloat noDataPlacehodlerContentViewHorizontaSpace; // contentView 左右距离父控件的间距值，默认为0
+    CGPoint noDataPlacehodlerContentOffset; // NoDataPlaceholderView 顶部 和 左侧 相对 父控件scrollView 顶部 的偏移量, default is 0,0
 };
 
 typedef struct _NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlags;
@@ -30,7 +30,7 @@ __unused NS_INLINE NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlags
                                                                                      BOOL noDataPlacehodlerIsAllowedResponseEvent,
                                                                                      BOOL noDataPlacehodlerIsAllowedScroll,
                                                                                      CGFloat noDataPlacehodlerGlobalVerticalSpace,
-                                                                                     CGFloat noDataPlacehodlerContentOffsetY, CGFloat noDataPlacehodlerContentViewHorizontaSpace) {
+                                                                                     CGFloat noDataPlacehodlerContentViewHorizontaSpace, CGPoint noDataPlacehodlerContentOffset) {
     NoDataPlaceholderDelegateFlags flags = {
         noDataPlacehodlerShouldDisplay,
         noDataPlacehodlerShouldBeForcedToDisplay,
@@ -39,8 +39,8 @@ __unused NS_INLINE NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlags
         noDataPlacehodlerIsAllowedResponseEvent,
         noDataPlacehodlerIsAllowedScroll,
         noDataPlacehodlerGlobalVerticalSpace,
-        noDataPlacehodlerContentOffsetY,
-        noDataPlacehodlerContentViewHorizontaSpace
+        noDataPlacehodlerContentViewHorizontaSpace,
+        noDataPlacehodlerContentOffset
     };
     return flags;
 }
@@ -106,10 +106,12 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 @property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
 /** self顶部距离父控件scrollView 顶部的偏移量 */
 @property (nonatomic, assign) CGFloat contentOffsetY;
+/** self顶部距离父控件scrollView 左侧的偏移量 */
+@property (nonatomic, assign) CGFloat contentOffsetX;
 /** contentView 左右距离父控件的间距 */
 @property (nonatomic, assign) CGFloat contentViewHorizontalSpace;
 /** 所有子控件之间垂直间距 */
-@property (nonatomic, assign) CGFloat globalverticalSpace;
+@property (nonatomic, assign) CGFloat globalVerticalSpace;
 /** 各子控件之间的边距，若设置此边距则 */
 @property (nonatomic, assign) UIEdgeInsets titleEdgeInsets;
 @property (nonatomic, assign) UIEdgeInsets imageEdgeInsets;
@@ -313,12 +315,13 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     return 0.0;
 }
 
-- (CGFloat)xy_noDataPlacehodlerContentOffsetY {
-    CGFloat offset = 0.0;
+
+- (CGPoint)xy_noDataPlacehodlerContentOffset {
+    CGPoint offset = CGPointZero;
     
     if (self.noDataPlaceholderDelegate &&
-        [self.noDataPlaceholderDelegate respondsToSelector:@selector(contentOffsetYForNoDataPlaceholder:)]) {
-        offset = [self.noDataPlaceholderDelegate contentOffsetYForNoDataPlaceholder:self];
+        [self.noDataPlaceholderDelegate respondsToSelector:@selector(contentOffsetForNoDataPlaceholder:)]) {
+        offset = [self.noDataPlaceholderDelegate contentOffsetForNoDataPlaceholder:self];
     }
     return offset;
 }
@@ -464,8 +467,8 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
                                                             [self xy_noDataPlacehodlerIsAllowedResponseEvent],
                                                             [self xy_noDataPlacehodlerIsAllowedScroll],
                                                             [self xy_noDataPlacehodlerGlobalVerticalSpace],
-                                                            [self xy_noDataPlacehodlerContentOffsetY],
-                                                            [self xy_noDataPlacehodlerContenViewHorizontalSpace]);
+                                                            [self xy_noDataPlacehodlerContenViewHorizontalSpace],
+                                                            [self xy_noDataPlacehodlerContentOffset]);
     
     if (!self.delegateFlags.noDataPlacehodlerCanDisplay) {
         return;
@@ -520,11 +523,12 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
             noDataPlaceholderView.imageEdgeInsets = self.noDataImageEdgeInsets;
             noDataPlaceholderView.buttonEdgeInsets = self.noDataButtonEdgeInsets;
             // 设置noDataPlaceholderView子控件垂直间的间距
-            noDataPlaceholderView.globalverticalSpace = self.delegateFlags.noDataPlacehodlerGlobalVerticalSpace;
+            noDataPlaceholderView.globalVerticalSpace = self.delegateFlags.noDataPlacehodlerGlobalVerticalSpace;
             
         }
         
-        noDataPlaceholderView.contentOffsetY = self.delegateFlags.noDataPlacehodlerContentOffsetY;
+        noDataPlaceholderView.contentOffsetY = self.delegateFlags.noDataPlacehodlerContentOffset.y;
+        noDataPlaceholderView.contentOffsetX = self.delegateFlags.noDataPlacehodlerContentOffset.x;
         noDataPlaceholderView.contentViewHorizontalSpace = self.delegateFlags.noDataPlacehodlerContentViewHorizontaSpace;
         noDataPlaceholderView.backgroundColor = [self xy_noDataPlacehodlerBackgroundColor];
         noDataPlaceholderView.contentView.backgroundColor = [self xy_noDataPlacehodlerContentBackgroundColor];
@@ -1242,6 +1246,35 @@ buttonEdgeInsets = _buttonEdgeInsets;
     return nil;
 }
 
+- (NSLayoutConstraint *)getSelfLeftConstraint {
+    NSArray *superViewConstraints = self.superview.constraints;
+    if (!superViewConstraints.count) {
+        return nil;
+    }
+    NSEnumerator *enumerator = superViewConstraints.reverseObjectEnumerator;
+    NSLayoutConstraint *constraint = nil;
+    while ((constraint = enumerator.nextObject)) {
+        if ([constraint.firstItem isEqual:self] && constraint.firstAttribute == NSLayoutAttributeLeading) {
+            return constraint;
+        }
+    }
+    return nil;
+}
+
+- (NSLayoutConstraint *)getSelfRightConstraint {
+    NSArray *superViewConstraints = self.superview.constraints;
+    if (!superViewConstraints.count) {
+        return nil;
+    }
+    NSEnumerator *enumerator = superViewConstraints.reverseObjectEnumerator;
+    NSLayoutConstraint *constraint = nil;
+    while ((constraint = enumerator.nextObject)) {
+        if ([constraint.secondItem isEqual:self] && constraint.firstAttribute == NSLayoutAttributeTrailing) {
+            return constraint;
+        }
+    }
+    return nil;
+}
 
 - (void)updateConstraints {
     
@@ -1260,10 +1293,12 @@ buttonEdgeInsets = _buttonEdgeInsets;
     
     [self addConstraints:[contentViewConstraints valueForKeyPath:@"@unionOfArrays.self"]];
     
-    // 当contentOffsetY(自定义的垂直偏移量)有值时，需要调整垂直偏移量的约束值
-    if (self.contentOffsetY != 0.0 && self.constraints.count > 0 && self.getSelfTopConstraint && self.getSelfBottomConstraint) {
+    // 需要调整self 相对父控件顶部和左侧 的偏移量
+    if (self.constraints.count > 0 && self.getSelfTopConstraint && self.getSelfBottomConstraint && self.getSelfLeftConstraint && self.getSelfRightConstraint) {
         self.getSelfTopConstraint.constant = self.contentOffsetY;
         self.getSelfBottomConstraint.constant = self.contentOffsetY;
+        self.getSelfLeftConstraint.constant = self.contentOffsetX;
+        self.getSelfRightConstraint.constant = self.contentOffsetX;
     }
     
     // 若有customView 则 让其与contentView的约束相同
@@ -1284,7 +1319,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
         // 无customView
         CGFloat width = CGRectGetWidth(self.frame) ?: CGRectGetWidth([UIScreen mainScreen].bounds);
         CGFloat horizontalSpace = roundf(width / NoDataPlaceholderHorizontalSpaceRatioValue); // contentView的子控件横向间距  四舍五入
-        CGFloat globalverticalSpace = MAX(self.globalverticalSpace, 10.0); // contentView的子控件之间的垂直间距，默认为10.0
+        CGFloat globalverticalSpace = MAX(self.globalVerticalSpace, 10.0); // contentView的子控件之间的垂直间距，默认为10.0
         
         NSMutableArray<NSString *> *subviewKeyArray = [NSMutableArray arrayWithCapacity:0];
         NSMutableDictionary *subviewDict = [NSMutableDictionary dictionaryWithCapacity:0];
@@ -1404,7 +1439,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
         
         // 设置垂直约束
         NSMutableString *verticalFormat = [NSMutableString new];
-        // 拼接字符串，添加每个控件垂直边缘之间的约束值, 默认为globalverticalSpace 11.0，如果设置了子控件的contentEdgeInsets,则verticalSpace无效
+        // 拼接字符串，添加每个控件垂直边缘之间的约束值, 默认为globalVerticalSpace 11.0，如果设置了子控件的contentEdgeInsets,则verticalSpace无效
         UIView *previousView = nil;
         for (NSInteger i = 0; i < subviewKeyArray.count; ++i) {
             CGFloat topSpace = globalverticalSpace;

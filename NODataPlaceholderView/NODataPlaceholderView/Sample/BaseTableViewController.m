@@ -203,12 +203,13 @@
 }
 
 
-- (CGFloat)contentOffsetYForNoDataPlaceholder:(UIScrollView *)scrollView {
+- (CGPoint)contentOffsetForNoDataPlaceholder:(UIScrollView *)scrollView {
     if ([UIDevice currentDevice].orientation == UIDeviceOrientationPortrait) {
-        return 80;
+        return CGPointMake(0.0, 80.0);
     }
-    return 30;
+    return CGPointMake(0.0, 30.0);
 }
+
 
 - (void)noDataPlaceholderWillAppear:(UIScrollView *)scrollView {
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
