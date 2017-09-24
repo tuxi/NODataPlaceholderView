@@ -104,7 +104,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 @property (nonatomic, strong) UIView *customView;
 /** 点按手势 */
 @property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
-/** contentView中心点y轴的偏移量 */
+/** self顶部距离父控件scrollView 顶部的偏移量 */
 @property (nonatomic, assign) CGFloat contentOffsetY;
 /** contentView 左右距离父控件的间距 */
 @property (nonatomic, assign) CGFloat contentViewHorizontalSpace;
@@ -290,7 +290,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         view = self.customNoDataView();
     }
     if (view) {
-        NSAssert([view isKindOfClass:[UIView class]], @"-[customViewForNoDataPlaceholder:] 返回值必须为UIView类或其子类");
+        NSParameterAssert([view isKindOfClass:[UIView class]]);
         return view;
     }
     return view;
@@ -821,10 +821,6 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 #pragma mark *** NoDataPlaceholderView ***
 
 @implementation NoDataPlaceholderView
-{
-    __weak NSLayoutConstraint *_selfTopConstraint;
-    __weak NSLayoutConstraint *_selfBottomConstraint;
-}
 
 @synthesize
 contentView = _contentView,
@@ -863,26 +859,22 @@ buttonEdgeInsets = _buttonEdgeInsets;
         }
     }
     
-    NSLayoutConstraint *selfTopConstraint = [NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.superview attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0];
-    _selfTopConstraint = selfTopConstraint;
-    NSLayoutConstraint *selfBottomConstraint = [NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:self.superview attribute:NSLayoutAttributeBottom multiplier:1.0 constant:0.0];
-    _selfBottomConstraint = selfBottomConstraint;
     NSArray *selfConstraints = @[
-                                 @[
-                                     selfTopConstraint,
-                                     selfBottomConstraint
-                                     ],
+                                 [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[self]|"
+                                                                         options:kNilOptions
+                                                                         metrics:nil
+                                                                           views:@{@"self": self}],
                                  @[[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeWidth multiplier:1.0 constant:0.0],
                                    [NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeHeight multiplier:1.0 constant:0.0]
                                    ],
                                  
-                                 [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[self]|"
-                                                                         options:0
+                                 [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[self]|"
+                                                                         options:kNilOptions
                                                                          metrics:nil
                                                                            views:@{@"self": self}],
                                  ];
     
-    [self.superview addConstraints:[selfConstraints valueForKeyPath:@"@unionOfArrays.self"]];
+    [view addConstraints:[selfConstraints valueForKeyPath:@"@unionOfArrays.self"]];
     
     return self;
 }
@@ -918,6 +910,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
     [UIView animateWithDuration:animated ? 0.3 : 0.0 animations:animatedBlock];
     
 }
+
 
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - set
@@ -1219,6 +1212,37 @@ buttonEdgeInsets = _buttonEdgeInsets;
     
 }
 
+- (NSLayoutConstraint *)getSelfTopConstraint {
+    NSArray *superViewConstraints = self.superview.constraints;
+    if (!superViewConstraints.count) {
+        return nil;
+    }
+    NSEnumerator *enumerator = superViewConstraints.reverseObjectEnumerator;
+    NSLayoutConstraint *constraint = nil;
+    while ((constraint = enumerator.nextObject)) {
+        if ([constraint.firstItem isEqual:self] && constraint.firstAttribute == NSLayoutAttributeTop) {
+            return constraint;
+        }
+    }
+    return nil;
+}
+
+- (NSLayoutConstraint *)getSelfBottomConstraint {
+    NSArray *superViewConstraints = self.superview.constraints;
+    if (!superViewConstraints.count) {
+        return nil;
+    }
+    NSEnumerator *enumerator = superViewConstraints.reverseObjectEnumerator;
+    NSLayoutConstraint *constraint = nil;
+    while ((constraint = enumerator.nextObject)) {
+        if ([constraint.secondItem isEqual:self] && constraint.firstAttribute == NSLayoutAttributeBottom) {
+            return constraint;
+        }
+    }
+    return nil;
+}
+
+
 - (void)updateConstraints {
     
     [self removeAllConstraints];
@@ -1237,9 +1261,9 @@ buttonEdgeInsets = _buttonEdgeInsets;
     [self addConstraints:[contentViewConstraints valueForKeyPath:@"@unionOfArrays.self"]];
     
     // 当contentOffsetY(自定义的垂直偏移量)有值时，需要调整垂直偏移量的约束值
-    if (self.contentOffsetY != 0.0 && self.constraints.count > 0 && _selfTopConstraint && _selfBottomConstraint) {
-        _selfTopConstraint.constant = self.contentOffsetY;
-        _selfBottomConstraint.constant = self.contentOffsetY;
+    if (self.contentOffsetY != 0.0 && self.constraints.count > 0 && self.getSelfTopConstraint && self.getSelfBottomConstraint) {
+        self.getSelfTopConstraint.constant = self.contentOffsetY;
+        self.getSelfBottomConstraint.constant = self.contentOffsetY;
     }
     
     // 若有customView 则 让其与contentView的约束相同
