@@ -49,14 +49,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 @optional
 
-/// 是否应该淡入淡出，默认为YES
+/// 是否应该淡入淡出，default is YES
 - (BOOL)noDataPlaceholderShouldFadeInOnDisplay:(UIScrollView *)scrollView;
 
 /// 是否应显示NoDataPlaceholderView, 默认YES
 /// @return 如果当前无数据则应显示NoDataPlaceholderView
 - (BOOL)noDataPlaceholderShouldDisplay:(UIScrollView *)scrollView;
 
-/// 当前所在页面的数据源itemCount>0时，是否应该实现NoDataPlaceholder，默认是不显示的
+/// 当前所在页面的数据源itemCount>0时，是否应该实现NoDataPlaceholder，default return NO
 /// @return 如果需要强制显示NoDataPlaceholder，return YES即可
 - (BOOL)noDataPlaceholderShouldBeForcedToDisplay:(UIScrollView *)scrollView;
 
