@@ -862,13 +862,21 @@ buttonEdgeInsets = _buttonEdgeInsets;
             [view addSubview:self];
         }
     }
-    
+    CGFloat widthConstant = 0.0;
+    if ([view isKindOfClass:[UICollectionView class]]) {
+        UICollectionView *collectionView = (UICollectionView *)view;
+        widthConstant = collectionView.contentInset.left + collectionView.contentInset.right;
+    }
+    else if ([view isKindOfClass:[UITableView class]]) {
+        UITableView *tableView = (UITableView *)view;
+        widthConstant = tableView.contentInset.left + tableView.contentInset.right;
+    }
     NSArray *selfConstraints = @[
                                  [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[self]|"
                                                                          options:kNilOptions
                                                                          metrics:nil
                                                                            views:@{@"self": self}],
-                                 @[[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeWidth multiplier:1.0 constant:0.0],
+                                 @[[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeWidth multiplier:1.0 constant:-widthConstant],
                                    [NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeHeight multiplier:1.0 constant:0.0]
                                    ],
                                  
