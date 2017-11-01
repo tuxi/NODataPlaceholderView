@@ -634,22 +634,27 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 }
 
 - (UIView * _Nonnull (^)(void))customNoDataView {
+    [self registerNoDataPlaceholder];
     return objc_getAssociatedObject(self, _cmd);
 }
 
 - (UILabel * _Nonnull (^)(void))noDataTextLabel {
+    [self registerNoDataPlaceholder];
     return objc_getAssociatedObject(self, _cmd);
 }
 
 - (UILabel * _Nonnull (^)(void))noDataDetailTextLabel {
+    [self registerNoDataPlaceholder];
     return objc_getAssociatedObject(self, _cmd);
 }
 
 - (UIImageView * _Nonnull (^)(void))noDataImageView {
+    [self registerNoDataPlaceholder];
     return objc_getAssociatedObject(self, _cmd);
 }
 
 - (UIButton * _Nonnull (^)(void))noDataReloadButton {
+    [self registerNoDataPlaceholder];
     return objc_getAssociatedObject(self, _cmd);
 }
 
@@ -704,30 +709,37 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 - (void)setNoDataTextLabelBlock:(void (^)(UILabel * _Nonnull))noDataTextLabelBlock {
     objc_setAssociatedObject(self, @selector(noDataTextLabelBlock), noDataTextLabelBlock, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [self registerNoDataPlaceholder];
 }
 
 - (void (^)(UILabel * _Nonnull))noDataTextLabelBlock {
+    [self registerNoDataPlaceholder];
     return objc_getAssociatedObject(self, _cmd);
 }
 
 - (void)setNoDataDetailTextLabelBlock:(void (^)(UILabel * _Nonnull))noDataDetailTextLabelBlock {
     objc_setAssociatedObject(self, @selector(noDataDetailTextLabelBlock), noDataDetailTextLabelBlock, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [self registerNoDataPlaceholder];
 }
 
 - (void (^)(UILabel * _Nonnull))noDataDetailTextLabelBlock {
+    [self registerNoDataPlaceholder];
     return objc_getAssociatedObject(self, _cmd);
 }
 
 - (void)setNoDataImageViewBlock:(void (^)(UIImageView * _Nonnull))noDataImageViewBlock {
     objc_setAssociatedObject(self, @selector(noDataImageViewBlock), noDataImageViewBlock, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [self registerNoDataPlaceholder];
 }
 
 - (void (^)(UIImageView * _Nonnull))noDataImageViewBlock {
+    [self registerNoDataPlaceholder];
     return objc_getAssociatedObject(self, _cmd);
 }
 
 - (void)setNoDataReloadButtonBlock:(void (^)(UIButton * _Nonnull))noDataReloadButtonBlock {
     objc_setAssociatedObject(self, @selector(noDataReloadButtonBlock), noDataReloadButtonBlock, OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [self registerNoDataPlaceholder];
 }
 
 - (void (^)(UIButton * _Nonnull))noDataReloadButtonBlock {
@@ -798,6 +810,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     }
     _WeakObjectContainer *container = [[_WeakObjectContainer alloc] initWithWeakObject:noDataPlaceholderDelegate];
     objc_setAssociatedObject(self, @selector(noDataPlaceholderDelegate), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    [self registerNoDataPlaceholder];
 }
 
 - (void)setNoDataPlaceholderView:(NoDataPlaceholderView *)noDataPlaceholderView {
