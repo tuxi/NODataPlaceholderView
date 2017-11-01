@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   #
 
   s.name         = "NODataPlaceholderView"
-  s.version      = "1.0"
+  s.version      = "1.0.1"
   s.summary      = "A UITableView and UICollectionView are used to display categories when there is no data."
 
   # This description is used to generate tags and improve search results.
