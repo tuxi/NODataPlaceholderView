@@ -1360,7 +1360,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
                 NSDictionary *imageMetrics = @{@"imageLeftSpace": @(imageLeftSpace),
                                                @"imageRightSpace": @(imageRightSpace)};
                 [metrics addEntriesFromDictionary:imageMetrics];
-                [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(imageLeftSpace@750)-[imageView]-(imageRightSpace@750)-|"
+                [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(imageLeftSpace@999)-[imageView]-(imageRightSpace@999)-|"
                                                                                          options:0
                                                                                          metrics:metrics
                                                                                            views:subviewDict]];
@@ -1396,7 +1396,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
             [subviewKeyArray addObject:NSStringFromSelector(@selector(titleLabel))];
             subviewDict[[subviewKeyArray lastObject]] = _titleLabel;
             
-            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(titleLeftSpace@750)-[titleLabel(>=0)]-(titleRightSpace@750)-|"
+            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(titleLeftSpace@999)-[titleLabel(>=0)]-(titleRightSpace@999)-|"
                                                                                      options:0
                                                                                      metrics:metrics
                                                                                        views:subviewDict]];
@@ -1422,7 +1422,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
             [subviewKeyArray addObject:NSStringFromSelector(@selector(detailLabel))];
             subviewDict[[subviewKeyArray lastObject]] = _detailLabel;
             
-            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-(detailLeftSpace@750)-[detailLabel(>=0)]-(detailRightSpace@750)-|"
+            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-(detailLeftSpace@999)-[detailLabel(>=0)]-(detailRightSpace@999)-|"
                                                                                      options:0
                                                                                      metrics:metrics
                                                                                        views:subviewDict]];
@@ -1448,7 +1448,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
             [subviewKeyArray addObject:NSStringFromSelector(@selector(reloadButton))];
             subviewDict[[subviewKeyArray lastObject]] = _reloadButton;
             
-            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-(buttonLeftSpace@750)-[reloadButton(>=0)]-(buttonRightSpace@750)-|"
+            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-(buttonLeftSpace@999)-[reloadButton(>=0)]-(buttonRightSpace@999)-|"
                                                                                      options:0
                                                                                      metrics:metrics
                                                                                        views:subviewDict]];
@@ -1474,11 +1474,11 @@ buttonEdgeInsets = _buttonEdgeInsets;
                 topSpace += previousView.noDataPlaceholderViewContentEdgeInsets.bottom;
             }
             
-            [verticalFormat appendFormat:@"-(%.f@750)-[%@]", topSpace, viewName];
+            [verticalFormat appendFormat:@"-(%.f@999)-[%@]", topSpace, viewName];
             
             if (i == subviewKeyArray.count - 1) {
                 // 最后一个控件把距离父控件底部的约束值也加上
-                [verticalFormat appendFormat:@"-(%.f@750)-", view.noDataPlaceholderViewContentEdgeInsets.bottom];
+                [verticalFormat appendFormat:@"-(%.f@999)-", view.noDataPlaceholderViewContentEdgeInsets.bottom];
             }
             
             
