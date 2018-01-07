@@ -586,17 +586,20 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     
     BOOL flag = [objc_getAssociatedObject(self, _cmd) boolValue];
     if (!flag) {
-        flag = YES;
+        flag = NO;
         if (![self xy_noDataPlacehodlerCanDisplay]) {
             [self xy_removeNoDataPlacehodlerView];
         }
-        [self setupNoDataPlaceholderView];
-        
-        // 对reloadData方法的实现进行处理, 为加载reloadData时注入额外的实现
-        [self hockSelector:@selector(reloadData) swizzlingSelector:@selector(xy_reloadNoData)];
-        
-        if ([self isKindOfClass:[UITableView class]]) {
-            [self hockSelector:@selector(endUpdates) swizzlingSelector:@selector(xy_reloadNoData)];
+        else {
+            flag = YES;
+            [self setupNoDataPlaceholderView];
+            
+            // 对reloadData方法的实现进行处理, 为加载reloadData时注入额外的实现
+            [self hockSelector:@selector(reloadData) swizzlingSelector:@selector(xy_reloadNoData)];
+            
+            if ([self isKindOfClass:[UITableView class]]) {
+                [self hockSelector:@selector(endUpdates) swizzlingSelector:@selector(xy_reloadNoData)];
+            }
         }
         objc_setAssociatedObject(self, _cmd, @(flag), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
@@ -867,6 +870,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
     if (!self) {
         return nil;
     }
+    self.translatesAutoresizingMaskIntoConstraints = NO;
     if (self.superview == nil) {
         if (([view isKindOfClass:[UITableView class]] || [view isKindOfClass:[UICollectionView class]]) &&
             [view.subviews count] > 1) {
@@ -924,7 +928,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
 
 - (void)setupViews {
     [self contentView];
-    self.translatesAutoresizingMaskIntoConstraints = NO;
+    self.globalVerticalSpace = 10.0;
 }
 
 - (void)showAnimated:(BOOL)animated {
@@ -1195,13 +1199,6 @@ buttonEdgeInsets = _buttonEdgeInsets;
 
 - (void)tapGestureRecognizer:(void (^)(UITapGestureRecognizer *))tapBlock {
     
-    if (!self.tapGesture) {
-        self.tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapGestureOnSelf:)];
-        [self addGestureRecognizer:self.tapGesture];
-    }
-    if (self.tapGestureRecognizerBlock) {
-        self.tapGestureRecognizerBlock = nil;
-    }
     self.tapGestureRecognizerBlock = tapBlock;
 }
 
@@ -1315,11 +1312,15 @@ buttonEdgeInsets = _buttonEdgeInsets;
     [self addConstraints:[contentViewConstraints valueForKeyPath:@"@unionOfArrays.self"]];
     
     // 需要调整self 相对父控件顶部和左侧 的偏移量
-    if (self.constraints.count > 0 && self.getSelfTopConstraint && self.getSelfBottomConstraint && self.getSelfLeftConstraint && self.getSelfRightConstraint) {
-        self.getSelfTopConstraint.constant = self.contentOffsetY;
-        self.getSelfBottomConstraint.constant = self.contentOffsetY;
-        self.getSelfLeftConstraint.constant = self.contentOffsetX;
-        self.getSelfRightConstraint.constant = self.contentOffsetX;
+    NSLayoutConstraint *getSelfTopConstraint, *getSelfBottomConstraint, *getSelfLeftConstraint, *getSelfRightConstraint;
+    if ((getSelfTopConstraint = self.getSelfTopConstraint) &&
+        (getSelfBottomConstraint = self.getSelfBottomConstraint) &&
+        (getSelfLeftConstraint = self.getSelfLeftConstraint) &&
+        (getSelfRightConstraint = self.getSelfRightConstraint)) {
+        getSelfTopConstraint.constant = self.contentOffsetY;
+        getSelfBottomConstraint.constant = self.contentOffsetY;
+        getSelfLeftConstraint.constant = self.contentOffsetX;
+        getSelfRightConstraint.constant = self.contentOffsetX;
     }
     
     // 若有customView 则 让其与contentView的约束相同
@@ -1340,7 +1341,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
         // 无customView
         CGFloat width = CGRectGetWidth(self.frame) ?: CGRectGetWidth([UIScreen mainScreen].bounds);
         CGFloat horizontalSpace = roundf(width / NoDataPlaceholderHorizontalSpaceRatioValue); // contentView的子控件横向间距  四舍五入
-        CGFloat globalverticalSpace = MAX(self.globalVerticalSpace, 10.0); // contentView的子控件之间的垂直间距，默认为10.0
+        CGFloat globalverticalSpace = self.globalVerticalSpace; // contentView的子控件之间的垂直间距，默认为10.0
         
         NSMutableArray<NSString *> *subviewKeyArray = [NSMutableArray arrayWithCapacity:0];
         NSMutableDictionary *subviewDict = [NSMutableDictionary dictionaryWithCapacity:0];
@@ -1460,7 +1461,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
         
         // 设置垂直约束
         NSMutableString *verticalFormat = [NSMutableString new];
-        // 拼接字符串，添加每个控件垂直边缘之间的约束值, 默认为globalVerticalSpace 11.0，如果设置了子控件的contentEdgeInsets,则verticalSpace无效
+        // 拼接字符串，添加每个控件垂直边缘之间的约束值, 默认为globalVerticalSpace 10.0，如果设置了子控件的contentEdgeInsets,则verticalSpace无效
         UIView *previousView = nil;
         for (NSInteger i = 0; i < subviewKeyArray.count; ++i) {
             CGFloat topSpace = globalverticalSpace;
