@@ -2,8 +2,8 @@
 //  UIScrollView+NoDataExtend.h
 //  NODataPlaceholderView
 //
-//  Created by Ossey on 2017/5/29.
-//  Copyright © 2017年 Ossey. All rights reserved.
+//  Created by alpface on 2017/5/29.
+//  Copyright © 2017年 alpface. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
