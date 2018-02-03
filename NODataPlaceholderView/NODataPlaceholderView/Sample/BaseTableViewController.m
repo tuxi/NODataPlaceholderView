@@ -10,8 +10,8 @@
 #import "UIScrollView+NoDataExtend.h"
 
 @interface BaseTableViewController () <UIAlertViewDelegate, NoDataPlaceholderDelegate> {
-    NSMutableArray<NSString *> *_dataArray;
-    NSInteger _currentClickRow;
+    NSMutableArray<NSMutableArray *> *_dataArray;
+    
 }
 
 @end
@@ -25,25 +25,21 @@
     
     [self setupNodataView];
 
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemTrash target:self action:@selector(deleteAll)];
 }
 
+- (void)deleteAll {
+    if (_dataArray.count == 0) {
+        return;
+    }
+    [_dataArray removeAllObjects];
+    [self.tableView reloadData];
+}
 
 - (void)setupNodataView {
     __weak typeof(self) weakSelf = self;
     
     self.tableView.noDataPlaceholderDelegate = self;
-
-    self.tableView.customNoDataView = ^UIView * _Nonnull{
-        if (weakSelf.tableView.xy_loading) {
-            UIActivityIndicatorView *activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-            [activityView startAnimating];
-            return activityView;
-        }
-        else {
-            return nil;
-        }
-        
-    };
     
     self.tableView.noDataTextLabelBlock = ^(UILabel * _Nonnull textLabel) {
         textLabel.backgroundColor = [UIColor clearColor];
@@ -101,57 +97,42 @@
 #pragma mark - Table view data source
 ////////////////////////////////////////////////////////////////////////
 
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return _dataArray.count;
+}
+
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
 
-    return _dataArray.count;
+    return _dataArray[section].count;
 }
 
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"reuseIdentifier" forIndexPath:indexPath];
     
-    if (indexPath.row == 0) {
-        cell.textLabel.text = @"add";
-    } else if (indexPath.row == 1) {
-        cell.textLabel.text = @"delete all";
-    } else {
-        cell.textLabel.text = @"delete current row";
-    }
-    
-    cell.backgroundColor = [UIColor colorWithRed:arc4random_uniform(256)/255.0 green:arc4random_uniform(256)/255.0 blue:arc4random_uniform(256)/255.0 alpha:1.0];
+    cell.textLabel.text = [NSString stringWithFormat:@"删除当前行 %ld", indexPath.row];
     
     return cell;
 }
 
-
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    _currentClickRow = indexPath.row;
-    [[[UIAlertView alloc] initWithTitle:@"请选择" message:nil delegate:self cancelButtonTitle:@"NO" otherButtonTitles:@"OK", nil] show];
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    return [NSString stringWithFormat:@"第%ld组", section];
 }
 
-////////////////////////////////////////////////////////////////////////
-#pragma mark - UIAlertViewDelegate
-////////////////////////////////////////////////////////////////////////
 
-- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
-    if (buttonIndex == 1) {
-        
-        if (_currentClickRow == 0) {
-            [self addData];
-        } else if (_currentClickRow == 1) {
-            [_dataArray removeAllObjects];
-        } else {
-            if (_currentClickRow < _dataArray.count) {
-                [_dataArray removeObjectAtIndex:_currentClickRow];
-            } else {
-                NSAssert(_currentClickRow < _dataArray.count, @"要删除的数据索引超出了数组的长度");
-            }
-        }
-        
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [self.tableView reloadData];
-        });
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [self.tableView beginUpdates];
+    NSMutableArray *arr = _dataArray[indexPath.section];
+    if (arr.count == 1) {
+        [self.tableView deleteSections:[NSIndexSet indexSetWithIndex:indexPath.section] withRowAnimation:UITableViewRowAnimationFade];
+        [_dataArray removeObjectAtIndex:indexPath.section];
     }
+    else {
+        [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+        [arr removeObjectAtIndex:indexPath.row];
+    }
+    
+    [self.tableView endUpdates];
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -160,24 +141,37 @@
 
 - (void)getDataFromServer {
     
-    self.tableView.xy_loading = YES;
+    /// 以下模拟从服务器请求数据
+    [self.tableView xy_beginLoading];
     
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self addData];
-        [self.tableView reloadData];
-        self.tableView.xy_loading = NO;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        // 数据请求完成
+        [self loadSectionData];
     });
 }
 
-- (void)addData {
-    int i = 0;
-    while (i < 10) {
-        
-        [_dataArray addObject:[NSString stringWithFormat:@"%d", i]];
-        
-        i++;
+- (void)loadSectionData {
+    
+    [_dataArray removeAllObjects];
+    
+    NSMutableArray *sec1 = [NSMutableArray array];
+    [_dataArray addObject:sec1];
+    NSMutableArray *sec2 = [NSMutableArray array];
+    [_dataArray addObject:sec2];
+    
+    for (NSInteger i = 0; i < 3; i++) {
+        [sec1 addObject:@(i)];
+        [sec2 addObject:@(i)];
     }
     
+    if (_dataArray.count == 0) {
+        [self.tableView reloadData];
+        return;
+    }
+    [self.tableView beginUpdates];
+    [self.tableView insertSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationFade];
+    [self.tableView insertSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationFade];
+    [self.tableView endUpdates];
 }
 
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {

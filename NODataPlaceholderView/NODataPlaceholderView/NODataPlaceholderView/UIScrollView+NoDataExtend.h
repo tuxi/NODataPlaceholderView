@@ -34,14 +34,17 @@ NS_ASSUME_NONNULL_BEGIN
 /// reloadButton 的间距
 @property (nonatomic, assign) UIEdgeInsets noDataButtonEdgeInsets;
 
-/// noDataPlaceholderView 的背景颜色
+/// 空数据视图 的背景颜色
 @property (nonatomic, strong) UIColor *noDataViewBackgroundColor;
-/// noDataPlaceholderView中contentView的背景颜色
+/// 空数据视图中contentView的背景颜色
 @property (nonatomic, strong) UIColor *noDataViewContentBackgroundColor;
-@property (nonatomic, assign) BOOL xy_loading;
 
-/// 刷新NoDataView, 当执行tableView的readData、endUpdates或者CollectionView的readData时会调用此方法
+/// 刷新空数据视图
+/// 如果需要在请求数据期间显示loading菊花样式，则在请求数据前主动调用xy_beginLoading方法即可
+/// @note 刷新完数据后不必主动调用此方法，因为执行tableView的readData、endUpdates或者CollectionView的readData时会主动执行此方法
 - (void)xy_reloadNoData;
+/// 如果使用了customNoDataView block 则此方法无效
+- (void)xy_beginLoading;
 
 @end
 
@@ -52,43 +55,43 @@ NS_ASSUME_NONNULL_BEGIN
 /// 是否应该淡入淡出，default is YES
 - (BOOL)noDataPlaceholderShouldFadeInOnDisplay:(UIScrollView *)scrollView;
 
-/// 是否应显示NoDataPlaceholderView, 默认YES
-/// @return 如果当前无数据则应显示NoDataPlaceholderView
+/// 是否应显示空数据视图, 默认YES
+/// @return 通过delegate方法决定是否应该显示noData, 当return YES 时 即使无数据页也会显示空数据视图
 - (BOOL)noDataPlaceholderShouldDisplay:(UIScrollView *)scrollView;
 
 /// 当前所在页面的数据源itemCount>0时，是否应该实现NoDataPlaceholder，default return NO
 /// @return 如果需要强制显示NoDataPlaceholder，return YES即可
 - (BOOL)noDataPlaceholderShouldBeForcedToDisplay:(UIScrollView *)scrollView;
 
-/// 当noDataPlaceholder即将显示的回调
+/// 当空数据视图即将显示的回调
 - (void)noDataPlaceholderWillAppear:(UIScrollView *)scrollView;
 
-/// 当noDataPlaceholder完全显示的回调
+/// 当空数据视图完全显示的回调
 - (void)noDataPlaceholderDidAppear:(UIScrollView *)scrollView;
 
-/// 当noDataPlaceholder即将消失的回调
+/// 当空数据视图即将消失的回调
 - (void)noDataPlaceholderWillDisappear:(UIScrollView *)scrollView;
 
-/// 当noDataPlaceholder完全消失的回调
+/// 当空数据视图完全消失的回调
 - (void)noDataPlaceholderDidDisappear:(UIScrollView *)scrollView;
 
-/// noDataPlaceholder是否可以响应事件，默认YES
+/// 空数据视图是否可以响应事件，默认YES
 - (BOOL)noDataPlaceholderShouldAllowResponseEvent:(UIScrollView *)scrollView;
 
-/// noDataPlaceholder是否可以滚动，默认YES
+/// 空数据视图是否可以滚动，默认YES
 - (BOOL)noDataPlaceholderShouldAllowScroll:(UIScrollView *)scrollView;
 
 - (void)noDataPlaceholder:(UIScrollView *)scrollView didTapOnContentView:(UITapGestureRecognizer *)tap;
 
 - (void)noDataPlaceholder:(UIScrollView *)scrollView didClickReloadButton:(UIButton *)button;
 
-/// NoDataPlaceholderView各子控件之间垂直的间距，默认为11
+/// 空数据视图各子控件之间垂直的间距，默认为11
 - (CGFloat)contentSubviewsGlobalVerticalSpaceFoNoDataPlaceholder:(UIScrollView *)scrollView;
 
-/// NoDataPlaceholderView 的 contentView左右距离父控件的间距值
+/// 空数据视图 的 contentView左右距离父控件的间距值
 - (CGFloat)contentViewHorizontalSpaceFoNoDataPlaceholder:(UIScrollView *)scrollView;
 
-/// NoDataPlaceholderView 顶部 和 左侧 相对 父控件scrollView 顶部 的偏移量, default is 0,0
+/// 空数据视图 顶部 和 左侧 相对 父控件scrollView 顶部 的偏移量, default is 0,0
 - (CGPoint)contentOffsetForNoDataPlaceholder:(UIScrollView *)scrollView;
 
 /// imageView的size, 有的时候图片本身太大，导致imageView的尺寸并不是我们想要的，可以通过此方法设置, 当为CGSizeZero时不设置,默认为CGSizeZero

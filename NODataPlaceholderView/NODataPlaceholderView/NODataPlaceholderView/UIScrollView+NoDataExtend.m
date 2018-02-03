@@ -9,43 +9,6 @@
 #import "UIScrollView+NoDataExtend.h"
 #import <objc/runtime.h>
 
-struct _NoDataPlaceholderDelegateFlags {
-    BOOL noDataPlacehodlerShouldDisplay : YES; // 通过delegate方法决定是否应该显示noData
-    BOOL noDataPlacehodlerShouldBeForcedToDisplay; // 当不可以显示noData时，是否强制显示
-    BOOL noDataPlacehodlerCanDisplay : YES; // 是否可以显示noData，根据当前noDataView所在的父控件确定
-    NSInteger itemCount; // 当前tableView或collectionView的总行数
-    BOOL noDataPlacehodlerIsAllowedResponseEvent : YES; // noDataView是否可以响应事件
-    BOOL noDataPlacehodlerIsAllowedScroll : YES; // 是否可以滚动
-    CGFloat noDataPlacehodlerGlobalVerticalSpace; // noDataView 各子控件垂直之间的间距值，默认为10.0
-    CGFloat noDataPlacehodlerContentViewHorizontaSpace; // contentView 左右距离父控件的间距值，默认为0
-    CGPoint noDataPlacehodlerContentOffset; // NoDataPlaceholderView 顶部 和 左侧 相对 父控件scrollView 顶部 的偏移量, default is 0,0
-};
-
-typedef struct _NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlags;
-
-__unused NS_INLINE NoDataPlaceholderDelegateFlags NoDataPlaceholderDelegateFlagsMake(BOOL noDataPlacehodlerShouldDisplay,
-                                                                                     BOOL noDataPlacehodlerShouldBeForcedToDisplay,
-                                                                                     BOOL noDataPlacehodlerCanDisplay,
-                                                                                     NSInteger itemCount,
-                                                                                     BOOL noDataPlacehodlerIsAllowedResponseEvent,
-                                                                                     BOOL noDataPlacehodlerIsAllowedScroll,
-                                                                                     CGFloat noDataPlacehodlerGlobalVerticalSpace,
-                                                                                     CGFloat noDataPlacehodlerContentViewHorizontaSpace, CGPoint noDataPlacehodlerContentOffset) {
-    NoDataPlaceholderDelegateFlags flags = {
-        noDataPlacehodlerShouldDisplay,
-        noDataPlacehodlerShouldBeForcedToDisplay,
-        noDataPlacehodlerCanDisplay,
-        itemCount,
-        noDataPlacehodlerIsAllowedResponseEvent,
-        noDataPlacehodlerIsAllowedScroll,
-        noDataPlacehodlerGlobalVerticalSpace,
-        noDataPlacehodlerContentViewHorizontaSpace,
-        noDataPlacehodlerContentOffset
-    };
-    return flags;
-}
-
-
 typedef NSString * ImplementationKey NS_EXTENSIBLE_STRING_ENUM;
 
 static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
@@ -137,13 +100,12 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 @property (nonatomic, readonly) NoDataPlaceholderView *noDataPlaceholderView;
 @property (nonatomic, assign) BOOL registerNoDataPlaceholder;
-@property (nonatomic, assign) NoDataPlaceholderDelegateFlags delegateFlags;
+//@property (nonatomic, assign) NoDataPlaceholderDelegateFlags delegateFlags;
 
 @property (nonatomic, copy) UILabel * _Nullable(^noDataTextLabel)(void);
 @property (nonatomic, copy) UILabel * _Nullable(^noDataDetailTextLabel)(void);
 @property (nonatomic, copy) UIImageView * _Nullable(^noDataImageView)(void);
 @property (nonatomic, copy) UIButton * _Nullable(^noDataReloadButton)(void);
-
 
 @end
 
@@ -280,6 +242,20 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     }
 }
 
+- (void)setXy_loading:(BOOL)xy_loading {
+    if (self.xy_loading == xy_loading) {
+        return;
+    }
+    
+    objc_setAssociatedObject(self, @selector(xy_loading), @(xy_loading), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    
+    [self xy_reloadNoData];
+    
+}
+- (BOOL)xy_loading {
+    return [objc_getAssociatedObject(self, _cmd) integerValue];
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -290,6 +266,11 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     UIView *view = nil;
     if (self.customNoDataView) {
         view = self.customNoDataView();
+    }
+    else if (self.xy_loading) {
+        UIActivityIndicatorView *activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+        [activityView startAnimating];
+        return activityView;
     }
     if (view) {
         NSParameterAssert([view isKindOfClass:[UIView class]]);
@@ -457,25 +438,18 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 #pragma mark - Public method (reload subviews)
 ////////////////////////////////////////////////////////////////////////
 
-// 刷新 当调用reloadData时也会调用此方法
+- (void)xy_beginLoading {
+    [self setXy_loading:YES];
+}
+
 - (void)xy_reloadNoData {
     
-    self.delegateFlags = NoDataPlaceholderDelegateFlagsMake([self xy_noDataPlacehodlerShouldDisplay],
-                                                            [self xy_noDataPlacehodlerShouldBeForcedToDisplay],
-                                                            [self xy_noDataPlacehodlerCanDisplay],
-                                                            [self xy_itemCount],
-                                                            [self xy_noDataPlacehodlerIsAllowedResponseEvent],
-                                                            [self xy_noDataPlacehodlerIsAllowedScroll],
-                                                            [self xy_noDataPlacehodlerGlobalVerticalSpace],
-                                                            [self xy_noDataPlacehodlerContenViewHorizontalSpace],
-                                                            [self xy_noDataPlacehodlerContentOffset]);
-    
-    if (!self.delegateFlags.noDataPlacehodlerCanDisplay) {
+    if (![self xy_noDataPlacehodlerCanDisplay]) {
         return;
     }
     
-    if ((self.delegateFlags.noDataPlacehodlerShouldDisplay && !self.delegateFlags.itemCount) ||
-        self.delegateFlags.noDataPlacehodlerShouldBeForcedToDisplay) {
+    if (([self xy_noDataPlacehodlerShouldDisplay] && ![self xy_itemCount]) ||
+        [self xy_noDataPlacehodlerShouldBeForcedToDisplay]) {
         
         // 通知代理即将显示
         [self xy_noDataPlaceholderViewWillAppear];
@@ -523,20 +497,20 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
             noDataPlaceholderView.imageEdgeInsets = self.noDataImageEdgeInsets;
             noDataPlaceholderView.buttonEdgeInsets = self.noDataButtonEdgeInsets;
             // 设置noDataPlaceholderView子控件垂直间的间距
-            noDataPlaceholderView.globalVerticalSpace = self.delegateFlags.noDataPlacehodlerGlobalVerticalSpace;
+            noDataPlaceholderView.globalVerticalSpace = [self xy_noDataPlacehodlerGlobalVerticalSpace];
             
         }
         
-        noDataPlaceholderView.contentOffsetY = self.delegateFlags.noDataPlacehodlerContentOffset.y;
-        noDataPlaceholderView.contentOffsetX = self.delegateFlags.noDataPlacehodlerContentOffset.x;
-        noDataPlaceholderView.contentViewHorizontalSpace = self.delegateFlags.noDataPlacehodlerContentViewHorizontaSpace;
+        noDataPlaceholderView.contentOffsetY = [self xy_noDataPlacehodlerContentOffset].y;
+        noDataPlaceholderView.contentOffsetX = [self xy_noDataPlacehodlerContentOffset].x;
+        noDataPlaceholderView.contentViewHorizontalSpace = [self xy_noDataPlacehodlerContenViewHorizontalSpace];
         noDataPlaceholderView.backgroundColor = [self xy_noDataPlacehodlerBackgroundColor];
         noDataPlaceholderView.contentView.backgroundColor = [self xy_noDataPlacehodlerContentBackgroundColor];
         noDataPlaceholderView.hidden = NO;
         noDataPlaceholderView.clipsToBounds = YES;
         noDataPlaceholderView.imageViewSize = [self xy_noDataPlaceholderImageViewSize];
         
-        noDataPlaceholderView.userInteractionEnabled = self.delegateFlags.noDataPlacehodlerIsAllowedResponseEvent;
+        noDataPlaceholderView.userInteractionEnabled = [self xy_noDataPlacehodlerIsAllowedResponseEvent];
         
         [noDataPlaceholderView setNeedsUpdateConstraints];
         
@@ -545,7 +519,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
             [noDataPlaceholderView layoutIfNeeded];
         }];
         
-        self.scrollEnabled = self.delegateFlags.noDataPlacehodlerIsAllowedScroll;
+        self.scrollEnabled = [self xy_noDataPlacehodlerIsAllowedScroll];
         
         // 通知代理完全显示
         [self xy_noDataPlacehodlerDidAppear];
@@ -554,6 +528,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         [self xy_removeNoDataPlacehodlerView];
     }
     
+    objc_setAssociatedObject(self, @selector(xy_loading), @(NO), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 
@@ -669,9 +644,6 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     return objc_getAssociatedObject(self, _cmd);
 }
 
-- (BOOL)xy_loading {
-    return [objc_getAssociatedObject(self, _cmd) integerValue];
-}
 
 - (UIEdgeInsets)noDataTextEdgeInsets {
     NSValue *value = objc_getAssociatedObject(self, _cmd);
@@ -693,22 +665,11 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     return value ? [value UIEdgeInsetsValue] : UIEdgeInsetsZero;
 }
 
-- (NoDataPlaceholderDelegateFlags)delegateFlags {
-    NSData *data = objc_getAssociatedObject(self, _cmd);
-    NoDataPlaceholderDelegateFlags delegateFlags;
-    [data getBytes:&delegateFlags length:sizeof(delegateFlags)];
-    return delegateFlags;
-}
 
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - set
 ////////////////////////////////////////////////////////////////////////
 
-- (void)setDelegateFlags:(NoDataPlaceholderDelegateFlags)delegateFlags {
-    
-    NSData *data = [NSData dataWithBytes:&delegateFlags length:sizeof(delegateFlags)];
-    objc_setAssociatedObject(self, @selector(delegateFlags), data, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-}
 
 - (void)setNoDataTextLabelBlock:(void (^)(UILabel * _Nonnull))noDataTextLabelBlock {
     objc_setAssociatedObject(self, @selector(noDataTextLabelBlock), noDataTextLabelBlock, OBJC_ASSOCIATION_COPY_NONATOMIC);
@@ -788,17 +749,6 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 - (void)setNoDataViewContentBackgroundColor:(UIColor *)noDataViewContentBackgroundColor {
     objc_setAssociatedObject(self, @selector(noDataViewContentBackgroundColor), noDataViewContentBackgroundColor, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-}
-
-- (void)setXy_loading:(BOOL)xy_loading {
-    if (self.xy_loading == xy_loading) {
-        return;
-    }
-    
-    objc_setAssociatedObject(self, @selector(xy_loading), @(xy_loading), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    
-    [self xy_reloadNoData];
-    
 }
 
 
@@ -1573,8 +1523,6 @@ buttonEdgeInsets = _buttonEdgeInsets;
     if (![self respondsToSelector:orginSelector]) {
         return;
     }
-    
-    NSLog(@"%@", self.implementationDictionary);
     
     for (_SwizzlingObject *implObject in self.implementationDictionary.allValues) {
         // 确保setImplementation 在UITableView or UICollectionView只调用一次, 也就是每个方法的指针只存储一次
