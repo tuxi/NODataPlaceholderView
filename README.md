@@ -17,7 +17,7 @@ Or move 'UIScrollView+NoDataExtend' to your project
 
 # Documentation
 
-* setup no data views
+* 根据需求设置空视图
 
 ```objective-c
 - (void)setupNodataView {
@@ -72,8 +72,9 @@ Or move 'UIScrollView+NoDataExtend' to your project
 }
 
 ```
+---
 
-* request data form server
+* 模拟请求数据
 
 ```objective-c
 /// 以下模拟从服务器请求数据
@@ -112,8 +113,9 @@ Or move 'UIScrollView+NoDataExtend' to your project
     [self.tableView endUpdates];
 }
 ```
+---
 
-* set noDataPlaceholderDelegate
+* 代理回调
 
 ```objective-c
 
@@ -155,3 +157,4 @@ Or move 'UIScrollView+NoDataExtend' to your project
     return YES;
 }
 ```
+---
