@@ -139,13 +139,14 @@
 #pragma mark - other
 ////////////////////////////////////////////////////////////////////////
 
+/// 以下模拟从服务器请求数据
 - (void)getDataFromServer {
     
-    /// 以下模拟从服务器请求数据
+    // 请求数据前执行此方法，显示加载中的loading，如果不需要加载中的loading，可不执行此方法
     [self.tableView xy_beginLoading];
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        // 数据请求完成
+        // 模拟数据请求完成
         [self loadSectionData];
     });
 }
@@ -173,7 +174,6 @@
     [self.tableView insertSections:[NSIndexSet indexSetWithIndex:1] withRowAnimation:UITableViewRowAnimationFade];
     [self.tableView endUpdates];
 }
-
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
     [self.tableView xy_reloadNoData];
     
