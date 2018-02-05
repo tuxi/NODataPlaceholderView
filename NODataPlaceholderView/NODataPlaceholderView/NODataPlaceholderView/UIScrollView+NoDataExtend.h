@@ -40,11 +40,15 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) UIColor *noDataViewContentBackgroundColor;
 
 /// 刷新空数据视图
-/// 如果需要在请求数据期间显示loading菊花样式，则在请求数据前主动调用xy_beginLoading方法即可
+/// 如果需要在请求数据期间显示loading菊花样式，需要在请求数据前主动调用xy_beginLoading方法
 /// @note 刷新完数据后不必主动调用此方法，因为执行tableView的readData、endUpdates或者CollectionView的readData时会主动执行此方法
 - (void)xy_reloadNoData;
-/// 如果使用了customNoDataView block 则此方法无效
+
+/// 用于请求数据前的loading样式
+/// 需在请求前执行xy_beginLoading，请求完成后执行xy_endLoading
+/// @note 如果使用了customNoDataView block 则此方法无效
 - (void)xy_beginLoading;
+- (void)xy_endLoading;
 
 @end
 

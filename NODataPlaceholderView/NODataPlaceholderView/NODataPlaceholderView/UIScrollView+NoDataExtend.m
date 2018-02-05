@@ -253,7 +253,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     
 }
 - (BOOL)xy_loading {
-    return [objc_getAssociatedObject(self, _cmd) integerValue];
+    return [objc_getAssociatedObject(self, _cmd) boolValue];
 }
 
 
@@ -303,6 +303,11 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     if (self.noDataPlaceholderDelegate &&
         [self.noDataPlaceholderDelegate respondsToSelector:@selector(contentOffsetForNoDataPlaceholder:)]) {
         offset = [self.noDataPlaceholderDelegate contentOffsetForNoDataPlaceholder:self];
+    }
+    else {
+        if (self.xy_loading) {
+            return CGPointMake(0.0, 80.0);
+        }
     }
     return offset;
 }
@@ -442,6 +447,10 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     [self setXy_loading:YES];
 }
 
+- (void)xy_endLoading {
+    [self setXy_loading:NO];
+}
+
 - (void)xy_reloadNoData {
     
     if (![self xy_noDataPlacehodlerCanDisplay]) {
@@ -528,7 +537,6 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         [self xy_removeNoDataPlacehodlerView];
     }
     
-    objc_setAssociatedObject(self, @selector(xy_loading), @(NO), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 
@@ -885,7 +893,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
     void (^ animatedBlock)(void) = ^{
         _contentView.alpha = 1.0;
     };
-        
+    
     [UIView animateWithDuration:animated ? 0.3 : 0.0 animations:animatedBlock];
     
 }
@@ -1621,5 +1629,6 @@ void xy_orginalImplementation(id self, SEL _cmd) {
 }
 
 @end
+
 
 
