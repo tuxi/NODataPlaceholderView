@@ -1507,18 +1507,21 @@ buttonEdgeInsets = _buttonEdgeInsets;
     
     UIView *hitView = [super hitTest:point withEvent:event];
     
-    // 如果hitView是UIControl或其子类初始化的，就返回此hitView的实例
+    
     if ([hitView isKindOfClass:[UIControl class]]) {
         return hitView;
     }
     
-    // 如果hitView是contentView或customView, 就返回此实例
-    if ([hitView isEqual:_contentView] ||
-        [hitView isEqual:_customView]) {
+    if ([hitView isEqual:_customView]) {
+        hitView = [hitView hitTest:point withEvent:event];
         return hitView;
     }
     
-    return nil;
+    if ([hitView isEqual:_contentView]) {
+        return hitView;
+    }
+    
+    return hitView;
 }
 
 - (void)resetSubviews {
