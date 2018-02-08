@@ -82,8 +82,11 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 @property (nonatomic, assign) UIEdgeInsets buttonEdgeInsets;
 /** imageView的size, 有的时候图片本身太大，导致imageView的尺寸并不是我们想要的，可以通过此方法设置, 当为CGSizeZero时不设置,默认为CGSizeZero */
 @property (nonatomic, assign) CGSize imageViewSize;
+@property (nonatomic, assign) UIScrollViewNoDataContentLayouAttribute contentLayouAttribute;
 /** tap手势回调block */
 @property (nonatomic, copy) void (^tapGestureRecognizerBlock)(UITapGestureRecognizer *tap);
+
+@property (nonatomic, strong) NSMutableArray<NSLayoutConstraint *> *viewsConstraints;
 
 /// 移除所有子控件及其约束
 - (void)resetSubviews;
@@ -320,6 +323,12 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     return imageViewSize;
 }
 
+- (UIScrollViewNoDataContentLayouAttribute)xy_contentLayouAttribute {
+    if (self.noDataPlaceholderDelegate && [self.noDataPlaceholderDelegate respondsToSelector:@selector(contentLayouAttributeOfNoDataPlaceholder:)]) {
+        return [self.noDataPlaceholderDelegate contentLayouAttributeOfNoDataPlaceholder:self];
+    }
+    return UIScrollViewNoDataContentLayouAttributeCenterY;
+}
 
 - (UILabel *)xy_noDataPlacehodlerTitleLabel {
     UILabel *titleLabel = nil;
@@ -518,7 +527,7 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         noDataPlaceholderView.hidden = NO;
         noDataPlaceholderView.clipsToBounds = YES;
         noDataPlaceholderView.imageViewSize = [self xy_noDataPlaceholderImageViewSize];
-        
+        noDataPlaceholderView.contentLayouAttribute = [self xy_contentLayouAttribute];
         noDataPlaceholderView.userInteractionEnabled = [self xy_noDataPlacehodlerIsAllowedResponseEvent];
         
         [noDataPlaceholderView setNeedsUpdateConstraints];
@@ -846,22 +855,16 @@ buttonEdgeInsets = _buttonEdgeInsets;
         UITableView *tableView = (UITableView *)view;
         widthConstant = tableView.contentInset.left + tableView.contentInset.right;
     }
-    NSArray *selfConstraints = @[
-                                 [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[self]|"
-                                                                         options:kNilOptions
-                                                                         metrics:nil
-                                                                           views:@{@"self": self}],
-                                 @[[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeWidth multiplier:1.0 constant:-widthConstant],
-                                   [NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeHeight multiplier:1.0 constant:0.0]
-                                   ],
-                                 
-                                 [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[self]|"
-                                                                         options:kNilOptions
-                                                                         metrics:nil
-                                                                           views:@{@"self": self}],
-                                 ];
     
-    [view addConstraints:[selfConstraints valueForKeyPath:@"@unionOfArrays.self"]];
+    NSMutableArray *selfArray = @[].mutableCopy;
+    [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0]];
+    [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeBottom multiplier:1.0 constant:0.0]];
+    [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeWidth multiplier:1.0 constant:widthConstant]];
+    [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeWidth multiplier:1.0 constant:0.0]];
+    [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:view /*self.contentView*/ attribute:NSLayoutAttributeHeight multiplier:1.0 constant:0.0]];
+    [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeLeading multiplier:1.0 constant:0.0]];
+    [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeTrailing multiplier:1.0 constant:0.0]];
+    [NSLayoutConstraint activateConstraints:selfArray];
     
     return self;
 }
@@ -939,7 +942,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
     if (!customView) {
         return;
     }
-    [customView removeConstraints:customView.constraints];
+    //    [customView removeConstraints:customView.constraints];
     _customView.translatesAutoresizingMaskIntoConstraints = NO;
     _customView.accessibilityIdentifier = @"customView";
     [self.contentView addSubview:_customView];
@@ -1185,10 +1188,13 @@ buttonEdgeInsets = _buttonEdgeInsets;
 #pragma mark - Auto Layout
 ////////////////////////////////////////////////////////////////////////
 /// 移除所有约束
-- (void)removeAllConstraints {
-    [self.superview removeConstraints:self.constraints];
-    [self removeConstraints:self.constraints];
-    [_contentView removeConstraints:_contentView.constraints];
+- (void)clearConstraints {
+    //    [self.superview removeConstraints:self.constraints];
+    //    [self removeConstraints:self.constraints];
+    //    [_contentView removeConstraints:_contentView.constraints];
+    if (_viewsConstraints.count) {
+        [NSLayoutConstraint deactivateConstraints:_viewsConstraints];
+    }
     
 }
 
@@ -1254,12 +1260,12 @@ buttonEdgeInsets = _buttonEdgeInsets;
 
 - (void)updateConstraints {
     
-    [self removeAllConstraints];
+    [self clearConstraints];
     
     // contentView 与 父视图 保持一致, 根据子控件的高度而改变
     NSArray *contentViewConstraints = @[
                                         @[[NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0.0],
-                                          [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0]
+                                          
                                           ],
                                         [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(contentViewHorizontalSpace)-[contentView]-(contentViewHorizontalSpace)-|"
                                                                                 options:0
@@ -1267,7 +1273,27 @@ buttonEdgeInsets = _buttonEdgeInsets;
                                                                                   views:@{@"contentView": self.contentView}]
                                         ];
     
-    [self addConstraints:[contentViewConstraints valueForKeyPath:@"@unionOfArrays.self"]];
+    NSArray *constraints = [contentViewConstraints valueForKeyPath:@"@unionOfArrays.self"];
+    [self addConstraints:constraints];
+    [self.viewsConstraints addObjectsFromArray:constraints];
+    
+    // 根据contentLayouAttribute确定contentView的顶部或中心点
+    switch (self.contentLayouAttribute) {
+        case UIScrollViewNoDataContentLayouAttributeCenterY: {
+            NSLayoutConstraint *contentY = [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0];
+            [self addConstraint:contentY];
+            [self.viewsConstraints addObject:contentY];
+            break;
+        }
+        case UIScrollViewNoDataContentLayouAttributeTop: {
+            NSLayoutConstraint *contentTop = [NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0];
+            [self addConstraint:contentTop];
+            [self.viewsConstraints addObject:contentTop];
+            break;
+        }
+        default:
+            break;
+    }
     
     // 需要调整self 相对父控件顶部和左侧 的偏移量
     NSLayoutConstraint *getSelfTopConstraint, *getSelfBottomConstraint, *getSelfLeftConstraint, *getSelfRightConstraint;
@@ -1293,7 +1319,9 @@ buttonEdgeInsets = _buttonEdgeInsets;
                                                                                    metrics:nil
                                                                                      views:@{@"customView": _customView}]
                                            ];
-        [self.contentView addConstraints:[customViewConstraints valueForKeyPath:@"@unionOfArrays.self"]];
+        NSArray *constraints = [customViewConstraints valueForKeyPath:@"@unionOfArrays.self"];
+        [self.contentView addConstraints:constraints];
+        [self.viewsConstraints addObjectsFromArray:constraints];
     } else {
         
         // 无customView
@@ -1319,21 +1347,25 @@ buttonEdgeInsets = _buttonEdgeInsets;
                 NSDictionary *imageMetrics = @{@"imageLeftSpace": @(imageLeftSpace),
                                                @"imageRightSpace": @(imageRightSpace)};
                 [metrics addEntriesFromDictionary:imageMetrics];
-                [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(imageLeftSpace@999)-[imageView]-(imageRightSpace@999)-|"
-                                                                                         options:0
-                                                                                         metrics:metrics
-                                                                                           views:subviewDict]];
-                
+                NSArray *constraints = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(imageLeftSpace@999)-[imageView]-(imageRightSpace@999)-|"
+                                                                               options:0
+                                                                               metrics:metrics
+                                                                                 views:subviewDict];
+                [self.contentView addConstraints:constraints];
+                [self.viewsConstraints addObjectsFromArray:constraints];
             }
             else {
                 NSLayoutConstraint *imageViewCenterX = [NSLayoutConstraint constraintWithItem:_imageView attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0.0];
                 [self.contentView addConstraint:imageViewCenterX];
+                [self.viewsConstraints addObject:imageViewCenterX];
             }
             if (self.imageViewSize.width > 0.0 && self.imageViewSize.height > 0.0) {
-                [self.contentView addConstraints:@[
-                                                   [NSLayoutConstraint constraintWithItem:self.imageView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0 constant:self.imageViewSize.width],
-                                                   [NSLayoutConstraint constraintWithItem:self.imageView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0 constant:self.imageViewSize.height],
-                                                   ]];
+                NSArray *constraints = @[
+                                         [NSLayoutConstraint constraintWithItem:self.imageView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0 constant:self.imageViewSize.width],
+                                         [NSLayoutConstraint constraintWithItem:self.imageView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0 constant:self.imageViewSize.height],
+                                         ];
+                [self.contentView addConstraints:constraints];
+                [self.viewsConstraints addObjectsFromArray:constraints];
             }
             
         } else {
@@ -1355,10 +1387,12 @@ buttonEdgeInsets = _buttonEdgeInsets;
             [subviewKeyArray addObject:NSStringFromSelector(@selector(titleLabel))];
             subviewDict[[subviewKeyArray lastObject]] = _titleLabel;
             
-            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(titleLeftSpace@999)-[titleLabel(>=0)]-(titleRightSpace@999)-|"
-                                                                                     options:0
-                                                                                     metrics:metrics
-                                                                                       views:subviewDict]];
+            NSArray *constraints = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(titleLeftSpace@999)-[titleLabel(>=0)]-(titleRightSpace@999)-|"
+                                                                           options:0
+                                                                           metrics:metrics
+                                                                             views:subviewDict];
+            [self.contentView addConstraints:constraints];
+            [self.viewsConstraints addObjectsFromArray:constraints];
         } else {
             // 不显示就移除
             [_titleLabel removeFromSuperview];
@@ -1381,10 +1415,12 @@ buttonEdgeInsets = _buttonEdgeInsets;
             [subviewKeyArray addObject:NSStringFromSelector(@selector(detailLabel))];
             subviewDict[[subviewKeyArray lastObject]] = _detailLabel;
             
-            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-(detailLeftSpace@999)-[detailLabel(>=0)]-(detailRightSpace@999)-|"
-                                                                                     options:0
-                                                                                     metrics:metrics
-                                                                                       views:subviewDict]];
+            NSArray *constraints = [NSLayoutConstraint constraintsWithVisualFormat:@"|-(detailLeftSpace@999)-[detailLabel(>=0)]-(detailRightSpace@999)-|"
+                                                                           options:0
+                                                                           metrics:metrics
+                                                                             views:subviewDict];
+            [self.contentView addConstraints:constraints];
+            [self.viewsConstraints addObjectsFromArray:constraints];
         } else {
             // 不显示就移除
             [_detailLabel removeFromSuperview];
@@ -1407,10 +1443,12 @@ buttonEdgeInsets = _buttonEdgeInsets;
             [subviewKeyArray addObject:NSStringFromSelector(@selector(reloadButton))];
             subviewDict[[subviewKeyArray lastObject]] = _reloadButton;
             
-            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-(buttonLeftSpace@999)-[reloadButton(>=0)]-(buttonRightSpace@999)-|"
-                                                                                     options:0
-                                                                                     metrics:metrics
-                                                                                       views:subviewDict]];
+            NSArray *constraints = [NSLayoutConstraint constraintsWithVisualFormat:@"|-(buttonLeftSpace@999)-[reloadButton(>=0)]-(buttonRightSpace@999)-|"
+                                                                           options:0
+                                                                           metrics:metrics
+                                                                             views:subviewDict];
+            [self.contentView addConstraints:constraints];
+            [self.viewsConstraints addObjectsFromArray:constraints];
         } else {
             // 不显示就移除
             [_reloadButton removeFromSuperview];
@@ -1446,10 +1484,12 @@ buttonEdgeInsets = _buttonEdgeInsets;
         previousView = nil;
         // 向contentView分配垂直约束
         if (verticalFormat.length > 0) {
-            [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:[NSString stringWithFormat:@"V:|%@|", verticalFormat]
-                                                                                     options:0
-                                                                                     metrics:metrics
-                                                                                       views:subviewDict]];
+            NSArray *constraints = [NSLayoutConstraint constraintsWithVisualFormat:[NSString stringWithFormat:@"V:|%@|", verticalFormat]
+                                                                           options:0
+                                                                           metrics:metrics
+                                                                             views:subviewDict];
+            [self.contentView addConstraints:constraints];
+            [self.viewsConstraints addObjectsFromArray:constraints];
         }
     }
     
@@ -1457,6 +1497,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
     
     [super updateConstraints];
 }
+
 
 ////////////////////////////////////////////////////////////////////////
 #pragma mark -
@@ -1488,9 +1529,15 @@ buttonEdgeInsets = _buttonEdgeInsets;
     _customView = nil;
     _reloadButton = nil;
     
-    [self removeAllConstraints];
+    [self clearConstraints];
 }
 
+- (NSMutableArray<NSLayoutConstraint *> *)viewsConstraints {
+    if (_viewsConstraints == nil) {
+        _viewsConstraints = @[].mutableCopy;
+    }
+    return _viewsConstraints;
+}
 
 @end
 
@@ -1629,6 +1676,5 @@ void xy_orginalImplementation(id self, SEL _cmd) {
 }
 
 @end
-
 
 

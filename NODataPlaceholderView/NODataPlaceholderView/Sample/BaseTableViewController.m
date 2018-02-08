@@ -26,6 +26,12 @@
     [self setupNodataView];
 
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemTrash target:self action:@selector(deleteAll)];
+    
+//    if (@available(iOS 11.0, *)) {
+//        self.tableView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+//    } else {
+//        self.automaticallyAdjustsScrollViewInsets = NO;
+//    }
 }
 
 - (void)deleteAll {
@@ -200,11 +206,14 @@
 
 - (CGPoint)contentOffsetForNoDataPlaceholder:(UIScrollView *)scrollView {
     if ([UIDevice currentDevice].orientation == UIDeviceOrientationPortrait) {
-        return CGPointMake(0.0, 80.0);
+        return CGPointMake(0.0, 30.0);
     }
     return CGPointMake(0.0, 30.0);
 }
 
+- (UIScrollViewNoDataContentLayouAttribute)contentLayouAttributeOfNoDataPlaceholder:(UIScrollView *)scrollView {
+    return UIScrollViewNoDataContentLayouAttributeTop;
+}
 
 - (void)noDataPlaceholderWillAppear:(UIScrollView *)scrollView {
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;

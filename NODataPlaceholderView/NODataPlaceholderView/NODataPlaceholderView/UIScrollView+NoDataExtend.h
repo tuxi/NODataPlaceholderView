@@ -10,6 +10,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(NSInteger, UIScrollViewNoDataContentLayouAttribute) {
+    UIScrollViewNoDataContentLayouAttributeCenterY,
+    UIScrollViewNoDataContentLayouAttributeTop
+};
+
 @protocol NoDataPlaceholderDelegate;
 
 @interface UIScrollView (NoDataExtend)
@@ -100,6 +105,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// imageView的size, 有的时候图片本身太大，导致imageView的尺寸并不是我们想要的，可以通过此方法设置, 当为CGSizeZero时不设置,默认为CGSizeZero
 - (CGSize)imageViewSizeForNoDataPlaceholder:(UIScrollView *)scrollView;
+
+/// 空数据视图contentView相对其父控件的约束
+- (UIScrollViewNoDataContentLayouAttribute)contentLayouAttributeOfNoDataPlaceholder:(UIScrollView *)scrollView;
+
 @end
 
 
