@@ -21,10 +21,11 @@ typedef NS_ENUM(NSInteger, UIScrollViewNoDataContentLayouAttribute) {
 
 @property (nonatomic, weak, nullable) id<NoDataPlaceholderDelegate> noDataPlaceholderDelegate;
 
-/// use custom view
+/// 使用自定义的视图展示空数据，将不再使用下面定义的那些控件
+/// 由于本分类中，空视图view的高度依赖内容子控件的高度，所以遇到使用customNoDataView且高度为0时，需要单独设置customNoDataView的高度约束
 @property (nonatomic, copy) UIView * _Nullable (^customNoDataView)(void);
 
-// setup subviews
+// 设置空视图的子控件，当使用customNoDataView时，以下子控件无效
 @property (nonatomic, copy) void  (^ _Nullable noDataTextLabelBlock)(UILabel *textLabel);
 @property (nonatomic, copy) void  (^ _Nullable noDataDetailTextLabelBlock)(UILabel *detailTextLabel);
 @property (nonatomic, copy) void  (^ _Nullable noDataImageViewBlock)(UIImageView *imageView);
@@ -108,6 +109,7 @@ typedef NS_ENUM(NSInteger, UIScrollViewNoDataContentLayouAttribute) {
 
 /// 空数据视图contentView相对其父控件的约束
 - (UIScrollViewNoDataContentLayouAttribute)contentLayouAttributeOfNoDataPlaceholder:(UIScrollView *)scrollView;
+
 
 @end
 
