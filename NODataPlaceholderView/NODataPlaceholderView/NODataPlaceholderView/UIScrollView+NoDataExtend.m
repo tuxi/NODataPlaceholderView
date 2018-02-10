@@ -1210,7 +1210,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
             return constraint;
         }
     }
-    return nil;
+    @throw nil;
 }
 
 - (NSLayoutConstraint *)getSelfBottomConstraint {
@@ -1221,11 +1221,11 @@ buttonEdgeInsets = _buttonEdgeInsets;
     NSEnumerator *enumerator = superViewConstraints.reverseObjectEnumerator;
     NSLayoutConstraint *constraint = nil;
     while ((constraint = enumerator.nextObject)) {
-        if ([constraint.secondItem isEqual:self] && constraint.firstAttribute == NSLayoutAttributeBottom) {
+        if ([constraint.firstItem isEqual:self] && constraint.firstAttribute == NSLayoutAttributeBottom) {
             return constraint;
         }
     }
-    return nil;
+    @throw nil;
 }
 
 - (NSLayoutConstraint *)getSelfLeftConstraint {
@@ -1240,7 +1240,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
             return constraint;
         }
     }
-    return nil;
+    @throw nil;
 }
 
 - (NSLayoutConstraint *)getSelfRightConstraint {
@@ -1251,11 +1251,11 @@ buttonEdgeInsets = _buttonEdgeInsets;
     NSEnumerator *enumerator = superViewConstraints.reverseObjectEnumerator;
     NSLayoutConstraint *constraint = nil;
     while ((constraint = enumerator.nextObject)) {
-        if ([constraint.secondItem isEqual:self] && constraint.firstAttribute == NSLayoutAttributeTrailing) {
+        if ([constraint.firstItem isEqual:self] && constraint.firstAttribute == NSLayoutAttributeTrailing) {
             return constraint;
         }
     }
-    return nil;
+    @throw nil;
 }
 
 - (void)updateConstraints {
