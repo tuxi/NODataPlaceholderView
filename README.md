@@ -1,14 +1,14 @@
 
 # The UI use of auto layout, support screen adaptation
 
-![image](https://github.com/alpface/NODataPlaceholderView/blob/master/NODataPlaceholderView/NODataPlaceholderView/2017-09-03%2017_31_53.gif)
+![image](https://github.com/alpface/NODataPlaceholderView/blob/master/NODataPlaceholderView/2017-09-03%2017_31_53.gif)
 
 # Quick Start
 
 1.In your [Podfile]:
 
 ```
-pod 'NODataPlaceholderView', '~> 1.0.2'
+pod 'NODataPlaceholderView', '~> 1.0.4'
 ```
 
 Or move 'UIScrollView+NoDataExtend' to your project

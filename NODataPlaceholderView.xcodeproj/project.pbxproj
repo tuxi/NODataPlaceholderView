@@ -11,12 +11,10 @@
 		1809F6231EDBA419006929CF /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1809F6211EDBA419006929CF /* Main.storyboard */; };
 		1809F6251EDBA419006929CF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1809F6241EDBA419006929CF /* Assets.xcassets */; };
 		1809F6281EDBA419006929CF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1809F6261EDBA419006929CF /* LaunchScreen.storyboard */; };
-		1809F6331EDBA419006929CF /* NODataPlaceholderViewTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1809F6321EDBA419006929CF /* NODataPlaceholderViewTests.m */; };
-		1809F63E1EDBA419006929CF /* NODataPlaceholderViewUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1809F63D1EDBA419006929CF /* NODataPlaceholderViewUITests.m */; };
 		1809F6511EDBA4B8006929CF /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 1809F64E1EDBA4B8006929CF /* AppDelegate.m */; };
 		187CA6F71EDD633D0003A4EF /* BaseTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 187CA6F61EDD633D0003A4EF /* BaseTableViewController.m */; };
-		D09046092025B98800C21A15 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = D09046082025B98800C21A15 /* README.md */; };
-		D2CD11A3203F33DE00E7929F /* UIScrollView+NoDataExtend.m in Sources */ = {isa = PBXBuildFile; fileRef = D2CD11A2203F33DE00E7929F /* UIScrollView+NoDataExtend.m */; };
+		D2CD11A6203F390B00E7929F /* UIScrollView+NoDataExtend.m in Sources */ = {isa = PBXBuildFile; fileRef = D2CD11A5203F390B00E7929F /* UIScrollView+NoDataExtend.m */; };
+		D2CD11A8203F391400E7929F /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = D2CD11A7203F391400E7929F /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,19 +42,15 @@
 		1809F6271EDBA419006929CF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		1809F6291EDBA419006929CF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1809F62E1EDBA419006929CF /* NODataPlaceholderViewTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NODataPlaceholderViewTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		1809F6321EDBA419006929CF /* NODataPlaceholderViewTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NODataPlaceholderViewTests.m; sourceTree = "<group>"; };
-		1809F6341EDBA419006929CF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1809F6391EDBA419006929CF /* NODataPlaceholderViewUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NODataPlaceholderViewUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		1809F63D1EDBA419006929CF /* NODataPlaceholderViewUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NODataPlaceholderViewUITests.m; sourceTree = "<group>"; };
-		1809F63F1EDBA419006929CF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1809F64D1EDBA4B8006929CF /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		1809F64E1EDBA4B8006929CF /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		187CA6F51EDD633D0003A4EF /* BaseTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BaseTableViewController.h; sourceTree = "<group>"; };
 		187CA6F61EDD633D0003A4EF /* BaseTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BaseTableViewController.m; sourceTree = "<group>"; };
 		18AB48491F5C03A40048B760 /* 2017-09-03 17_31_53.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = "2017-09-03 17_31_53.gif"; sourceTree = "<group>"; };
-		D09046082025B98800C21A15 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
-		D2CD11A1203F33DE00E7929F /* UIScrollView+NoDataExtend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIScrollView+NoDataExtend.h"; path = "../../UIScrollView+NoDataExtend.h"; sourceTree = "<group>"; };
-		D2CD11A2203F33DE00E7929F /* UIScrollView+NoDataExtend.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIScrollView+NoDataExtend.m"; path = "../../UIScrollView+NoDataExtend.m"; sourceTree = "<group>"; };
+		D2CD11A4203F390B00E7929F /* UIScrollView+NoDataExtend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIScrollView+NoDataExtend.h"; sourceTree = "<group>"; };
+		D2CD11A5203F390B00E7929F /* UIScrollView+NoDataExtend.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIScrollView+NoDataExtend.m"; sourceTree = "<group>"; };
+		D2CD11A7203F391400E7929F /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -87,10 +81,10 @@
 		1809F60C1EDBA419006929CF = {
 			isa = PBXGroup;
 			children = (
-				D09046082025B98800C21A15 /* README.md */,
+				D2CD11A7203F391400E7929F /* README.md */,
+				D2CD11A4203F390B00E7929F /* UIScrollView+NoDataExtend.h */,
+				D2CD11A5203F390B00E7929F /* UIScrollView+NoDataExtend.m */,
 				1809F6171EDBA419006929CF /* NODataPlaceholderView */,
-				1809F6311EDBA419006929CF /* NODataPlaceholderViewTests */,
-				1809F63C1EDBA419006929CF /* NODataPlaceholderViewUITests */,
 				1809F6161EDBA419006929CF /* Products */,
 			);
 			sourceTree = "<group>";
@@ -108,8 +102,6 @@
 		1809F6171EDBA419006929CF /* NODataPlaceholderView */ = {
 			isa = PBXGroup;
 			children = (
-				D2CD11A1203F33DE00E7929F /* UIScrollView+NoDataExtend.h */,
-				D2CD11A2203F33DE00E7929F /* UIScrollView+NoDataExtend.m */,
 				1809F64C1EDBA4B8006929CF /* Sample */,
 				1809F6181EDBA419006929CF /* Supporting Files */,
 			);
@@ -127,24 +119,6 @@
 				1809F6191EDBA419006929CF /* main.m */,
 			);
 			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
-		1809F6311EDBA419006929CF /* NODataPlaceholderViewTests */ = {
-			isa = PBXGroup;
-			children = (
-				1809F6321EDBA419006929CF /* NODataPlaceholderViewTests.m */,
-				1809F6341EDBA419006929CF /* Info.plist */,
-			);
-			path = NODataPlaceholderViewTests;
-			sourceTree = "<group>";
-		};
-		1809F63C1EDBA419006929CF /* NODataPlaceholderViewUITests */ = {
-			isa = PBXGroup;
-			children = (
-				1809F63D1EDBA419006929CF /* NODataPlaceholderViewUITests.m */,
-				1809F63F1EDBA419006929CF /* Info.plist */,
-			);
-			path = NODataPlaceholderViewUITests;
 			sourceTree = "<group>";
 		};
 		1809F64C1EDBA4B8006929CF /* Sample */ = {
@@ -269,7 +243,7 @@
 			files = (
 				1809F6281EDBA419006929CF /* LaunchScreen.storyboard in Resources */,
 				1809F6251EDBA419006929CF /* Assets.xcassets in Resources */,
-				D09046092025B98800C21A15 /* README.md in Resources */,
+				D2CD11A8203F391400E7929F /* README.md in Resources */,
 				1809F6231EDBA419006929CF /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -295,7 +269,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D2CD11A3203F33DE00E7929F /* UIScrollView+NoDataExtend.m in Sources */,
+				D2CD11A6203F390B00E7929F /* UIScrollView+NoDataExtend.m in Sources */,
 				1809F6511EDBA4B8006929CF /* AppDelegate.m in Sources */,
 				1809F61A1EDBA419006929CF /* main.m in Sources */,
 				187CA6F71EDD633D0003A4EF /* BaseTableViewController.m in Sources */,
@@ -306,7 +280,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1809F6331EDBA419006929CF /* NODataPlaceholderViewTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -314,7 +287,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1809F63E1EDBA419006929CF /* NODataPlaceholderViewUITests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
