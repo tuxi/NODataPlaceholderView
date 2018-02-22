@@ -8,7 +8,7 @@
 1.In your [Podfile]:
 
 ```
-pod 'NODataPlaceholderView', '~> 1.0.4'
+pod 'NODataPlaceholderView', '~> 1.0.5'
 ```
 
 Or move 'UIScrollView+NoDataExtend' to your project

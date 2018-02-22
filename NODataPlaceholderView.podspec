@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name         = "NODataPlaceholderView"
-  s.version      = "1.0.4"
+  s.version      = "1.0.5"
   s.summary      = "A UITableView and UICollectionView are used to display categories when there is no data."
   s.homepage     = "https://github.com/alpface/NODataPlaceholderView"
   # s.license      = "MIT"
