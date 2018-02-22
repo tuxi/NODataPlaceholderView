@@ -19,7 +19,7 @@ Pod::Spec.new do |s|
   # s.social_media_url   = "https://github.com/alpface"
   s.platform     = :ios, "7.0"
   s.source       = { :git => "https://github.com/alpface/NODataPlaceholderView.git", :tag => "#{s.version}" }
-  s.source_files  = "NODataPlaceholderView", "NODataPlaceholderView/NODataPlaceholderView/NODataPlaceholderView/**/*.{h,m}
+  s.source_files = 'UIScrollView+NoDataExtend.{h,m}'
   s.requires_arc = true
 
 end
