@@ -1189,12 +1189,21 @@ buttonEdgeInsets = _buttonEdgeInsets;
 ////////////////////////////////////////////////////////////////////////
 /// 移除所有约束
 - (void)clearConstraints {
-    //    [self.superview removeConstraints:self.constraints];
-    //    [self removeConstraints:self.constraints];
-    //    [_contentView removeConstraints:_contentView.constraints];
+    /**
+     iOS 8.2 间歇性报错, 未解决，先加个@try@catch:
+     *** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '-[__NSMallocBlock__ nsli_layoutEngine]: unrecognized selector sent to instance 0x4112a490'
+     */
     if (_viewsConstraints.count) {
-        [NSLayoutConstraint deactivateConstraints:_viewsConstraints];
+        @try {
+            [NSLayoutConstraint deactivateConstraints:_viewsConstraints];
+        }
+        @catch (NSException *exception) {
+            [_viewsConstraints enumerateObjectsUsingBlock:^(NSLayoutConstraint * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                obj.active = false;
+            }];
+        }
     }
+    [_viewsConstraints removeAllObjects];
     
 }
 
