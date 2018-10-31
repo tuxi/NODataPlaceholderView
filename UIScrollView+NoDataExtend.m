@@ -313,9 +313,9 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 ////////////////////////////////////////////////////////////////////////
 
 - (UIView *)xy_noDataPlacehodlerCustomView {
-    UIView *view = nil;
+    UIView *customView = nil;
     if (self.customNoDataView) {
-        view = self.customNoDataView();
+        customView = self.customNoDataView();
     }
     else if (self.xy_loading) {
         
@@ -332,14 +332,14 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         BOOL isLightColor = [UIColor isLightColor:backgroundColor];
         UIActivityIndicatorView *activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:isLightColor?UIActivityIndicatorViewStyleGray:UIActivityIndicatorViewStyleWhite];
         [activityView startAnimating];
-        view = activityView;
-        return view;
+        customView = activityView;
+        return customView;
     }
-    if (view) {
-        NSParameterAssert([view isKindOfClass:[UIView class]]);
-        return view;
+    if (customView) {
+        NSParameterAssert([customView isKindOfClass:[UIView class]]);
+        return customView;
     }
-    return view;
+    return customView;
 }
 
 
@@ -919,8 +919,7 @@ buttonEdgeInsets = _buttonEdgeInsets;
     NSMutableArray *selfArray = @[].mutableCopy;
     [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0]];
     [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeBottom multiplier:1.0 constant:0.0]];
-    [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeWidth multiplier:1.0 constant:widthConstant]];
-    [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeWidth multiplier:1.0 constant:0.0]];
+    [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeWidth multiplier:1.0 constant:-widthConstant]];
     [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeHeight multiplier:1.0 constant:0.0]];
     [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeLeading multiplier:1.0 constant:0.0]];
     [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeTrailing multiplier:1.0 constant:0.0]];
