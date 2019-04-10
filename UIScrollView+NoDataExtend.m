@@ -664,12 +664,14 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         view = [NoDataPlaceholderView showTo:self animated:[self xy_noDataPlacehodlerShouldFadeInOnDisplay]];
         view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         view.hidden = YES;
-        view.tapGesture.delegate = self;
-        __weak typeof(self) weakSelf = self;
-        [view tapGestureRecognizer:^(UITapGestureRecognizer *tap) {
-            [weakSelf xy_didTapContentView:tap];
-        }];
         self.noDataPlaceholderView = view;
+        if ([self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholder:didTapOnContentView:)]) {
+            view.tapGesture.delegate = self;
+            __weak typeof(self) weakSelf = self;
+            [view tapGestureRecognizer:^(UITapGestureRecognizer *tap) {
+                [weakSelf xy_didTapContentView:tap];
+            }];
+        }
     }
     return view;
 }
