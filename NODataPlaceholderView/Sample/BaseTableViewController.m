@@ -1,7 +1,7 @@
 //
 //  BaseTableViewController.m
 //  NODataPlaceholderView
-//
+//  https://tuxi@github.com/tuxi/NODataPlaceholderView
 //  Created by alpface on 2017/5/30.
 //  Copyright © 2017年 alpface. All rights reserved.
 //
