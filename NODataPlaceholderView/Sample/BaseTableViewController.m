@@ -200,7 +200,7 @@
 }
 
 - (void)noDataPlaceholder:(UIScrollView *)scrollView didTapOnContentView:(UITapGestureRecognizer *)tap {
-    [self getDataFromServer];
+//    [self getDataFromServer];
 }
 
 

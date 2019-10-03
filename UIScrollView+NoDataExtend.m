@@ -140,8 +140,8 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 /// 设置tap手势
 - (void)tapGestureRecognizer:(void (^)(UITapGestureRecognizer *))tapBlock;
 
-- (instancetype)initWithView:(UIView *)view;
-+ (instancetype)showTo:(UIView *)view animated:(BOOL)animated;
+- (instancetype)initWithView:(UIScrollView *)view;
++ (instancetype)showTo:(UIScrollView *)view animated:(BOOL)animated;
 @end
 
 #pragma mark *** UIScrollView (NoDataPlaceholder) ***
@@ -272,6 +272,9 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 
 - (void)xy_noDataPlacehodlerDidAppear {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self.contentSize = CGSizeMake(self.contentSize.width == 0 ? self.noDataPlaceholderView.frame.size.width : self.contentSize.width, self.noDataPlaceholderView.frame.size.height);
+    });
     if (self.noDataPlaceholderDelegate &&
         [self.noDataPlaceholderDelegate respondsToSelector:@selector(noDataPlaceholderDidAppear:)]) {
         [self.noDataPlaceholderDelegate noDataPlaceholderDidAppear:self];
@@ -888,13 +891,13 @@ buttonEdgeInsets = _buttonEdgeInsets;
 #pragma mark - Initialize
 ////////////////////////////////////////////////////////////////////////
 
-+ (instancetype)showTo:(UIView *)view animated:(BOOL)animated {
++ (instancetype)showTo:(UIScrollView *)view animated:(BOOL)animated {
     NoDataPlaceholderView *noDataView = [[self alloc] initWithView:view];
     [noDataView showAnimated:animated];
     return noDataView;
 }
 
-- (instancetype)initWithView:(UIView *)view {
+- (instancetype)initWithView:(UIScrollView *)view {
     self = [self initWithFrame:view.bounds];
     if (!self) {
         return nil;
@@ -908,21 +911,12 @@ buttonEdgeInsets = _buttonEdgeInsets;
             [view addSubview:self];
         }
     }
-    CGFloat widthConstant = 0.0;
-    if ([view isKindOfClass:[UICollectionView class]]) {
-        UICollectionView *collectionView = (UICollectionView *)view;
-        widthConstant = collectionView.contentInset.left + collectionView.contentInset.right;
-    }
-    else if ([view isKindOfClass:[UITableView class]]) {
-        UITableView *tableView = (UITableView *)view;
-        widthConstant = tableView.contentInset.left + tableView.contentInset.right;
-    }
+    CGFloat widthConstant = view.contentInset.left + view.contentInset.right;
     
     NSMutableArray *selfArray = @[].mutableCopy;
     [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0]];
     [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeBottom multiplier:1.0 constant:0.0]];
     [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeWidth multiplier:1.0 constant:-widthConstant]];
-    [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeHeight multiplier:1.0 constant:0.0]];
     [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeLeading multiplier:1.0 constant:0.0]];
     [selfArray addObject:[NSLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:view attribute:NSLayoutAttributeTrailing multiplier:1.0 constant:0.0]];
     [NSLayoutConstraint activateConstraints:selfArray];
@@ -1334,9 +1328,10 @@ buttonEdgeInsets = _buttonEdgeInsets;
     
     // contentView 与 父视图 保持一致, 根据子控件的高度而改变
     NSArray *contentViewConstraints = @[
-                                        @[[NSLayoutConstraint constraintWithItem:self.contentView attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0.0],
-                                          
-                                          ],
+                                        [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-(contentViewHorizontalSpace)-[contentView]-(contentViewHorizontalSpace)-|"
+                                        options:0
+                                        metrics:@{@"contentViewHorizontalSpace": @(_contentViewHorizontalSpace)}
+                                          views:@{@"contentView": self.contentView}],
                                         [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-(contentViewHorizontalSpace)-[contentView]-(contentViewHorizontalSpace)-|"
                                                                                 options:0
                                                                                 metrics:@{@"contentViewHorizontalSpace": @(_contentViewHorizontalSpace)}
