@@ -1,7 +1,7 @@
 //
 //  UIScrollView+NoDataExtend.m
 //  NODataPlaceholderView
-//
+//  https://github.com/tuxi
 //  Created by alpface on 2017/5/29.
 //  Copyright © 2017年 alpface. All rights reserved.
 //
@@ -324,13 +324,13 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         
         UIView *view = self;
         UIColor *backgroundColor = view.backgroundColor;
-        while (view == nil) {
+        do {
             view = view.superview;
             backgroundColor = view.backgroundColor;
-            if (backgroundColor != nil) {
+            if (backgroundColor != nil && backgroundColor != [UIColor clearColor]) {
                 break;
             }
-        }
+        } while (view != nil);
         
         BOOL isLightColor = [UIColor isLightColor:backgroundColor];
         UIActivityIndicatorView *activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:isLightColor?UIActivityIndicatorViewStyleGray:UIActivityIndicatorViewStyleWhite];
@@ -338,12 +338,9 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         customView = activityView;
         return customView;
     }
-    if (customView) {
-        NSParameterAssert([customView isKindOfClass:[UIView class]]);
-        return customView;
-    }
     return customView;
 }
+
 
 
 - (CGFloat)xy_noDataPlacehodlerGlobalVerticalSpace {

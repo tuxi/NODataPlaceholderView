@@ -1,7 +1,7 @@
 //
 //  UIScrollView+NoDataExtend.h
 //  NODataPlaceholderView
-//
+//  https://github.com/tuxi
 //  Created by alpface on 2017/5/29.
 //  Copyright © 2017年 alpface. All rights reserved.
 //
