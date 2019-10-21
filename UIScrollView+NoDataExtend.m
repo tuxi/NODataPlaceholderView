@@ -45,6 +45,9 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 /// 判断颜色是不是亮色
 + (BOOL)isLightColor:(UIColor *)color {
+    if (color == nil || color == [UIColor clearColor]) {
+        return YES;
+    }
     CGFloat components[3];
     [UIColor getRGBComponents:components forColor:color];
     //    NSLog(@"%f %f %f", components[0], components[1], components[2]);
@@ -324,13 +327,10 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
         
         UIView *view = self;
         UIColor *backgroundColor = view.backgroundColor;
-        do {
+        while (view != nil && (backgroundColor == nil || backgroundColor == [UIColor clearColor])) {
             view = view.superview;
             backgroundColor = view.backgroundColor;
-            if (backgroundColor != nil && backgroundColor != [UIColor clearColor]) {
-                break;
-            }
-        } while (view != nil);
+        }
         
         BOOL isLightColor = [UIColor isLightColor:backgroundColor];
         UIActivityIndicatorView *activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:isLightColor?UIActivityIndicatorViewStyleGray:UIActivityIndicatorViewStyleWhite];
@@ -340,7 +340,6 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
     }
     return customView;
 }
-
 
 
 - (CGFloat)xy_noDataPlacehodlerGlobalVerticalSpace {
