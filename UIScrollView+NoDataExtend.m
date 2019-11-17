@@ -276,6 +276,13 @@ static const CGFloat NoDataPlaceholderHorizontalSpaceRatioValue = 16.0;
 
 - (void)xy_noDataPlacehodlerDidAppear {
     dispatch_async(dispatch_get_main_queue(), ^{
+        // 显示空数据时，空数据视图成为scrollView.contentSize 改变的因素
+        // 修复：scrollView的contentSize.height为0的问题
+        // 添加到主队列，不然此时self.noDataPlaceholderView的frame可能还没有计算好
+        // 加入主队列后，可能此时[self noDataPlaceholderView]已经被释放，所以需要忽略
+        if (![self noDataPlaceholderView]) {
+            return;
+        }
         self.contentSize = CGSizeMake(self.contentSize.width == 0 ? self.noDataPlaceholderView.frame.size.width : self.contentSize.width, self.noDataPlaceholderView.frame.size.height);
     });
     if (self.noDataPlaceholderDelegate &&
